@@ -6,50 +6,80 @@
     <title>تۆمارکردنی گەیاندن</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-slate-900 text-slate-100 min-h-screen flex items-center justify-center p-4">
+<body class="bg-slate-900 text-slate-100 min-h-screen p-4 flex justify-center items-center">
 
-    <div class="w-full max-w-md bg-slate-800 p-6 rounded-2xl shadow-xl border border-slate-700">
-        <h2 class="text-2xl font-bold text-center text-blue-400 mb-6">فۆڕمی تۆمارکردنی زانیاری</h2>
+    <div class="w-full max-w-lg bg-slate-800 p-6 rounded-2xl shadow-xl border border-slate-700 my-6">
+        <h2 class="text-2xl font-bold text-center text-blue-400 mb-6">فۆڕمی زانیارییەکانی گەیاندن</h2>
         
         <form id="deliveryForm" class="space-y-4">
-            <div>
-                <label class="block text-sm mb-1 text-slate-300">ناوی سایەق *</label>
-                <input type="text" id="driver_name" required class="w-full p-3 rounded-xl bg-slate-700 border border-slate-600 text-white focus:outline-none focus:border-blue-500">
-            </div>
-
-            <div>
-                <label class="block text-sm mb-1 text-slate-300">ناوی دابەشکار *</label>
-                <input type="text" id="distributor_name" required class="w-full p-3 rounded-xl bg-slate-700 border border-slate-600 text-white focus:outline-none focus:border-blue-500">
-            </div>
-
-            <div>
-                <label class="block text-sm mb-1 text-slate-300">ژمارەی سەیارە *</label>
-                <input type="text" id="car_number" required class="w-full p-3 rounded-xl bg-slate-700 border border-slate-600 text-white focus:outline-none focus:border-blue-500">
-            </div>
-
-            <div>
-                <label class="block text-sm mb-1 text-slate-300">ناوی مەندوب (ئارەزوومەندانه)</label>
-                <input type="text" id="sales_rep_name" class="w-full p-3 rounded-xl bg-slate-700 border border-slate-600 text-white focus:outline-none focus:border-blue-500">
-            </div>
-
-            <div class="grid grid-cols-2 gap-3">
+            <!-- سەرەکییەکان -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div>
-                    <label class="block text-sm mb-1 text-slate-300">ژمارەی وەسڵ</label>
-                    <input type="text" id="invoice_number" class="w-full p-3 rounded-xl bg-slate-700 border border-slate-600 text-white focus:outline-none focus:border-blue-500">
+                    <label class="block text-sm mb-1 text-slate-300">ناوی سایەق *</label>
+                    <input type="text" id="driver_name" required class="w-full p-2.5 rounded-xl bg-slate-700 border border-slate-600 text-white focus:outline-none focus:border-blue-500">
                 </div>
                 <div>
-                    <label class="block text-sm mb-1 text-slate-300">ژمارەی پارچە</label>
-                    <input type="number" id="item_count" class="w-full p-3 rounded-xl bg-slate-700 border border-slate-600 text-white focus:outline-none focus:border-blue-500">
+                    <label class="block text-sm mb-1 text-slate-300">ناوی دابەشکار *</label>
+                    <input type="text" id="distributor_name" required class="w-full p-2.5 rounded-xl bg-slate-700 border border-slate-600 text-white focus:outline-none focus:border-blue-500">
                 </div>
             </div>
 
-            <div>
-                <label class="block text-sm mb-1 text-slate-300">کێشی بار (کگم)</label>
-                <input type="number" step="0.1" id="cargo_weight" class="w-full p-3 rounded-xl bg-slate-700 border border-slate-600 text-white focus:outline-none focus:border-blue-500">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div>
+                    <label class="block text-sm mb-1 text-slate-300">ژمارەی سەیارە *</label>
+                    <input type="text" id="car_number" required class="w-full p-2.5 rounded-xl bg-slate-700 border border-slate-600 text-white focus:outline-none focus:border-blue-500">
+                </div>
+                <div>
+                    <label class="block text-sm mb-1 text-slate-300">ناوی مەندوب</label>
+                    <input type="text" id="sales_rep_name" class="w-full p-2.5 rounded-xl bg-slate-700 border border-slate-600 text-white focus:outline-none focus:border-blue-500">
+                </div>
             </div>
 
-            <button type="submit" id="submitBtn" class="w-full bg-blue-600 hover:bg-blue-500 active:scale-95 text-white font-bold py-3 rounded-xl transition duration-200">
-                ناردنی زانیاری
+            <div class="grid grid-cols-3 gap-3">
+                <div>
+                    <label class="block text-xs mb-1 text-slate-300">ژمارەی وەسڵ</label>
+                    <input type="text" id="invoice_number" class="w-full p-2.5 rounded-xl bg-slate-700 border border-slate-600 text-white focus:outline-none focus:border-blue-500">
+                </div>
+                <div>
+                    <label class="block text-xs mb-1 text-slate-300">پارچە</label>
+                    <input type="number" id="item_count" class="w-full p-2.5 rounded-xl bg-slate-700 border border-slate-600 text-white focus:outline-none focus:border-blue-500">
+                </div>
+                <div>
+                    <label class="block text-xs mb-1 text-slate-300">کێش (کگم)</label>
+                    <input type="number" step="0.01" id="cargo_weight" class="w-full p-2.5 rounded-xl bg-slate-700 border border-slate-600 text-white focus:outline-none focus:border-blue-500">
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-sm mb-1 text-slate-300">بەروار</label>
+                <input type="date" id="record_date" class="w-full p-2.5 rounded-xl bg-slate-700 border border-slate-600 text-white focus:outline-none focus:border-blue-500">
+            </div>
+
+            <!-- کاتەکان -->
+            <div class="p-3 bg-slate-700/50 rounded-xl border border-slate-600 space-y-3">
+                <p class="text-xs font-bold text-blue-300">تۆمارکردنی کاتەکان:</p>
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="block text-xs mb-1 text-slate-400">کاتی دەرچوون</label>
+                        <input type="time" id="departure_time" class="w-full p-2 rounded-lg bg-slate-800 border border-slate-600 text-white text-xs">
+                    </div>
+                    <div>
+                        <label class="block text-xs mb-1 text-slate-400">گەشتنە زۆن</label>
+                        <input type="time" id="arrival_at_zone_time" class="w-full p-2 rounded-lg bg-slate-800 border border-slate-600 text-white text-xs">
+                    </div>
+                    <div>
+                        <label class="block text-xs mb-1 text-slate-400">دەرچوون لە زۆن</label>
+                        <input type="time" id="departure_from_zone_time" class="w-full p-2 rounded-lg bg-slate-800 border border-slate-600 text-white text-xs">
+                    </div>
+                    <div>
+                        <label class="block text-xs mb-1 text-slate-400">گەشتنەوە کۆمپانیا</label>
+                        <input type="time" id="return_to_company_time" class="w-full p-2 rounded-lg bg-slate-800 border border-slate-600 text-white text-xs">
+                    </div>
+                </div>
+            </div>
+
+            <button type="submit" id="submitBtn" class="w-full bg-blue-600 hover:bg-blue-500 active:scale-95 text-white font-bold py-3 rounded-xl transition duration-200 mt-2">
+                تۆمارکردن لە داتابەیس
             </button>
         </form>
 
@@ -77,8 +107,16 @@
                 sales_rep_name: document.getElementById('sales_rep_name').value || null,
                 invoice_number: document.getElementById('invoice_number').value || null,
                 item_count: document.getElementById('item_count').value ? parseInt(document.getElementById('item_count').value) : null,
-                cargo_weight: document.getElementById('cargo_weight').value ? parseFloat(document.getElementById('cargo_weight').value) : null
+                cargo_weight: document.getElementById('cargo_weight').value ? parseFloat(document.getElementById('cargo_weight').value) : null,
+                record_date: document.getElementById('record_date').value || None,
+                departure_time: document.getElementById('departure_time').value || null,
+                arrival_at_zone_time: document.getElementById('arrival_at_zone_time').value || null,
+                departure_from_zone_time: document.getElementById('departure_from_zone_time').value || null,
+                return_to_company_time: document.getElementById('return_to_company_time').value || null
             };
+
+            // ئەگەر بەروار دیاری نەکرابێت، سڕینەوە تا ئۆتۆماتیکی ئەمرۆ دابنێت
+            if (!payload.record_date) delete payload.record_date;
 
             try {
                 const response = await fetch(SUPABASE_URL, {
@@ -104,7 +142,7 @@
                 statusMsg.className = "mt-4 text-center font-bold text-sm text-red-400 block";
             } finally {
                 btn.disabled = false;
-                btn.innerText = "ناردنی زانیاری";
+                btn.innerText = "تۆمارکردن لە داتابەیس";
             }
         });
     </script>
