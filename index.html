@@ -1,146 +1,611 @@
 <!DOCTYPE html>
-<html dir="rtl" lang="ckb">
+<html lang="ckb" dir="rtl">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>سیستەمی گەیاندن</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <title>سیستەمی سایەقەکان</title>
+    
     <style>
-        body { background-color: #0f172a; }
-        .modal-scroll { max-height: 80vh; overflow-y: auto; }
+        :root {
+            --bg-color: #121212;
+            --card-bg: #1e1e1e;
+            --text-color: #e0e0e0;
+            --border-color: #333;
+            --input-bg: #121212;
+            --input-border: #444;
+        }
+
+        .light-mode {
+            --bg-color: #f4f6f9;
+            --card-bg: #ffffff;
+            --text-color: #333333;
+            --border-color: #dcdcdc;
+            --input-bg: #f9f9f9;
+            --input-border: #ccc;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 380px;
+        }
+
+        .card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .title {
+            text-align: center;
+            color: #007acc;
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .input-group label {
+            font-size: 13px;
+            color: #888;
+        }
+
+        .input-style {
+            background-color: var(--input-bg);
+            border: 1px solid var(--input-border);
+            color: var(--text-color);
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 15px;
+            outline: none;
+            direction: rtl;
+            width: 100%;
+        }
+
+        .btn {
+            background-color: #007acc;
+            color: white;
+            border: none;
+            padding: 14px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn:hover { background-color: #005999; }
+        .btn:disabled { background-color: #555 !important; cursor: not-allowed; opacity: 0.6; }
+
+        .error-msg {
+            color: #ff5252;
+            font-size: 12px;
+            text-align: center;
+            display: none;
+        }
+
+        #dashboardView {
+            display: none;
+            flex-direction: column;
+            gap: 20px;
+            width: 100%;
+        }
+
+        .top-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: var(--card-bg);
+            padding: 12px 15px;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            font-size: 13px;
+        }
+
+        .driver-display { font-weight: bold; color: #4fc3f7; }
+        .day-display { font-weight: bold; color: #ffca28; }
+        .date-display { font-weight: bold; color: #f57c00; direction: ltr; }
+
+        .buttons-container {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .btn-zone-in { background-color: #2e7d32; }
+        .btn-zone-out { background-color: #f57c00; }
+        .btn-company-back { background-color: #8e24aa; }
+        .btn-settings { background-color: #424242; }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal-box {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 14px;
+            padding: 20px;
+            width: 90%;
+            max-width: 300px;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .modal-box p { color: var(--text-color); font-size: 15px; }
+
+        .modal-btn {
+            background-color: #007acc;
+            color: white;
+            border: none;
+            padding: 10px;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .settings-box {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 14px;
+            padding: 20px;
+            width: 95%;
+            max-width: 350px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            text-align: right;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .settings-box h3 { color: #007acc; text-align: center; }
+
+        .setting-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 14px;
+        }
+
+        .form-modal-box {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 14px;
+            padding: 20px;
+            width: 95%;
+            max-width: 400px;
+            max-height: 90vh;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .form-modal-box h3 { color: #007acc; text-align: center; font-size: 18px; }
+        .form-group { display: flex; flex-direction: column; gap: 5px; text-align: right; }
+        .form-group label { font-size: 12px; color: #888; }
+        .form-control {
+            background-color: var(--input-bg);
+            border: 1px solid var(--input-border);
+            color: var(--text-color);
+            padding: 10px;
+            border-radius: 8px;
+            font-size: 14px;
+            outline: none;
+            width: 100%;
+        }
+        .form-buttons { display: flex; gap: 10px; margin-top: 5px; }
     </style>
 </head>
-<body class="text-slate-100 p-4">
+<body>
 
-    <!-- ١. بەشی چوونەژوورەوە -->
-    <div id="loginSection" class="w-full max-w-lg mx-auto bg-slate-800 p-6 rounded-xl shadow-lg mt-10">
-        <h2 class="text-2xl font-bold text-center mb-6 text-blue-400">چوونەژوورەوە</h2>
-        <form id="loginForm" class="space-y-4">
-            <select id="loginUser" required class="w-full p-4 bg-slate-700 rounded-lg border border-slate-600 text-white font-bold">
-                <option value="">ناوی سایەق هەڵبژێرە...</option>
-                <option value="ئۆنەر">👑 ئۆنەر</option>
-                <option value="کاروان">کاروان</option>
-                <option value="سەمیع">سەمیع</option>
-            </select>
-            <button type="submit" class="w-full bg-blue-600 p-4 rounded-lg font-bold text-lg">چوونە ژوور</button>
-        </form>
+    <div class="container">
+        
+        <!-- 1. پەڕەی چوونەژوورەوە -->
+        <div id="loginView" class="card">
+            <div class="title">چوونەژوورەوەی سایەق</div>
+            
+            <div class="input-group">
+                <label for="driverSelect">ناوی سایەق هەڵبژێرە:</label>
+                <select id="driverSelect" class="input-style">
+                    <option value="" disabled selected>-- ناوێک هەڵبژێرە --</option>
+                </select>
+            </div>
+
+            <div class="input-group">
+                <label for="passwordInput">پاسۆرد (ژمارەی زنجیرە):</label>
+                <input type="password" id="passwordInput" class="input-style" placeholder="پاسۆردەکەت بنووسە...">
+            </div>
+
+            <div id="errorMsg" class="error-msg">پاسۆرد یان ناوەکە هەڵەیە!</div>
+
+            <button class="btn" onclick="validateLogin()">چوونەژوورەوە</button>
+        </div>
+
+        <!-- 2. پەڕەی سەرەکی (Dashboard) -->
+        <div id="dashboardView">
+            <div class="top-header">
+                <div class="driver-display" id="driverNameDisplay">--</div>
+                <div class="day-display" id="currentDayDisplay">--</div>
+                <div class="date-display" id="currentDateDisplay">--</div>
+            </div>
+
+            <div class="buttons-container">
+                <button class="btn" id="btnExitCompany" onclick="openCompanyExitModal()">🏢 دەرچوون لەکۆمپانیا</button>
+                <button class="btn btn-zone-in" id="btnZoneIn" onclick="recordAction('arrival_at_zone_time', 'گەشتنە ناو زۆن', 1)" disabled>📍 گەشتنە ناو زۆن</button>
+                <button class="btn btn-zone-out" id="btnZoneOut" onclick="recordAction('departure_from_zone_time', 'دەرچوون لەزۆن', 2)" disabled>🚗 دەرچوون لەزۆن</button>
+                <button class="btn btn-company-back" id="btnBackCompany" onclick="recordAction('return_to_company_time', 'گەشتنەوە کۆمپانیا', 3)" disabled>🏁 گەشتنەوە کۆمپانیا</button>
+                <button class="btn btn-settings" onclick="openSettings()">⚙️ چاککردن (ڕێکخستن)</button>
+            </div>
+        </div>
+
     </div>
 
-    <!-- ٢. بەشی دووگمەکان (٥ دووگمە) -->
-    <div id="driverSection" class="hidden w-full max-w-lg mx-auto bg-slate-800 p-6 rounded-xl shadow-lg mt-10">
-        <h2 id="welcomeText" class="text-xl font-bold text-center mb-6 text-blue-400">بەخێربێیت</h2>
-        <div class="grid grid-cols-1 gap-3">
-            <button onclick="openModal()" class="bg-blue-600 p-4 rounded-lg font-bold">1. دەرچوون لە کۆمپانیا</button>
-            <button onclick="recordTime('arrival_at_zone_time')" class="bg-indigo-600 p-4 rounded-lg font-bold">2. گەشتنە ناو زۆن</button>
-            <button onclick="recordTime('departure_from_zone_time')" class="bg-amber-600 p-4 rounded-lg font-bold">3. دەرچوون لە زۆن</button>
-            <button onclick="recordTime('return_to_company_time', true)" class="bg-emerald-600 p-4 rounded-lg font-bold">4. گەشتنەوە کۆمپانیا</button>
-            <!-- دووگمەی پێنجەم بۆ دەستکاری و زانیاریی -->
-            <button onclick="openModal()" class="bg-purple-600 p-4 rounded-lg font-bold border-2 border-white/20">5. دەستکاری زانیارییەکان</button>
+    <!-- پەنجەرەی ڕێکخستنەکان -->
+    <div class="modal-overlay" id="settingsModal">
+        <div class="settings-box">
+            <h3>⚙️ بەشی ڕێکخستنەکان</h3>
+            
+            <div class="setting-item">
+                <span>🌙 دۆخی تاریک (Dark Mode)</span>
+                <input type="checkbox" id="darkModeToggle" onchange="toggleDarkMode()" checked style="width: 20px; height: 20px; cursor: pointer;">
+            </div>
+
+            <div class="setting-item">
+                <span>🔒 بیرهاتنەوەی چوونەژوورەوە (Remember Me)</span>
+                <input type="checkbox" id="rememberMeToggle" onchange="toggleRememberMe()" style="width: 20px; height: 20px; cursor: pointer;">
+            </div>
+
+            <div class="setting-item" style="flex-direction: column; align-items: flex-start; gap: 8px;">
+                <span>🔑 گۆڕینی پاسۆردی کەسی</span>
+                <input type="password" id="newPasswordInput" class="form-control" placeholder="پاسۆردی نوێ بنووسە...">
+                <button class="modal-btn" style="width: 100%; padding: 8px;" onclick="updatePassword()">نوێکردنەوەی پاسۆرد</button>
+            </div>
+
+            <div class="setting-item">
+                <span>⏱️ یاسای کاتەکان (تتابعی و ١٠ دەقە)</span>
+                <input type="checkbox" id="timeRulesToggle" onchange="toggleTimeRules()" style="width: 20px; height: 20px; cursor: pointer;">
+            </div>
+
+            <button class="modal-btn" style="background-color: #d32f2f; margin-top: 5px;" onclick="logout()">🚪 لۆگ ئاوت (دەرچوون)</button>
+            <button class="modal-btn" style="background-color: #555; margin-top: 5px;" onclick="closeSettings()">داخستن</button>
         </div>
     </div>
 
-    <!-- ٣. مۆداڵی تۆمارکردن و دەستکاری -->
-    <div id="departureModal" class="hidden fixed inset-0 bg-black/90 flex items-center justify-center p-4 z-50">
-        <div class="bg-white text-slate-900 p-6 rounded-2xl w-full max-w-md shadow-2xl modal-scroll">
-            <h3 class="text-xl font-bold mb-4 text-blue-800 border-b pb-2">زانیارییەکان</h3>
-            <form id="departureForm" class="space-y-3">
-                <div>
-                    <label class="text-xs font-bold text-slate-600">ناوی دابەشکار:</label>
-                    <input list="distributors" id="distributor_name" required class="w-full p-3 border rounded-lg bg-gray-50 mt-1">
-                    <datalist id="distributors">
-                        <option value="سمیع"><option value="عبدالله"><option value="شایان"><option value="هیمداد">
-                        <option value="ابراهیم محسن"><option value="ئومێد"><option value="امیر"><option value="هۆشەنگ">
-                    </datalist>
-                </div>
-                <div>
-                    <label class="text-xs font-bold text-slate-600">ناوی مەندوب:</label>
-                    <input type="text" id="sales_rep_name" class="w-full p-3 border rounded-lg bg-gray-50 mt-1">
-                </div>
-                <div class="grid grid-cols-2 gap-2">
-                    <div>
-                        <label class="text-xs font-bold text-slate-600">ژمارەی سەیارە:</label>
-                        <input type="text" id="car_number" required class="w-full p-3 border rounded-lg bg-gray-50 mt-1">
-                    </div>
-                    <div>
-                        <label class="text-xs font-bold text-slate-600">ژمارەی وەسڵ:</label>
-                        <input type="text" id="invoice_number" class="w-full p-3 border rounded-lg bg-gray-50 mt-1">
-                    </div>
-                </div>
-                <div class="grid grid-cols-2 gap-2">
-                    <div>
-                        <label class="text-xs font-bold text-slate-600">ژمارەی پارچە:</label>
-                        <input type="number" id="item_count" class="w-full p-3 border rounded-lg bg-gray-50 mt-1">
-                    </div>
-                    <div>
-                        <label class="text-xs font-bold text-slate-600">کێش (کگم):</label>
-                        <input type="number" step="0.01" id="cargo_weight" class="w-full p-3 border rounded-lg bg-gray-50 mt-1">
-                    </div>
-                </div>
-                <div class="flex gap-2 pt-4">
-                    <button type="submit" class="flex-1 bg-blue-600 text-white p-3 rounded-lg font-bold">تۆمارکردن</button>
-                    <button type="button" onclick="closeModal()" class="bg-gray-300 p-3 rounded-lg font-bold">داخستن</button>
-                </div>
-            </form>
+    <!-- پەنجەرەی خانەکانی دەرچوون لە کۆمپانیا -->
+    <div class="modal-overlay" id="companyExitModal">
+        <div class="form-modal-box">
+            <h3>تۆمارکردنی دەرچوون لە کۆمپانیا</h3>
+            
+            <div class="form-group"><label>ناوی دابەشکار</label><input type="text" id="f_distributor" class="form-control"></div>
+            <div class="form-group"><label>ناوی مەندووب</label><input type="text" id="f_mandoub" class="form-control" placeholder="ناوی مەندووب..."></div>
+            <div class="form-group"><label>ژمارەی سەیارە</label><input type="text" id="f_carNo" class="form-control" placeholder="ژمارەی سەیارە..."></div>
+            <div class="form-group"><label>ژمارەی پارچە</label><input type="number" id="f_pieces" class="form-control" placeholder="ژمارەی پارچە..."></div>
+            <div class="form-group"><label>ژمارەی وەسڵ</label><input type="text" id="f_receipts" class="form-control" placeholder="ژمارەی وەسڵ..."></div>
+            <div class="form-group"><label>کێشی بار</label><input type="text" id="f_weight" class="form-control" placeholder="کێشی بار..."></div>
+
+            <div class="form-buttons">
+                <button class="modal-btn" style="background-color: #2e7d32; flex: 1;" onclick="saveCompanyExit()">تۆمارکردن</button>
+                <button class="modal-btn" style="background-color: #c62828; flex: 1;" onclick="closeCompanyExitModal()">پاشگەزبوونەوە</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- پەنجەرەی نیشاندانی کات -->
+    <div class="modal-overlay" id="actionModal">
+        <div class="modal-box">
+            <h3 style="color: #007acc;" id="modalTitle">تۆمارکردن</h3>
+            <p id="modalTimeText">کات تۆمارکرا لە سەعات: --:--</p>
+            <button class="modal-btn" onclick="closeModal()">باشە</button>
         </div>
     </div>
 
     <script>
         const SUPABASE_URL = "https://teqzbhdzyhnfxqcautaz.supabase.co/rest/v1/delivery_records";
         const API_KEY = "sb_publishable_b8QZKs1M98SNBt9EsV4Leg_AJFziBxy";
-        let currentUser = "";
 
-        function openModal() { document.getElementById('departureModal').classList.remove('hidden'); }
-        function closeModal() { document.getElementById('departureModal').classList.add('hidden'); }
+        let driversData = JSON.parse(localStorage.getItem('driversData')) || [
+            { "id": "1", "name": "کاروان", "pass": "1" },
+            { "id": "2", "name": "محمد ابراهیم", "pass": "2" },
+            { "id": "3", "name": "محمد اسماعیل", "pass": "3" },
+            { "id": "4", "name": "احمد کمال", "pass": "4" },
+            { "id": "5", "name": "دیار", "pass": "5" },
+            { "id": "6", "name": "احمد نسردین", "pass": "6" },
+            { "id": "7", "name": "هەمزە", "pass": "7" },
+            { "id": "8", "name": "ریان", "pass": "8" },
+            { "id": "9", "name": "احمد رمضان", "pass": "9" },
+            { "id": "10", "name": "رەزا", "pass": "10" },
+            { "id": "11", "name": "میرخان", "pass": "11" },
+            { "id": "12", "name": "فارس", "pass": "12" },
+            { "id": "13", "name": "بیلال فارس", "pass": "13" },
+            { "id": "14", "name": "سلام", "pass": "14" },
+            { "id": "15", "name": "هەوراز", "pass": "15" },
+            { "id": "16", "name": "زریان", "pass": "16" },
+            { "id": "17", "name": "هیوا", "pass": "17" },
+            { "id": "34", "name": "سەمیع", "pass": "34" }
+        ].map(d => ({ ...d, id: String(d.id), pass: String(d.pass) }));
 
-        document.getElementById('loginForm').addEventListener('submit', (e) => {
-            e.preventDefault();
-            const user = document.getElementById('loginUser').value;
-            if(user) {
-                currentUser = user;
-                document.getElementById('welcomeText').innerText = "بەخێربێیت، " + user;
-                document.getElementById('loginSection').classList.add('hidden');
-                document.getElementById('driverSection').classList.remove('hidden');
+        const kurdishDays = ["یەکشەممە", "دووشەممە", "سێشەممە", "چوارشەممە", "پێنجشەممە", "هەینی", "شەممە"];
+        let currentDriverObj = null;
+        let timeRulesActive = false;
+        let lastActionTime = null;
+        let currentStep = 0;
+        let rememberMeActive = localStorage.getItem('rememberMeActive') === 'true';
+
+        document.getElementById('rememberMeToggle').checked = rememberMeActive;
+
+        function loadDrivers() {
+            const select = document.getElementById("driverSelect");
+            select.innerHTML = '<option value="" disabled selected>-- ناوێک هەڵبژێرە --</option>';
+            const sortedDrivers = [...driversData].sort((a, b) => a.name.localeCompare(b.name, 'ku'));
+
+            sortedDrivers.forEach(driver => {
+                const option = document.createElement("option");
+                option.value = driver.id;
+                option.textContent = driver.name;
+                select.appendChild(option);
+            });
+        }
+
+        window.onload = function() {
+            loadDrivers();
+            if (rememberMeActive) {
+                const savedDriverId = localStorage.getItem('savedDriverId');
+                if (savedDriverId) {
+                    const driverObj = driversData.find(d => d.id === savedDriverId);
+                    if (driverObj) loginDriver(driverObj);
+                }
             }
-        });
+        };
 
-        document.getElementById('departureForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
+        function toggleRememberMe() {
+            rememberMeActive = document.getElementById("rememberMeToggle").checked;
+            localStorage.setItem('rememberMeActive', rememberMeActive);
+            if (!rememberMeActive) localStorage.removeItem('savedDriverId');
+            else if (currentDriverObj) localStorage.setItem('savedDriverId', currentDriverObj.id);
+        }
+
+        function validateLogin() {
+            const select = document.getElementById("driverSelect");
+            const passwordInput = document.getElementById("passwordInput");
+            const errorMsg = document.getElementById("errorMsg");
+
+            const selectedId = select.value;
+            const enteredPassword = passwordInput.value.trim();
+
+            if (!selectedId) {
+                errorMsg.textContent = "تکایە سەرەتا ناوێک هەڵبژێرە!";
+                errorMsg.style.display = "block";
+                return;
+            }
+
+            const driverObj = driversData.find(d => d.id === selectedId);
+
+            if (driverObj && driverObj.pass === enteredPassword) {
+                errorMsg.style.display = "none";
+                loginDriver(driverObj);
+                if (rememberMeActive) localStorage.setItem('savedDriverId', driverObj.id);
+            } else {
+                errorMsg.textContent = "پاسۆردی هەڵەیە!";
+                errorMsg.style.display = "block";
+            }
+        }
+
+        function loginDriver(driverObj) {
+            currentDriverObj = driverObj;
+            document.getElementById("driverNameDisplay").textContent = driverObj.name;
+            document.getElementById("f_distributor").value = driverObj.name;
+
+            const today = new Date();
+            document.getElementById("currentDayDisplay").textContent = kurdishDays[today.getDay()];
+            
+            const year = today.getFullYear();
+            const month = String(today.getMonth() + 1).padStart(2, '0');
+            const day = String(today.getDate()).padStart(2, '0');
+            document.getElementById("currentDateDisplay").textContent = `${year}/${month}/${day}`;
+
+            document.getElementById("loginView").style.display = "none";
+            document.getElementById("dashboardView").style.display = "flex";
+            
+            resetButtonStates();
+        }
+
+        function resetButtonStates() {
+            if (!timeRulesActive) {
+                document.getElementById("btnZoneIn").disabled = false;
+                document.getElementById("btnZoneOut").disabled = false;
+                document.getElementById("btnBackCompany").disabled = false;
+            } else {
+                document.getElementById("btnZoneIn").disabled = (currentStep < 1);
+                document.getElementById("btnZoneOut").disabled = (currentStep < 2);
+                document.getElementById("btnBackCompany").disabled = (currentStep < 3);
+            }
+        }
+
+        function openCompanyExitModal() {
+            document.getElementById("companyExitModal").style.display = "flex";
+        }
+
+        function closeCompanyExitModal() {
+            document.getElementById("companyExitModal").style.display = "none";
+        }
+
+        async function saveCompanyExit() {
             const payload = {
-                driver_name: currentUser,
-                distributor_name: document.getElementById('distributor_name').value,
-                sales_rep_name: document.getElementById('sales_rep_name').value,
-                car_number: document.getElementById('car_number').value,
-                invoice_number: document.getElementById('invoice_number').value,
-                item_count: parseInt(document.getElementById('item_count').value) || 0,
-                cargo_weight: parseFloat(document.getElementById('cargo_weight').value) || 0,
+                driver_name: currentDriverObj.name,
+                distributor_name: document.getElementById("f_distributor").value,
+                sales_rep_name: document.getElementById("f_mandoub").value,
+                car_number: document.getElementById("f_carNo").value,
+                invoice_number: document.getElementById("f_receipts").value,
+                item_count: parseInt(document.getElementById("f_pieces").value) || 0,
+                cargo_weight: parseFloat(document.getElementById("f_weight").value) || 0,
                 departure_time: new Date().toTimeString().split(' ')[0]
             };
-            
-            const res = await fetch(SUPABASE_URL, {
-                method: 'POST',
-                headers: {'apikey': API_KEY, 'Authorization': `Bearer ${API_KEY}`, 'Content-Type': 'application/json', 'Prefer': 'return=representation'},
-                body: JSON.stringify(payload)
-            });
-            if(res.ok) {
-                const data = await res.json();
-                localStorage.setItem("activeTripId", data[0].id);
-                alert("بە سەرکەوتوویی تۆمارکرا");
-                closeModal();
-            } else { alert("هەڵەیەک ڕوویدا"); }
-        });
 
-        async function recordTime(field, isFinal = false) {
-            const id = localStorage.getItem("activeTripId");
-            if(!id) return alert("سەرەتا دەبێت دەرچوون لە کۆمپانیا تۆمار بکەیت!");
-            
-            const payload = {}; payload[field] = new Date().toTimeString().split(' ')[0];
-            await fetch(`${SUPABASE_URL}?id=eq.${id}`, {
-                method: 'PATCH',
-                headers: {'apikey': API_KEY, 'Authorization': `Bearer ${API_KEY}`, 'Content-Type': 'application/json'},
-                body: JSON.stringify(payload)
-            });
-            alert("کاتەکە تۆمارکرا!");
-            if(isFinal) localStorage.removeItem("activeTripId");
+            try {
+                const res = await fetch(SUPABASE_URL, {
+                    method: 'POST',
+                    headers: { 'apikey': API_KEY, 'Authorization': `Bearer ${API_KEY}`, 'Content-Type': 'application/json', 'Prefer': 'return=representation' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (res.ok) {
+                    const data = await res.json();
+                    localStorage.setItem("activeTripId", data[0].id);
+                    closeCompanyExitModal();
+                    lastActionTime = new Date();
+                    currentStep = 1;
+                    resetButtonStates();
+                    showActionModal("دەرچوون لە کۆمپانیا", "زانیارییەکان سەرکەوتووانە لە داتابەیس تۆمارکران.");
+                } else {
+                    alert("کێشەیەک لە تۆمارکردن هەبوو لە داتابەیس!");
+                }
+            } catch(e) {
+                alert("کێشەی هێڵ هەیە، تکایە ئینتەرنێتەکەت بپشکنە.");
+            }
+        }
+
+        async function recordAction(fieldKey, labelText, stepIndex) {
+            const tripId = localStorage.getItem("activeTripId");
+            if (!tripId) {
+                alert("سەرەتا دەبێت دەرچوون لە کۆمپانیا تۆمار بکەیت!");
+                return;
+            }
+
+            const now = new Date();
+            if (timeRulesActive && lastActionTime) {
+                const diffMinutes = (now - lastActionTime) / (1000 * 60);
+                if (diffMinutes < 10) {
+                    alert(`تکایە چاوەڕێ بکە! پێویستە لەنێوان دوگمەکاندا ١٠ دەقە تێپەڕ ببێت.`);
+                    return;
+                }
+            }
+
+            const timeStr = now.toTimeString().split(' ')[0];
+            const payload = {};
+            payload[fieldKey] = timeStr;
+
+            try {
+                const res = await fetch(`${SUPABASE_URL}?id=eq.${tripId}`, {
+                    method: 'PATCH',
+                    headers: { 'apikey': API_KEY, 'Authorization': `Bearer ${API_KEY}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (res.ok) {
+                    lastActionTime = now;
+                    currentStep = stepIndex + 1;
+                    resetButtonStates();
+
+                    if (stepIndex === 3) localStorage.removeItem("activeTripId");
+
+                    const displayTime = now.toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' });
+                    showActionModal(labelText, `کات بە سەرکەوتوویی تۆمارکرا: ${displayTime}`);
+                }
+            } catch(e) {
+                alert("پەیوەندی لەگەڵ داتابەیس پچڕا!");
+            }
+        }
+
+        function showActionModal(title, text) {
+            document.getElementById("modalTitle").textContent = title;
+            document.getElementById("modalTimeText").textContent = text;
+            document.getElementById("actionModal").style.display = "flex";
+        }
+
+        function closeModal() {
+            document.getElementById("actionModal").style.display = "none";
+        }
+
+        function openSettings() {
+            document.getElementById("settingsModal").style.display = "flex";
+        }
+
+        function closeSettings() {
+            document.getElementById("settingsModal").style.display = "none";
+        }
+
+        function toggleDarkMode() {
+            const isDark = document.getElementById("darkModeToggle").checked;
+            if (isDark) document.body.classList.remove("light-mode");
+            else document.body.classList.add("light-mode");
+        }
+
+        function toggleTimeRules() {
+            timeRulesActive = document.getElementById("timeRulesToggle").checked;
+            resetButtonStates();
+        }
+
+        function updatePassword() {
+            const newPass = document.getElementById("newPasswordInput").value.trim();
+            if(!newPass) return alert("تکایە پاسۆردی نوێ بنووسە!");
+
+            if(currentDriverObj) {
+                currentDriverObj.pass = newPass;
+                localStorage.setItem('driversData', JSON.stringify(driversData));
+                alert("پاسۆردەکەت بە سەرکەوتوویی گۆڕدرا!");
+                document.getElementById("newPasswordInput").value = "";
+            }
+        }
+
+        function logout() {
+            closeSettings();
+            currentDriverObj = null;
+            currentStep = 0;
+            lastActionTime = null;
+            localStorage.removeItem('savedDriverId');
+
+            document.getElementById("passwordInput").value = "";
+            document.getElementById("driverSelect").selectedIndex = 0;
+
+            document.getElementById("dashboardView").style.display = "none";
+            document.getElementById("loginView").style.display = "flex";
         }
     </script>
 </body>
