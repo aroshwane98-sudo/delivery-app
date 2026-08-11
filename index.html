@@ -3,20 +3,73 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>تۆمارکردنی گەیاندن</title>
+    <title>سیستەمی گەیاندن</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-slate-900 text-slate-100 min-h-screen p-4 flex justify-center items-center">
+<body class="bg-slate-900 text-slate-100 min-h-screen p-4 flex flex-col justify-center items-center">
 
-    <div class="w-full max-w-lg bg-slate-800 p-6 rounded-2xl shadow-xl border border-slate-700 my-6">
-        <h2 class="text-2xl font-bold text-center text-blue-400 mb-6">فۆڕمی زانیارییەکانی گەیاندن</h2>
-        
+    <!-- 1. فۆڕمی چوونەژوورەوە (Main Login) -->
+    <div id="loginSection" class="w-full max-w-md bg-slate-800 p-6 rounded-2xl shadow-xl border border-slate-700">
+        <h2 class="text-2xl font-bold text-center text-blue-400 mb-6">چوونەژوورەوە بۆ سیستەم</h2>
+        <form id="loginForm" class="space-y-4">
+            <div>
+                <label class="block text-sm mb-1 text-slate-300">ناوی بەکارهێنەر</label>
+                <select id="loginUser" required class="w-full p-3 rounded-xl bg-slate-700 border border-slate-600 text-white focus:outline-none focus:border-blue-500">
+                    <option value="">هەڵبژاردنی بەکارهێنەر...</option>
+                    <option value="ئۆنەر">👑 ئۆنەر (Owner)</option>
+                    <option value="کاروان">کاروان</option>
+                    <option value="محمد ابراهیم">محمد ابراهیم</option>
+                    <option value="محمد اسماعیل">محمد اسماعیل</option>
+                    <option value="احمد کمال">احمد کمال</option>
+                    <option value="دیار">دیار</option>
+                    <option value="احمد نسرین">احمد نسرین</option>
+                    <option value="هەمزه">هەمزه</option>
+                    <option value="ڕیان">ڕیان</option>
+                    <option value="احمد رمضان">احمد رمضان</option>
+                    <option value="ڕەزا">ڕەزا</option>
+                    <option value="میرخان">میرخان</option>
+                    <option value="فارس">فارس</option>
+                    <option value="بیلال فارس">بیلال فارس</option>
+                    <option value="سەلام">سەلام</option>
+                    <option value="هەوراز">هەوراز</option>
+                    <option value="زریان">زریان</option>
+                    <option value="هیوا">هیوا</option>
+                    <option value="سەمیع">سەمیع</option>
+                </select>
+            </div>
+            <div>
+                <label class="block text-sm mb-1 text-slate-300">پاسۆڕد</label>
+                <input type="password" id="loginPass" required class="w-full p-3 rounded-xl bg-slate-700 border border-slate-600 text-white focus:outline-none focus:border-blue-500">
+            </div>
+            <button type="submit" class="w-full bg-blue-600 hover:bg-blue-500 active:scale-95 text-white font-bold py-3 rounded-xl transition duration-200">
+                چوونەژوورەوە
+            </button>
+        </form>
+        <p id="loginError" class="mt-4 text-center font-bold text-sm text-red-400 hidden">پاسۆڕدەکە هەڵەیە!</p>
+    </div>
+
+    <!-- 2. فۆڕمی سایەق / ئۆنەر بۆ تۆمارکردن -->
+    <div id="appSection" class="w-full max-w-lg bg-slate-800 p-6 rounded-2xl shadow-xl border border-slate-700 hidden my-6">
+        <div class="flex justify-between items-center mb-6 pb-3 border-b border-slate-700">
+            <span id="currentUserLabel" class="text-lg font-bold text-blue-400"></span>
+            <button onclick="logout()" class="bg-red-500/20 hover:bg-red-500 text-red-300 hover:text-white text-xs px-3 py-1.5 rounded-lg transition">دەچوون</button>
+        </div>
+
+        <!-- بەشی تایبەتی ئۆنەر بۆ بینی داتاکان -->
+        <div id="ownerControls" class="mb-6 hidden">
+            <button onclick="toggleOwnerView()" id="toggleViewBtn" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2 rounded-xl mb-4 text-sm">
+                📊 بینینی هەموو داتاکانی داتابەیس
+            </button>
+            <div id="ownerTableContainer" class="hidden max-h-80 overflow-y-auto bg-slate-900 p-3 rounded-xl border border-slate-700 mb-4 text-xs space-y-2">
+                <!-- داتاکان لێرە پیشان دەدرێن -->
+            </div>
+        </div>
+
         <form id="deliveryForm" class="space-y-4">
-            <!-- سەرەکییەکان -->
             <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div>
-                    <label class="block text-sm mb-1 text-slate-300">ناوی سایەق *</label>
-                    <input type="text" id="driver_name" required class="w-full p-2.5 rounded-xl bg-slate-700 border border-slate-600 text-white focus:outline-none focus:border-blue-500">
+                    <label class="block text-sm mb-1 text-slate-300">ناوی سایەق</label>
+                    <input type="text" id="driver_name" readonly class="w-full p-2.5 rounded-xl bg-slate-900 border border-slate-700 text-slate-400 font-bold">
                 </div>
                 <div>
                     <label class="block text-sm mb-1 text-slate-300">ناوی دابەشکار *</label>
@@ -38,24 +91,18 @@
             <div class="grid grid-cols-3 gap-3">
                 <div>
                     <label class="block text-xs mb-1 text-slate-300">ژمارەی وەسڵ</label>
-                    <input type="text" id="invoice_number" class="w-full p-2.5 rounded-xl bg-slate-700 border border-slate-600 text-white focus:outline-none focus:border-blue-500">
+                    <input type="text" id="invoice_number" class="w-full p-2.5 rounded-xl bg-slate-700 border border-slate-600 text-white">
                 </div>
                 <div>
                     <label class="block text-xs mb-1 text-slate-300">پارچە</label>
-                    <input type="number" id="item_count" class="w-full p-2.5 rounded-xl bg-slate-700 border border-slate-600 text-white focus:outline-none focus:border-blue-500">
+                    <input type="number" id="item_count" class="w-full p-2.5 rounded-xl bg-slate-700 border border-slate-600 text-white">
                 </div>
                 <div>
                     <label class="block text-xs mb-1 text-slate-300">کێش (کگم)</label>
-                    <input type="number" step="0.01" id="cargo_weight" class="w-full p-2.5 rounded-xl bg-slate-700 border border-slate-600 text-white focus:outline-none focus:border-blue-500">
+                    <input type="number" step="0.01" id="cargo_weight" class="w-full p-2.5 rounded-xl bg-slate-700 border border-slate-600 text-white">
                 </div>
             </div>
 
-            <div>
-                <label class="block text-sm mb-1 text-slate-300">بەروار</label>
-                <input type="date" id="record_date" class="w-full p-2.5 rounded-xl bg-slate-700 border border-slate-600 text-white focus:outline-none focus:border-blue-500">
-            </div>
-
-            <!-- کاتەکان -->
             <div class="p-3 bg-slate-700/50 rounded-xl border border-slate-600 space-y-3">
                 <p class="text-xs font-bold text-blue-300">تۆمارکردنی کاتەکان:</p>
                 <div class="grid grid-cols-2 gap-2">
@@ -78,8 +125,8 @@
                 </div>
             </div>
 
-            <button type="submit" id="submitBtn" class="w-full bg-blue-600 hover:bg-blue-500 active:scale-95 text-white font-bold py-3 rounded-xl transition duration-200 mt-2">
-                تۆمارکردن لە داتابەیس
+            <button type="submit" id="submitBtn" class="w-full bg-blue-600 hover:bg-blue-500 active:scale-95 text-white font-bold py-3 rounded-xl transition duration-200">
+                تۆمارکردنی زانیاری
             </button>
         </form>
 
@@ -87,18 +134,102 @@
     </div>
 
     <script>
+        const USERS = {
+            "ئۆنەر": "00",
+            "کاروان": "1",
+            "محمد ابراهیم": "2",
+            "محمد اسماعیل": "3",
+            "احمد کمال": "4",
+            "دیار": "5",
+            "احمد نسرین": "6",
+            "هەمزه": "7",
+            "ڕیان": "8",
+            "احمد رمضان": "9",
+            "ڕەزا": "10",
+            "میرخان": "11",
+            "فارس": "12",
+            "بیلال فارس": "13",
+            "سەلام": "14",
+            "هەوراز": "15",
+            "زریان": "16",
+            "هیوا": "17",
+            "سەمیع": "34"
+        };
+
         const SUPABASE_URL = "https://teqzbhdzyhnfxqcautaz.supabase.co/rest/v1/delivery_records";
         const API_KEY = "sb_publishable_b8QZKs1M98SNBt9EsV4Leg_AJFziBxy";
 
+        let loggedInUser = "";
+
+        document.getElementById('loginForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const user = document.getElementById('loginUser').value;
+            const pass = document.getElementById('loginPass').value;
+            const err = document.getElementById('loginError');
+
+            if (USERS[user] && USERS[user] === pass) {
+                loggedInUser = user;
+                err.classList.add('hidden');
+                document.getElementById('loginSection').classList.add('hidden');
+                document.getElementById('appSection').classList.remove('hidden');
+                document.getElementById('currentUserLabel').innerText = `بەکارهێنەر: ${user}`;
+                
+                const driverInput = document.getElementById('driver_name');
+                if (user === "ئۆنەر") {
+                    driverInput.removeAttribute('readonly');
+                    driverInput.classList.remove('bg-slate-900', 'text-slate-400');
+                    driverInput.classList.add('bg-slate-700', 'text-white');
+                    driverInput.value = "";
+                    document.getElementById('ownerControls').classList.remove('hidden');
+                } else {
+                    driverInput.setAttribute('readonly', true);
+                    driverInput.value = user;
+                    document.getElementById('ownerControls').classList.add('hidden');
+                }
+            } else {
+                err.classList.remove('hidden');
+            }
+        });
+
+        function logout() {
+            location.reload();
+        }
+
+        async function toggleOwnerView() {
+            const container = document.getElementById('ownerTableContainer');
+            if (container.classList.contains('hidden')) {
+                container.classList.remove('hidden');
+                container.innerHTML = "دەنێردرێت...";
+                try {
+                    const res = await fetch(`${SUPABASE_URL}?select=*`, {
+                        headers: { 'apikey': API_KEY, 'Authorization': `Bearer ${API_KEY}` }
+                    });
+                    const data = await res.json();
+                    if (data.length === 0) {
+                        container.innerHTML = "<p class='text-center text-slate-400'>هیچ داتایەک تۆمار نەکراوە</p>";
+                    } else {
+                        container.innerHTML = data.map(r => `
+                            <div class="p-2 bg-slate-800 rounded border border-slate-700">
+                                <p><b class="text-blue-400">سایەق:</b> ${r.driver_name} | <b class="text-blue-400">دابەشکار:</b> ${r.distributor_name}</p>
+                                <p><b class="text-blue-400">سەیارە:</b> ${r.car_number} | <b class="text-blue-400">وەسڵ:</b> ${r.invoice_number || '-'}</p>
+                            </div>
+                        `).join('');
+                    }
+                } catch {
+                    container.innerHTML = "<p class='text-red-400'>کێشە لە وەرگرتنی داتا ڕوویدا</p>";
+                }
+            } else {
+                container.classList.add('hidden');
+            }
+        }
+
         document.getElementById('deliveryForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-            
             const btn = document.getElementById('submitBtn');
             const statusMsg = document.getElementById('statusMsg');
             
             btn.disabled = true;
             btn.innerText = "دەنێردرێت...";
-            statusMsg.classList.add('hidden');
 
             const payload = {
                 driver_name: document.getElementById('driver_name').value,
@@ -108,15 +239,11 @@
                 invoice_number: document.getElementById('invoice_number').value || null,
                 item_count: document.getElementById('item_count').value ? parseInt(document.getElementById('item_count').value) : null,
                 cargo_weight: document.getElementById('cargo_weight').value ? parseFloat(document.getElementById('cargo_weight').value) : null,
-                record_date: document.getElementById('record_date').value || None,
                 departure_time: document.getElementById('departure_time').value || null,
                 arrival_at_zone_time: document.getElementById('arrival_at_zone_time').value || null,
                 departure_from_zone_time: document.getElementById('departure_from_zone_time').value || null,
                 return_to_company_time: document.getElementById('return_to_company_time').value || null
             };
-
-            // ئەگەر بەروار دیاری نەکرابێت، سڕینەوە تا ئۆتۆماتیکی ئەمرۆ دابنێت
-            if (!payload.record_date) delete payload.record_date;
 
             try {
                 const response = await fetch(SUPABASE_URL, {
@@ -124,25 +251,25 @@
                     headers: {
                         'apikey': API_KEY,
                         'Authorization': `Bearer ${API_KEY}`,
-                        'Content-Type': 'application/json',
-                        'Prefer': 'return=representation'
+                        'Content-Type': 'application/json'
                     },
                     body: JSON.stringify(payload)
                 });
 
                 if (response.ok) {
-                    statusMsg.innerText = "✅ داتاکە بە سەرکەوتوویی تۆمار کرا!";
+                    statusMsg.innerText = "✅ زانیاری بە سەرکەوتوویی تۆمار کرا!";
                     statusMsg.className = "mt-4 text-center font-bold text-sm text-green-400 block";
                     document.getElementById('deliveryForm').reset();
+                    if (loggedInUser !== "ئۆنەر") document.getElementById('driver_name').value = loggedInUser;
                 } else {
                     throw new Error();
                 }
-            } catch (err) {
-                statusMsg.innerText = "❌ هەڵەیەک ڕوویدا لە ناردنی داتاکە!";
+            } catch {
+                statusMsg.innerText = "❌ هەڵەیەک ڕوویدا!";
                 statusMsg.className = "mt-4 text-center font-bold text-sm text-red-400 block";
             } finally {
                 btn.disabled = false;
-                btn.innerText = "تۆمارکردن لە داتابەیس";
+                btn.innerText = "تۆمارکردنی زانیاری";
             }
         });
     </script>
