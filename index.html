@@ -2,17 +2,23 @@
 <html dir="rtl" lang="ckb">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>سیستەمی گەیاندن</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = { darkMode: 'class' }
     </script>
+    <style>
+        body {
+            touch-action: manipulation;
+            overflow-x: hidden;
+        }
+    </style>
 </head>
-<body id="bodyTag" class="bg-slate-900 text-slate-100 min-h-screen flex items-center justify-center p-4 transition-colors duration-300">
+<body id="bodyTag" class="bg-slate-900 text-slate-100 h-screen w-screen overflow-hidden flex items-center justify-center p-4 transition-colors duration-300 fixed inset-0">
 
-    <!-- ١. فۆڕمی بەکارهێنەر (Login) -->
-    <div id="loginSection" class="w-full max-w-md bg-slate-800 p-6 rounded-2xl shadow-xl border border-slate-700">
+    <!-- ١. فۆڕمی بەکارهێنەر (Login) - نەجووڵاو -->
+    <div id="loginSection" class="w-full max-w-md bg-slate-800 p-6 rounded-2xl shadow-xl border border-slate-700 my-auto">
         <h2 class="text-2xl font-bold text-center text-blue-400 mb-6">چوونەژوورەوە</h2>
         <form id="loginForm" class="space-y-4">
             <div>
@@ -51,46 +57,40 @@
         <p id="loginError" class="mt-4 text-center font-bold text-sm text-red-400 hidden">پاسۆڕدەکە هەڵەیە!</p>
     </div>
 
-    <!-- ٢. فۆڕمی سایەق (Driver Dashboard) -->
-    <div id="driverSection" class="w-full max-w-md bg-slate-800 p-6 rounded-2xl shadow-xl border border-slate-700 hidden space-y-4">
+    <!-- ٢. فۆڕمی سایەق - نەجووڵاو -->
+    <div id="driverSection" class="w-full max-w-md bg-slate-800 p-6 rounded-2xl shadow-xl border border-slate-700 hidden space-y-4 my-auto">
         <div class="text-center border-b border-slate-700 pb-3">
             <h2 id="driverWelcome" class="text-xl font-bold text-blue-400">فۆڕمی سایەق</h2>
             <p id="tripStatus" class="text-xs text-amber-400 mt-1">هیچ گەشتێک چالاک نییە</p>
         </div>
 
         <div class="grid grid-cols-1 gap-3">
-            <!-- دووگمەی ۱ -->
             <button onclick="openDepartureModal()" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 rounded-xl text-right px-4 flex justify-between items-center shadow">
                 <span>1. دەرچوون لە کۆمپانیا</span>
                 <span class="text-xs opacity-75">📝 پڕکردنەوەی فۆڕم</span>
             </button>
 
-            <!-- دووگمەی ۲ -->
             <button onclick="recordTime('arrival_at_zone_time', 'گەشتنە ناو زۆن')" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 rounded-xl text-right px-4 flex justify-between items-center shadow">
                 <span>2. کاتی گەشتنە ناو زۆن</span>
                 <span class="text-xs opacity-75">⏱️ تۆمارکردنی کات</span>
             </button>
 
-            <!-- دووگمەی ۳ -->
             <button onclick="recordTime('departure_from_zone_time', 'دەرچوون لە زۆن')" class="w-full bg-amber-600 hover:bg-amber-500 text-white font-bold py-3 rounded-xl text-right px-4 flex justify-between items-center shadow">
                 <span>3. کاتی دەرچوون لە زۆن</span>
                 <span class="text-xs opacity-75">⏱️ تۆمارکردنی کات</span>
             </button>
 
-            <!-- دووگمەی ٤ -->
             <button onclick="recordTime('return_to_company_time', 'گەشتنەوە کۆمپانیا', true)" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3 rounded-xl text-right px-4 flex justify-between items-center shadow">
                 <span>4. کاتی گەشتنەوە کۆمپانیا</span>
                 <span class="text-xs opacity-75">🏁 کۆتایی گەشت</span>
             </button>
 
-            <!-- دووگمەی ٥ -->
             <button onclick="toggleSettings()" class="w-full bg-slate-700 hover:bg-slate-600 text-white font-bold py-3 rounded-xl text-right px-4 flex justify-between items-center shadow">
                 <span>5. ڕێکخستن</span>
                 <span class="text-xs opacity-75">⚙️ Dark Mode & Logout</span>
             </button>
         </div>
 
-        <!-- بەشی ڕێکخستن (Modal/Panel) -->
         <div id="settingsPanel" class="p-4 bg-slate-900 rounded-xl border border-slate-700 space-y-3 hidden">
             <div class="flex justify-between items-center">
                 <span>دۆخی تاریک (Dark Mode)</span>
@@ -104,12 +104,36 @@
         <p id="driverMsg" class="text-center font-bold text-sm hidden"></p>
     </div>
 
-    <!-- مۆداڵی پڕکردنەوەی زانیاریی دەرچوون لە کۆمپانیا -->
-    <div id="departureModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 hidden">
-        <div class="bg-slate-800 p-6 rounded-2xl w-full max-w-md border border-slate-700 space-y-4">
+    <!-- مۆداڵی دەرچوون بە خانەی دابەشکاری ئۆتۆماتیکی -->
+    <div id="departureModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 hidden z-50">
+        <div class="bg-slate-800 p-6 rounded-2xl w-full max-w-md border border-slate-700 space-y-4 max-h-[90vh] overflow-y-auto">
             <h3 class="text-lg font-bold text-blue-400">زانیارییەکانی دەرچوون لە کۆمپانیا</h3>
             <form id="departureForm" class="space-y-3">
-                <input type="text" id="distributor_name" placeholder="ناوی دابەشکار *" required class="w-full p-2.5 rounded-xl bg-slate-700 border border-slate-600 text-white">
+                <div>
+                    <label class="block text-xs mb-1 text-slate-300">ناوی دابەشکار *</label>
+                    <input list="distributorsList" id="distributor_name" placeholder="دەستپێبکە بە نووسین یان هەڵبژێرە..." required class="w-full p-2.5 rounded-xl bg-slate-700 border border-slate-600 text-white focus:outline-none focus:border-blue-500">
+                    <datalist id="distributorsList">
+                        <option value="سمیع">
+                        <option value="عبدالله">
+                        <option value="شایان">
+                        <option value="هیمداد">
+                        <option value="ابراهیم محسن">
+                        <option value="ئومێد">
+                        <option value="امیر">
+                        <option value="هۆشەنگ">
+                        <option value="سەرمەد">
+                        <option value="سەفین">
+                        <option value="بەڵێن">
+                        <option value="بڕوا">
+                        <option value="ڕەوەز">
+                        <option value="عمر">
+                        <option value="اسماعیل علی">
+                        <option value="اسماعیل شاخەوان">
+                        <option value="محمد عبدالرحمان">
+                        <option value="اسعد بیلال">
+                    </datalist>
+                </div>
+
                 <input type="text" id="sales_rep_name" placeholder="ناوی مەندووب" class="w-full p-2.5 rounded-xl bg-slate-700 border border-slate-600 text-white">
                 <input type="text" id="car_number" placeholder="ژمارەی سەیارە *" required class="w-full p-2.5 rounded-xl bg-slate-700 border border-slate-600 text-white">
                 <input type="text" id="invoice_number" placeholder="ژمارەی وەسڵ" class="w-full p-2.5 rounded-xl bg-slate-700 border border-slate-600 text-white">
@@ -126,7 +150,7 @@
     </div>
 
     <!-- ٣. فۆڕمی ئۆنەر (Owner Dashboard) -->
-    <div id="ownerSection" class="w-full max-w-4xl bg-slate-800 p-6 rounded-2xl shadow-xl border border-slate-700 hidden space-y-4">
+    <div id="ownerSection" class="w-full max-w-4xl bg-slate-800 p-6 rounded-2xl shadow-xl border border-slate-700 hidden space-y-4 max-h-[90vh] overflow-y-auto my-auto">
         <div class="flex justify-between items-center border-b border-slate-700 pb-3">
             <h2 class="text-xl font-bold text-emerald-400">👑 کۆگای داتاکان (ئۆنەر)</h2>
             <button onclick="logout()" class="bg-red-600 hover:bg-red-500 text-white text-xs font-bold px-3 py-2 rounded-lg">Log Out</button>
@@ -152,7 +176,6 @@
                     </tr>
                 </thead>
                 <tbody id="ownerTableBody" class="divide-y divide-slate-700">
-                    <!-- داتاکان لێرە باردەبن -->
                 </tbody>
             </table>
         </div>
@@ -196,7 +219,6 @@
         });
 
         function logout() { location.reload(); }
-
         function openDepartureModal() { document.getElementById('departureModal').classList.remove('hidden'); }
         function closeDepartureModal() { document.getElementById('departureModal').classList.add('hidden'); }
         function toggleSettings() { document.getElementById('settingsPanel').classList.toggle('hidden'); }
@@ -223,7 +245,6 @@
             return now.toTimeString().split(' ')[0];
         }
 
-        // ١. تۆمارکردنی سەرەتای گەشت (دەرچوون لە کۆمپانیا)
         document.getElementById('departureForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const payload = {
@@ -258,7 +279,6 @@
             }
         });
 
-        // ٢ و ٣ و ٤. تۆمارکردنی کاتەکان
         async function recordTime(field, labelName, isFinal = false) {
             if (!activeTripId) {
                 showDriverMsg("⚠️ تکایە سەرەتا دووگمەی (١. دەرچوون لە کۆمپانیا) دابگرە!", "text-amber-400");
@@ -295,7 +315,6 @@
             el.className = `text-center font-bold text-sm ${colorClass} block`;
         }
 
-        // ٥. بارکردنی داتاکان بۆ ئۆنەر
         async function loadOwnerData() {
             const tbody = document.getElementById('ownerTableBody');
             tbody.innerHTML = `<tr><td colspan="9" class="p-4 text-center">لە باری داگرتندایە...</td></tr>`;
