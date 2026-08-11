@@ -44,7 +44,8 @@
 
         .container {
             width: 100%;
-            max-width: 380px;
+            max-width: 420px;
+            margin: 0 auto;
         }
 
         .card {
@@ -168,7 +169,7 @@
             border-radius: 14px;
             padding: 20px;
             width: 90%;
-            max-width: 300px;
+            max-width: 320px;
             text-align: center;
             display: flex;
             flex-direction: column;
@@ -193,7 +194,7 @@
             border-radius: 14px;
             padding: 20px;
             width: 95%;
-            max-width: 350px;
+            max-width: 380px;
             display: flex;
             flex-direction: column;
             gap: 15px;
@@ -350,7 +351,9 @@
         const SUPABASE_URL = "https://teqzbhdzyhnfxqcautaz.supabase.co/rest/v1/delivery_records";
         const API_KEY = "sb_publishable_b8QZKs1M98SNBt9EsV4Leg_AJFziBxy";
 
+        // زانیاری سایەقەکان بڕگەی 👑 ئۆنەری تێدایە لەسەرەوە
         let driversData = JSON.parse(localStorage.getItem('driversData')) || [
+            { "id": "0", "name": "👑 ئۆنەر", "pass": "0" },
             { "id": "1", "name": "کاروان", "pass": "1" },
             { "id": "2", "name": "محمد ابراهیم", "pass": "2" },
             { "id": "3", "name": "محمد اسماعیل", "pass": "3" },
@@ -383,7 +386,11 @@
         function loadDrivers() {
             const select = document.getElementById("driverSelect");
             select.innerHTML = '<option value="" disabled selected>-- ناوێک هەڵبژێرە --</option>';
-            const sortedDrivers = [...driversData].sort((a, b) => a.name.localeCompare(b.name, 'ku'));
+            
+            // ئۆنەر لە پێشەوە دادەنرێت و ئەوانی تر بەپێی ئەلفووبێ ڕێکدەخرێن
+            const owner = driversData.find(d => d.id === "0");
+            const otherDrivers = driversData.filter(d => d.id !== "0").sort((a, b) => a.name.localeCompare(b.name, 'ku'));
+            const sortedDrivers = owner ? [owner, ...otherDrivers] : otherDrivers;
 
             sortedDrivers.forEach(driver => {
                 const option = document.createElement("option");
