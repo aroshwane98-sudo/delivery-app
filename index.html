@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="ckb">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تۆمارکردنی گەیاندن</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen flex items-center justify-center p-4">
+
+    <div class="w-full max-w-md bg-slate-800 p-6 rounded-2xl shadow-xl border border-slate-700">
+        <h2 class="text-2xl font-bold text-center text-blue-400 mb-6">فۆڕمی تۆمارکردنی زانیاری</h2>
+        
+        <form id="deliveryForm" class="space-y-4">
+            <div>
+                <label class="block text-sm mb-1 text-slate-300">ناوی سایەق *</label>
+                <input type="text" id="driver_name" required class="w-full p-3 rounded-xl bg-slate-700 border border-slate-600 text-white focus:outline-none focus:border-blue-500">
+            </div>
+
+            <div>
+                <label class="block text-sm mb-1 text-slate-300">ناوی دابەشکار *</label>
+                <input type="text" id="distributor_name" required class="w-full p-3 rounded-xl bg-slate-700 border border-slate-600 text-white focus:outline-none focus:border-blue-500">
+            </div>
+
+            <div>
+                <label class="block text-sm mb-1 text-slate-300">ژمارەی سەیارە *</label>
+                <input type="text" id="car_number" required class="w-full p-3 rounded-xl bg-slate-700 border border-slate-600 text-white focus:outline-none focus:border-blue-500">
+            </div>
+
+            <div>
+                <label class="block text-sm mb-1 text-slate-300">ناوی مەندوب (ئارەزوومەندانه)</label>
+                <input type="text" id="sales_rep_name" class="w-full p-3 rounded-xl bg-slate-700 border border-slate-600 text-white focus:outline-none focus:border-blue-500">
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="block text-sm mb-1 text-slate-300">ژمارەی وەسڵ</label>
+                    <input type="text" id="invoice_number" class="w-full p-3 rounded-xl bg-slate-700 border border-slate-600 text-white focus:outline-none focus:border-blue-500">
+                </div>
+                <div>
+                    <label class="block text-sm mb-1 text-slate-300">ژمارەی پارچە</label>
+                    <input type="number" id="item_count" class="w-full p-3 rounded-xl bg-slate-700 border border-slate-600 text-white focus:outline-none focus:border-blue-500">
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-sm mb-1 text-slate-300">کێشی بار (کگم)</label>
+                <input type="number" step="0.1" id="cargo_weight" class="w-full p-3 rounded-xl bg-slate-700 border border-slate-600 text-white focus:outline-none focus:border-blue-500">
+            </div>
+
+            <button type="submit" id="submitBtn" class="w-full bg-blue-600 hover:bg-blue-500 active:scale-95 text-white font-bold py-3 rounded-xl transition duration-200">
+                ناردنی زانیاری
+            </button>
+        </form>
+
+        <p id="statusMsg" class="mt-4 text-center font-bold text-sm hidden"></p>
+    </div>
+
+    <script>
+        const SUPABASE_URL = "https://teqzbhdzyhnfxqcautaz.supabase.co/rest/v1/delivery_records";
+        const API_KEY = "sb_publishable_b8QZKs1M98SNBt9EsV4Leg_AJFziBxy";
+
+        document.getElementById('deliveryForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const btn = document.getElementById('submitBtn');
+            const statusMsg = document.getElementById('statusMsg');
+            
+            btn.disabled = true;
+            btn.innerText = "دەنێردرێت...";
+            statusMsg.classList.add('hidden');
+
+            const payload = {
+                driver_name: document.getElementById('driver_name').value,
+                distributor_name: document.getElementById('distributor_name').value,
+                car_number: document.getElementById('car_number').value,
+                sales_rep_name: document.getElementById('sales_rep_name').value || null,
+                invoice_number: document.getElementById('invoice_number').value || null,
+                item_count: document.getElementById('item_count').value ? parseInt(document.getElementById('item_count').value) : null,
+                cargo_weight: document.getElementById('cargo_weight').value ? parseFloat(document.getElementById('cargo_weight').value) : null
+            };
+
+            try {
+                const response = await fetch(SUPABASE_URL, {
+                    method: 'POST',
+                    headers: {
+                        'apikey': API_KEY,
+                        'Authorization': `Bearer ${API_KEY}`,
+                        'Content-Type': 'application/json',
+                        'Prefer': 'return=representation'
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                if (response.ok) {
+                    statusMsg.innerText = "✅ داتاکە بە سەرکەوتوویی تۆمار کرا!";
+                    statusMsg.className = "mt-4 text-center font-bold text-sm text-green-400 block";
+                    document.getElementById('deliveryForm').reset();
+                } else {
+                    throw new Error();
+                }
+            } catch (err) {
+                statusMsg.innerText = "❌ هەڵەیەک ڕوویدا لە ناردنی داتاکە!";
+                statusMsg.className = "mt-4 text-center font-bold text-sm text-red-400 block";
+            } finally {
+                btn.disabled = false;
+                btn.innerText = "ناردنی زانیاری";
+            }
+        });
+    </script>
+</body>
+</html>
