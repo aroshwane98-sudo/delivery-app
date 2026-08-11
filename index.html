@@ -2,161 +2,146 @@
 <html dir="rtl" lang="ckb">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>سیستەمی گەیاندن</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        body { touch-action: manipulation; overflow: hidden; }
-        .scrollable-content { overflow-y: auto; }
+        body { background-color: #0f172a; }
+        .modal-container { max-height: 90vh; overflow-y: auto; }
     </style>
 </head>
-<body class="bg-slate-900 text-slate-100 h-screen w-screen flex items-center justify-center p-4">
+<body class="text-slate-100 p-4">
 
-    <!-- ١. فۆڕمی چوونەژوورەوە -->
-    <div id="loginSection" class="w-full max-w-md bg-slate-800 p-6 rounded-2xl shadow-xl border border-slate-700">
-        <h2 class="text-2xl font-bold text-center text-blue-400 mb-6">چوونەژوورەوە</h2>
+    <!-- ١. بەشی چوونەژوورەوە -->
+    <div id="loginSection" class="w-full max-w-lg mx-auto bg-slate-800 p-8 rounded-xl shadow-lg mt-10">
+        <h2 class="text-2xl font-bold text-center mb-6 text-blue-400">چوونەژوورەوە</h2>
         <form id="loginForm" class="space-y-4">
-            <select id="loginUser" required class="w-full p-3 rounded-xl bg-slate-700 border border-slate-600 text-white">
-                <option value="">ناوی سایەق هەڵبژێرە...</option>
-                <option value="ئۆنەر">👑 ئۆنەر (Owner)</option>
+            <label class="block text-sm text-slate-400">ناوی سایەق دیاری بکە:</label>
+            <select id="loginUser" required class="w-full p-4 bg-slate-700 rounded-lg border border-slate-600 text-white font-bold">
+                <option value="">هەڵبژێرە...</option>
+                <option value="ئۆنەر">👑 ئۆنەر</option>
                 <option value="کاروان">کاروان</option>
-                <option value="محمد ابراهیم">محمد ابراهیم</option>
-                <option value="محمد اسماعیل">محمد اسماعیل</option>
-                <option value="احمد کمال">احمد کمال</option>
-                <option value="دیار">دیار</option>
-                <option value="احمد نسرین">احمد نسرین</option>
-                <option value="هەمزه">هەمزه</option>
-                <option value="ڕیان">ڕیان</option>
-                <option value="احمد رمضان">احمد رمضان</option>
-                <option value="ڕەزا">ڕەزا</option>
-                <option value="میرخان">میرخان</option>
-                <option value="فارس">فارس</option>
-                <option value="بیلال فارس">بیلال فارس</option>
-                <option value="سەلام">سەلام</option>
-                <option value="هەوراز">هەوراز</option>
-                <option value="زریان">زریان</option>
-                <option value="هیوا">هیوا</option>
                 <option value="سەمیع">سەمیع</option>
             </select>
-            <input type="password" id="loginPass" placeholder="پاسۆڕد" required class="w-full p-3 rounded-xl bg-slate-700 border border-slate-600 text-white">
-            <button type="submit" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 rounded-xl">چوونە ژوور</button>
+            <button type="submit" class="w-full bg-blue-600 p-4 rounded-lg font-bold text-lg hover:bg-blue-700 transition">چوونە ژوور</button>
         </form>
     </div>
 
-    <!-- ٢. فۆڕمی سایەق -->
-    <div id="driverSection" class="w-full max-w-md bg-slate-800 p-6 rounded-2xl shadow-xl border border-slate-700 hidden">
-        <div class="text-center border-b border-slate-700 pb-3 mb-4">
-            <h2 id="driverWelcome" class="text-xl font-bold text-blue-400">بەخێربێیت</h2>
-            <p id="tripStatus" class="text-xs text-amber-400 mt-1">هیچ گەشتێک چالاک نییە</p>
+    <!-- ٢. بەشی سایەق (سەرەکی) -->
+    <div id="driverSection" class="hidden w-full max-w-lg mx-auto bg-slate-800 p-8 rounded-xl shadow-lg mt-10">
+        <h2 id="welcomeText" class="text-xl font-bold text-center mb-6 text-blue-400">بەخێربێیت</h2>
+        <div class="grid gap-4">
+            <button onclick="openModal()" class="bg-blue-600 p-4 rounded-lg font-bold hover:bg-blue-700">1. دەرچوون لە کۆمپانیا</button>
+            <button onclick="recordTime('arrival_at_zone_time')" class="bg-indigo-600 p-4 rounded-lg font-bold hover:bg-indigo-700">2. گەشتنە ناو زۆن</button>
+            <button onclick="recordTime('departure_from_zone_time')" class="bg-amber-600 p-4 rounded-lg font-bold hover:bg-amber-700">3. دەرچوون لە زۆن</button>
+            <button onclick="recordTime('return_to_company_time', true)" class="bg-emerald-600 p-4 rounded-lg font-bold hover:bg-emerald-700">4. گەشتنەوە کۆمپانیا</button>
         </div>
-        <div class="space-y-3">
-            <button onclick="openModal()" class="w-full bg-blue-600 py-3 rounded-xl font-bold">1. دەرچوون لە کۆمپانیا</button>
-            <button onclick="recordTime('arrival_at_zone_time')" class="w-full bg-indigo-600 py-3 rounded-xl font-bold">2. گەشتنە ناو زۆن</button>
-            <button onclick="recordTime('departure_from_zone_time')" class="w-full bg-amber-600 py-3 rounded-xl font-bold">3. دەرچوون لە زۆن</button>
-            <button onclick="recordTime('return_to_company_time', true)" class="w-full bg-emerald-600 py-3 rounded-xl font-bold">4. گەشتنەوە کۆمپانیا</button>
-        </div>
-        <p id="driverMsg" class="mt-4 text-center text-sm font-bold"></p>
     </div>
 
-    <!-- مۆداڵی دەرچوون -->
-    <div id="departureModal" class="fixed inset-0 bg-black/80 flex items-center justify-center p-4 hidden z-50">
-        <div class="bg-slate-800 p-6 rounded-2xl w-full max-w-md border border-slate-700 max-h-[80vh] overflow-y-auto">
-            <h3 class="text-lg font-bold mb-4">زانیاریی دەرچوون</h3>
-            <form id="departureForm" class="space-y-3">
-                <select id="distributor_name" required class="w-full p-3 rounded-xl bg-slate-700 border border-slate-600 text-white">
-                    <option value="">دابەشکارێک هەڵبژێرە...</option>
-                    <option value="سمیع">سمیع</option>
-                    <option value="عبدالله">عبدالله</option>
-                    <option value="شایان">شایان</option>
-                    <option value="هیمداد">هیمداد</option>
-                    <option value="ابراهیم محسن">ابراهیم محسن</option>
-                    <option value="ئومێد">ئومێد</option>
-                    <option value="امیر">امیر</option>
-                    <option value="هۆشەنگ">هۆشەنگ</option>
-                    <option value="سەرمەد">سەرمەد</option>
-                    <option value="سەفین">سەفین</option>
-                    <option value="بەڵێن">بەڵێن</option>
-                    <option value="بڕوا">بڕوا</option>
-                    <option value="ڕەوەز">ڕەوەز</option>
-                    <option value="عمر">عمر</option>
-                    <option value="اسماعیل علی">اسماعیل علی</option>
-                    <option value="اسماعیل شاخەوان">اسماعیل شاخەوان</option>
-                    <option value="محمد عبدالرحمان">محمد عبدالرحمان</option>
-                    <option value="اسعد بیلال">اسعد بیلال</option>
-                </select>
-                <input type="text" id="car_number" placeholder="ژمارەی سەیارە" required class="w-full p-3 rounded-xl bg-slate-700 border border-slate-600 text-white">
-                <div class="flex gap-2">
-                    <button type="submit" class="flex-1 bg-blue-600 py-3 rounded-xl font-bold">تۆمارکردن</button>
-                    <button type="button" onclick="closeModal()" class="bg-slate-600 px-6 py-3 rounded-xl font-bold">داخستن</button>
+    <!-- ٣. مۆداڵی دەرچوون -->
+    <div id="departureModal" class="hidden fixed inset-0 bg-black/90 flex items-center justify-center p-4 z-50">
+        <div class="bg-white text-slate-900 p-6 rounded-2xl w-full max-w-md shadow-2xl modal-container">
+            <h3 class="text-xl font-bold mb-4 text-blue-800 border-b pb-2">زانیاریی دەرچوون</h3>
+            <form id="departureForm" class="space-y-4">
+                <div>
+                    <label class="text-xs font-bold text-slate-600">ناوی دابەشکار:</label>
+                    <input list="distributors" id="distributor_name" required class="w-full p-3 border rounded-lg bg-gray-50 mt-1">
+                    <datalist id="distributors">
+                        <option value="سمیع"><option value="عبدالله"><option value="شایان"><option value="هیمداد">
+                        <option value="ابراهیم محسن"><option value="ئومێد"><option value="امیر"><option value="هۆشەنگ">
+                    </datalist>
+                </div>
+                <div>
+                    <label class="text-xs font-bold text-slate-600">ناوی مەندوب:</label>
+                    <input type="text" id="sales_rep_name" class="w-full p-3 border rounded-lg bg-gray-50 mt-1">
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="text-xs font-bold text-slate-600">ژمارەی سەیارە:</label>
+                        <input type="text" id="car_number" required class="w-full p-3 border rounded-lg bg-gray-50 mt-1">
+                    </div>
+                    <div>
+                        <label class="text-xs font-bold text-slate-600">ژمارەی وەسڵ:</label>
+                        <input type="text" id="invoice_number" class="w-full p-3 border rounded-lg bg-gray-50 mt-1">
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="text-xs font-bold text-slate-600">ژمارەی پارچە:</label>
+                        <input type="number" id="item_count" class="w-full p-3 border rounded-lg bg-gray-50 mt-1">
+                    </div>
+                    <div>
+                        <label class="text-xs font-bold text-slate-600">کێش (کگم):</label>
+                        <input type="number" step="0.01" id="cargo_weight" class="w-full p-3 border rounded-lg bg-gray-50 mt-1">
+                    </div>
+                </div>
+                
+                <div class="flex gap-2 pt-4">
+                    <button type="submit" class="flex-1 bg-blue-600 text-white p-3 rounded-lg font-bold">تۆمارکردن</button>
+                    <button type="button" onclick="closeModal()" class="bg-gray-300 p-3 rounded-lg font-bold">داخستن</button>
                 </div>
             </form>
         </div>
     </div>
 
-    <!-- ٣. فۆڕمی ئۆنەر -->
-    <div id="ownerSection" class="w-full max-w-4xl bg-slate-800 p-6 rounded-2xl shadow-xl border border-slate-700 hidden h-[90vh] flex flex-col">
-        <h2 class="text-xl font-bold mb-4 text-emerald-400">کۆگای داتاکان</h2>
-        <div class="flex-1 overflow-auto">
-            <table class="w-full text-xs">
-                <thead class="bg-slate-700"><tr><th class="p-2">سایەق</th><th class="p-2">دابەشکار</th><th class="p-2">سەیارە</th></tr></thead>
-                <tbody id="ownerTableBody"></tbody>
-            </table>
-        </div>
-    </div>
-
     <script>
-        const USERS = {
-            "ئۆنەر": "00", "کاروان": "1", "محمد ابراهیم": "2", "محمد اسماعیل": "3",
-            "احمد کمال": "4", "دیار": "5", "احمد نسرین": "6", "هەمزه": "7",
-            "ڕیان": "8", "احمد رمضان": "9", "ڕەزا": "10", "میرخان": "11",
-            "فارس": "12", "بیلال فارس": "13", "سەلام": "14", "هەوراز": "15",
-            "زریان": "16", "هیوا": "17", "سەمیع": "34"
-        };
+        // Supabase زانیارییەکان
         const SUPABASE_URL = "https://teqzbhdzyhnfxqcautaz.supabase.co/rest/v1/delivery_records";
         const API_KEY = "sb_publishable_b8QZKs1M98SNBt9EsV4Leg_AJFziBxy";
         let currentUser = "";
-        let activeTripId = localStorage.getItem("activeTripId");
+
+        // فۆنکشنە سەرەکییەکان
+        function openModal() { document.getElementById('departureModal').classList.remove('hidden'); }
+        function closeModal() { document.getElementById('departureModal').classList.add('hidden'); }
 
         document.getElementById('loginForm').addEventListener('submit', (e) => {
             e.preventDefault();
             const user = document.getElementById('loginUser').value;
-            const pass = document.getElementById('loginPass').value;
-            if (USERS[user] === pass) {
+            if(user) {
                 currentUser = user;
+                document.getElementById('welcomeText').innerText = "بەخێربێیت، " + user;
                 document.getElementById('loginSection').classList.add('hidden');
-                if(user === "ئۆنەر") document.getElementById('ownerSection').classList.remove('hidden');
-                else document.getElementById('driverSection').classList.remove('hidden');
-            } else { alert("پاسۆڕد هەڵەیە"); }
+                document.getElementById('driverSection').classList.remove('hidden');
+            }
         });
 
-        function openModal() { document.getElementById('departureModal').classList.remove('hidden'); }
-        function closeModal() { document.getElementById('departureModal').classList.add('hidden'); }
-
+        // تۆمارکردنی دەرچوون لە کۆمپانیا
         document.getElementById('departureForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const payload = {
                 driver_name: currentUser,
                 distributor_name: document.getElementById('distributor_name').value,
+                sales_rep_name: document.getElementById('sales_rep_name').value,
                 car_number: document.getElementById('car_number').value,
+                invoice_number: document.getElementById('invoice_number').value,
+                item_count: parseInt(document.getElementById('item_count').value) || 0,
+                cargo_weight: parseFloat(document.getElementById('cargo_weight').value) || 0,
                 departure_time: new Date().toTimeString().split(' ')[0]
             };
-            const res = await fetch(SUPABASE_URL, {
-                method: 'POST',
-                headers: {'apikey': API_KEY, 'Authorization': `Bearer ${API_KEY}`, 'Content-Type': 'application/json', 'Prefer': 'return=representation'},
-                body: JSON.stringify(payload)
-            });
-            if(res.ok) {
-                const data = await res.json();
-                localStorage.setItem("activeTripId", data[0].id);
-                closeModal();
-                alert("بە سەرکەوتوویی تۆمارکرا");
-            }
+            
+            try {
+                const res = await fetch(SUPABASE_URL, {
+                    method: 'POST',
+                    headers: {'apikey': API_KEY, 'Authorization': `Bearer ${API_KEY}`, 'Content-Type': 'application/json', 'Prefer': 'return=representation'},
+                    body: JSON.stringify(payload)
+                });
+                if(res.ok) {
+                    const data = await res.json();
+                    localStorage.setItem("activeTripId", data[0].id);
+                    alert("بە سەرکەوتوویی تۆمارکرا");
+                    closeModal();
+                }
+            } catch (err) { alert("کێشەیەک ڕوویدا، دووبارە تاقیکەرەوە."); }
         });
 
+        // تۆمارکردنی کاتەکان
         async function recordTime(field, isFinal = false) {
             const id = localStorage.getItem("activeTripId");
-            if(!id) return alert("سەرەتا گەشتێک دەستپێبکە!");
-            const payload = {}; payload[field] = new Date().toTimeString().split(' ')[0];
+            if(!id) return alert("سەرەتا دەبێت دەرچوون لە کۆمپانیا تۆمار بکەیت!");
+            
+            const payload = {}; 
+            payload[field] = new Date().toTimeString().split(' ')[0];
+            
             await fetch(`${SUPABASE_URL}?id=eq.${id}`, {
                 method: 'PATCH',
                 headers: {'apikey': API_KEY, 'Authorization': `Bearer ${API_KEY}`, 'Content-Type': 'application/json'},
