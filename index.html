@@ -6,7 +6,6 @@
     <title>سیستەمی گەیاندن</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        /* بۆ ئەوەی پەڕەکە نەجووڵێت */
         body { touch-action: manipulation; overflow: hidden; }
         .scrollable-content { overflow-y: auto; }
     </style>
@@ -18,9 +17,25 @@
         <h2 class="text-2xl font-bold text-center text-blue-400 mb-6">چوونەژوورەوە</h2>
         <form id="loginForm" class="space-y-4">
             <select id="loginUser" required class="w-full p-3 rounded-xl bg-slate-700 border border-slate-600 text-white">
-                <option value="">بەکارهێنەر هەڵبژێرە...</option>
+                <option value="">ناوی سایەق هەڵبژێرە...</option>
                 <option value="ئۆنەر">👑 ئۆنەر (Owner)</option>
                 <option value="کاروان">کاروان</option>
+                <option value="محمد ابراهیم">محمد ابراهیم</option>
+                <option value="محمد اسماعیل">محمد اسماعیل</option>
+                <option value="احمد کمال">احمد کمال</option>
+                <option value="دیار">دیار</option>
+                <option value="احمد نسرین">احمد نسرین</option>
+                <option value="هەمزه">هەمزه</option>
+                <option value="ڕیان">ڕیان</option>
+                <option value="احمد رمضان">احمد رمضان</option>
+                <option value="ڕەزا">ڕەزا</option>
+                <option value="میرخان">میرخان</option>
+                <option value="فارس">فارس</option>
+                <option value="بیلال فارس">بیلال فارس</option>
+                <option value="سەلام">سەلام</option>
+                <option value="هەوراز">هەوراز</option>
+                <option value="زریان">زریان</option>
+                <option value="هیوا">هیوا</option>
                 <option value="سەمیع">سەمیع</option>
             </select>
             <input type="password" id="loginPass" placeholder="پاسۆڕد" required class="w-full p-3 rounded-xl bg-slate-700 border border-slate-600 text-white">
@@ -49,7 +64,7 @@
             <h3 class="text-lg font-bold mb-4">زانیاریی دەرچوون</h3>
             <form id="departureForm" class="space-y-3">
                 <select id="distributor_name" required class="w-full p-3 rounded-xl bg-slate-700 border border-slate-600 text-white">
-                    <option value="">ناوی دابەشکار هەڵبژێرە...</option>
+                    <option value="">دابەشکارێک هەڵبژێرە...</option>
                     <option value="سمیع">سمیع</option>
                     <option value="عبدالله">عبدالله</option>
                     <option value="شایان">شایان</option>
@@ -90,13 +105,18 @@
     </div>
 
     <script>
-        const USERS = {"ئۆنەر": "00", "کاروان": "1", "سەمیع": "34"};
+        const USERS = {
+            "ئۆنەر": "00", "کاروان": "1", "محمد ابراهیم": "2", "محمد اسماعیل": "3",
+            "احمد کمال": "4", "دیار": "5", "احمد نسرین": "6", "هەمزه": "7",
+            "ڕیان": "8", "احمد رمضان": "9", "ڕەزا": "10", "میرخان": "11",
+            "فارس": "12", "بیلال فارس": "13", "سەلام": "14", "هەوراز": "15",
+            "زریان": "16", "هیوا": "17", "سەمیع": "34"
+        };
         const SUPABASE_URL = "https://teqzbhdzyhnfxqcautaz.supabase.co/rest/v1/delivery_records";
         const API_KEY = "sb_publishable_b8QZKs1M98SNBt9EsV4Leg_AJFziBxy";
         let currentUser = "";
         let activeTripId = localStorage.getItem("activeTripId");
 
-        // Logic
         document.getElementById('loginForm').addEventListener('submit', (e) => {
             e.preventDefault();
             const user = document.getElementById('loginUser').value;
@@ -106,7 +126,7 @@
                 document.getElementById('loginSection').classList.add('hidden');
                 if(user === "ئۆنەر") document.getElementById('ownerSection').classList.remove('hidden');
                 else document.getElementById('driverSection').classList.remove('hidden');
-            }
+            } else { alert("پاسۆڕد هەڵەیە"); }
         });
 
         function openModal() { document.getElementById('departureModal').classList.remove('hidden'); }
@@ -129,19 +149,20 @@
                 const data = await res.json();
                 localStorage.setItem("activeTripId", data[0].id);
                 closeModal();
+                alert("بە سەرکەوتوویی تۆمارکرا");
             }
         });
 
         async function recordTime(field, isFinal = false) {
             const id = localStorage.getItem("activeTripId");
-            if(!id) return alert("سەرەتا دەستپێبکە!");
+            if(!id) return alert("سەرەتا گەشتێک دەستپێبکە!");
             const payload = {}; payload[field] = new Date().toTimeString().split(' ')[0];
             await fetch(`${SUPABASE_URL}?id=eq.${id}`, {
                 method: 'PATCH',
                 headers: {'apikey': API_KEY, 'Authorization': `Bearer ${API_KEY}`, 'Content-Type': 'application/json'},
                 body: JSON.stringify(payload)
             });
-            alert("سەرکەوتوو بوو!");
+            alert("کاتەکە تۆمارکرا!");
             if(isFinal) localStorage.removeItem("activeTripId");
         }
     </script>
