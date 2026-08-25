@@ -2,7 +2,7 @@ name: Weekly Supabase Cleanup
 
 on:
   schedule:
-    - cron: '0 0 * * 6' # هەموو ڕۆژێکی شەممە کاتژمێر 12ی شەو
+    - cron: '0 0 * * 6'
   workflow_dispatch:
 
 jobs:
@@ -12,7 +12,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
 
       - name: Install Supabase Library
         run: npm install @supabase/supabase-js
@@ -24,14 +24,50 @@ jobs:
           const supabase = createClient('https://wzfeklnlgcgcdnlxhzvy.supabase.co', process.env.SUPABASE_SERVICE_KEY);
           
           async function run() {
-            const { error } = await supabase.from('delivery_records').delete().neq('id', 0);
+            const { error } = await supabase.from('delivery_records').delete().gt('id', 0);
             if (error) {
-              console.error('کێشە لە سڕینەوەدا:', error);
+              console.error('Error:', error);
               process.exit(1);
             }
-            console.log('داتاکان بە سەرکەوتوویی سڕدرانەوە!');
+            console.log('Success!');
           }
           run();
           "
         env:
-          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+          SUPABASE_SERVICE_KEY: ${{ name: Weekly Supabase Cleanup
+
+on:
+  schedule:
+    - cron: '0 0 * * 6'
+  workflow_dispatch:
+
+jobs:
+  clean-database:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install Supabase Library
+        run: npm install @supabase/supabase-js
+
+      - name: Delete Weekly Data
+        run: |
+          node -e "
+          const { createClient } = require('@supabase/supabase-js');
+          const supabase = createClient('https://wzfeklnlgcgcdnlxhzvy.supabase.co', process.env.SUPABASE_SERVICE_KEY);
+          
+          async function run() {
+            const { error } = await supabase.from('delivery_records').delete().gt('id', 0);
+            if (error) {
+              console.error('Error:', error);
+              process.exit(1);
+            }
+            console.log('Success!');
+          }
+          run();
+          "
+        env:
+          SUPABASE_SERVICE_KEY: ${{ sb_secret_08JJHSysHsawGIt3IVO90A_mMcz19WA }} }}
