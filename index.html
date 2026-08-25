@@ -4,6 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 
+    <!-- بەستنەوەی فایلی PWA Manifest -->
+    <link rel="manifest" href="manifest.json">
+
     <!-- ڕێکخستنی مۆبایل بۆ ئەوەی وەک ئەپ (PWA) دەربکەوێت -->
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -863,7 +866,7 @@
         _supabase
           .channel('schema-db-changes')
           .on('postgres_changes', { event: '*', schema: 'public', table: 'delivery_records' }, payload => {
-              fetchAndRenderData(); // ڕاستەوخۆ خشتەکە نوێ دەکاتەوە کاتێک داتای نوێ دێت
+              fetchAndRenderData();
           })
           .subscribe();
 
