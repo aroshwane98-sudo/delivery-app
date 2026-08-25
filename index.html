@@ -4,10 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 
-    <!-- بەستنەوەی فایلی PWA Manifest -->
-    <link rel="manifest" href="manifest.json">
-
-    <!-- ڕێکخستنی مۆبایل بۆ ئەوەی وەک ئەپ (PWA) دەربکەوێت -->
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -16,7 +12,6 @@
 
     <title>سیستەمی گەیاندن - ئۆنڵاین</title>
     
-    <!-- Supabase JS Library -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
     <style>
@@ -196,14 +191,16 @@
 
     <!-- Login Section -->
     <div id="loginSection" class="mobile-container">
+        <h2 style="text-align: center; margin-bottom: 20px; color: var(--primary);">چوونەژوورەوە</h2>
         <div class="input-group">
             <input type="text" id="loginDriver" list="driversList" placeholder="سایەق">
         </div>
         <div class="input-group">
             <input type="password" id="loginPass" placeholder="پاسۆرد">
         </div>
-        <div class="input-group" style="display: flex; justify-content: space-between; font-size: 12px;">
-            <label><input type="checkbox" onclick="togglePass()"> پشاندانی پاسۆڕد</label>
+        <div class="input-group" style="display: flex; justify-content: space-between; font-size: 13px; gap: 10px;">
+            <label style="cursor: pointer;"><input type="checkbox" id="rememberMe"> لەبیرم مەبڕەوە (ئۆتۆماتیکی)</label>
+            <label style="cursor: pointer;"><input type="checkbox" onclick="togglePass()"> پشاندانی پاسۆڕد</label>
         </div>
         <button onclick="login()">چوونەژوورەوە</button>
     </div>
@@ -218,9 +215,9 @@
 
         <div class="vertical-buttons">
             <button class="btn-danger" onclick="openExitModal()">دەرچوون</button>
-            <button onclick="registerTime('kati_nazon')">گەشتنە ناوزۆن</button>
-            <button onclick="registerTime('kati_dere_zon')">دەرچوون لەزۆن</button>
-            <button onclick="registerTime('kati_gashtnawa')">گەشتنەوە</button>
+            <button onclick="handleTimeClick('kati_nazon')">گەشتنە ناوزۆن</button>
+            <button onclick="handleTimeClick('kati_dere_zon')">دەرچوون لەزۆن</button>
+            <button onclick="handleTimeClick('kati_gashtnawa')">گەشتنەوە</button>
             <button class="btn-info" onclick="openInfoModal()">زانیارییەکان</button>
             <button class="btn-warning" onclick="openDriverSettingsModal()">سێتینگ</button>
             <button class="btn-danger" style="background:#5a6268;" onclick="logout()">لوگ ئاوت</button>
@@ -230,6 +227,7 @@
     <!-- Exit Modal -->
     <div id="exitModal" class="modal hidden">
         <div class="modal-content">
+            <input type="time" id="fieldKatiDerchun" class="hidden" style="margin-bottom: 5px;">
             <input type="text" id="fieldDabashkar" list="dabashkarList" placeholder="دابەشکار" onblur="validateInput(this, dabashkarList)">
             <input type="text" id="fieldMandoub" list="mandoubList" placeholder="مەندوب" onblur="validateInput(this, mandoubList)">
             <input type="text" id="fieldNawcha" list="nawchaList" placeholder="ناوچە" onblur="validateInput(this, nawchaList)">
@@ -243,6 +241,18 @@
                 <button id="btnEdit" onclick="enableEdit()" class="btn-warning hidden">چاککردن</button>
                 <button id="btnSecondLoad" onclick="openSecondLoad()" class="btn-info hidden">باری دووەم</button>
                 <button onclick="closeExitModal()" style="background:#6c757d;">گەڕانەوە</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Confirm / Edit Time Modal -->
+    <div id="confirmTimeModal" class="modal hidden">
+        <div class="modal-content">
+            <p id="timeModalMessage" style="font-size: 14px; font-weight: bold; text-align: center;">کاتەکەت هەڵەکردووە؟</p>
+            <input type="time" id="timeEditInput" class="hidden" style="margin-top: 10px;">
+            <div style="display: flex; gap: 8px; margin-top: 10px;">
+                <button id="btnTimeYes" onclick="onTimeModalYes()" class="btn-success">بەڵێ</button>
+                <button id="btnTimeNo" onclick="onTimeModalNo()" class="btn-danger">نەخێر</button>
             </div>
         </div>
     </div>
@@ -372,7 +382,6 @@
         </div>
     </div>
 
-    <!-- Datalists -->
     <datalist id="driversList"></datalist>
     <datalist id="dabashkarList"></datalist>
     <datalist id="mandoubList"></datalist>
@@ -380,12 +389,11 @@
     <datalist id="carNumList"></datalist>
 
     <script>
-        // --- Supabase Config ---
         const SUPABASE_URL = "https://rivwvzdjfotkjhpuwuaf.supabase.co";
         const SUPABASE_KEY = "sb_publishable_Chpd_Xgyls9HJQJl3TPV3A_UMojpoGA";
         const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        const driversData = [
+        let driversData = [
             { name: 'ئۆنەر', pass: '0', code: 'DRV-000' }, { name: 'احمد رمضان', pass: '12', code: 'DRV-001' },
             { name: 'احمد کمال', pass: '10', code: 'DRV-002' }, { name: 'احمد نسردین', pass: '11', code: 'DRV-003' },
             { name: 'بیلال فارس', pass: '3', code: 'DRV-004' }, { name: 'پارس', pass: '4', code: 'DRV-005' },
@@ -414,12 +422,43 @@
         let currentUser = null;
         let localDatabase = [];
         let loadCounter = 1;
+        let activeTimeType = null;
 
-        window.onload = function() {
+        window.onload = async function() {
+            await fetchDriversFromDb();
             populateDataLists();
             setupDateHeader();
             buildColumnsCheckboxList();
+
+            // پشکنینی Auto-Login کاتێک 'Remember Me' تیک درابێت
+            let savedUser = localStorage.getItem('autoLoginUser');
+            if (savedUser) {
+                let user = JSON.parse(savedUser);
+                let validUser = driversData.find(d => d.name === user.name && d.pass === user.pass);
+                if (validUser) {
+                    currentUser = validUser;
+                    document.getElementById('loginSection').classList.add('hidden');
+                    if (currentUser.name === 'ئۆنەر') {
+                        document.getElementById('ownerSection').classList.remove('hidden');
+                    } else {
+                        document.getElementById('topFormSection').classList.remove('hidden');
+                        document.getElementById('displayDriverName').innerText = currentUser.name;
+                    }
+                    await fetchAndRenderData();
+                }
+            }
         };
+
+        async function fetchDriversFromDb() {
+            try {
+                let { data, error } = await _supabase.from('drivers').select('*');
+                if (!error && data && data.length > 0) {
+                    driversData = data;
+                }
+            } catch (e) {
+                console.error("Drivers DB fetch error:", e);
+            }
+        }
 
         async function logAction(description) {
             let userStr = currentUser ? currentUser.name : 'سیستەم';
@@ -461,10 +500,21 @@
         async function login() {
             let name = document.getElementById('loginDriver').value;
             let pass = document.getElementById('loginPass').value;
+            let isRemember = document.getElementById('rememberMe').checked;
+
+            await fetchDriversFromDb();
 
             let user = driversData.find(d => d.name === name && d.pass === pass);
             if (user) {
                 currentUser = user;
+
+                // ئەگەر چێکبۆکسی لەبیرم مەبڕەوە تیک درابوو پاشەکەوتی دەکات
+                if (isRemember) {
+                    localStorage.setItem('autoLoginUser', JSON.stringify(user));
+                } else {
+                    localStorage.removeItem('autoLoginUser');
+                }
+
                 await logAction('چووە ژوورەوە');
                 document.getElementById('loginSection').classList.add('hidden');
 
@@ -483,6 +533,7 @@
 
         function logout() {
             logAction('دەروون لە سیستەم (Log Out)');
+            localStorage.removeItem('autoLoginUser');
             currentUser = null;
             loadCounter = 1;
             document.getElementById('topFormSection').classList.add('hidden');
@@ -500,12 +551,10 @@
         async function fetchAndRenderData() {
             let query = _supabase.from('delivery_records').select('*');
             let { data, error } = await query;
-            
             if (error) {
                 console.error(error);
                 return;
             }
-
             localDatabase = data || [];
             renderTable();
         }
@@ -514,6 +563,9 @@
             document.getElementById('exitModal').classList.remove('hidden');
             let existingRecord = localDatabase.find(r => r.driver_code === currentUser.code && r.load_index === loadCounter);
             
+            let btnSecondLoad = document.getElementById('btnSecondLoad');
+            let fieldKatiDerchun = document.getElementById('fieldKatiDerchun');
+
             if (existingRecord) {
                 document.getElementById('fieldDabashkar').value = existingRecord.dabashkar || '';
                 document.getElementById('fieldMandoub').value = existingRecord.mandoub || '';
@@ -522,16 +574,26 @@
                 document.getElementById('fieldWeight').value = existingRecord.weight || '';
                 document.getElementById('fieldParts').value = existingRecord.parts || '';
                 document.getElementById('fieldInvoice').value = existingRecord.invoice || '';
+                fieldKatiDerchun.value = existingRecord.kati_derchun || '';
 
                 setInputsDisabled(true);
                 document.getElementById('btnSave').classList.add('hidden');
                 document.getElementById('btnEdit').classList.remove('hidden');
-                document.getElementById('btnSecondLoad').classList.remove('hidden');
+                fieldKatiDerchun.classList.add('hidden');
+                
+                let nextLoad = loadCounter + 1;
+                if (nextLoad === 2) btnSecondLoad.innerText = 'باری دووەم';
+                else if (nextLoad === 3) btnSecondLoad.innerText = 'باری سێیەم';
+                else if (nextLoad === 4) btnSecondLoad.innerText = 'باری چوارەم';
+                else btnSecondLoad.innerText = `باری ${nextLoad}`;
+
+                btnSecondLoad.classList.remove('hidden');
             } else {
                 setInputsDisabled(false);
                 document.getElementById('btnSave').classList.remove('hidden');
                 document.getElementById('btnEdit').classList.add('hidden');
-                document.getElementById('btnSecondLoad').classList.add('hidden');
+                btnSecondLoad.classList.add('hidden');
+                fieldKatiDerchun.classList.add('hidden');
             }
         }
 
@@ -545,7 +607,7 @@
 
         async function saveRecord() {
             let now = new Date();
-            let currentTimeStr = now.getHours() + ':' + String(now.getMinutes()).padStart(2, '0');
+            let currentTimeStr = now.getHours().toString().padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
 
             let displayDriverName = currentUser.name;
             if (loadCounter === 2) displayDriverName += ' دوو';
@@ -567,8 +629,11 @@
                 invoice: Number(document.getElementById('fieldInvoice').value) || 0,
             };
 
+            let editedTime = document.getElementById('fieldKatiDerchun').value;
+
             if (rec) {
                 payload.is_edited = true;
+                if (editedTime) payload.kati_derchun = editedTime;
                 await _supabase.from('delivery_records').update(payload).eq('id', rec.id);
                 await logAction(`دەستکاری داتاکانی کرد (چاککردن)`);
             } else {
@@ -583,6 +648,7 @@
 
         function enableEdit() {
             setInputsDisabled(false);
+            document.getElementById('fieldKatiDerchun').classList.remove('hidden');
             document.getElementById('btnSave').classList.remove('hidden');
             document.getElementById('btnEdit').classList.add('hidden');
         }
@@ -591,18 +657,25 @@
             loadCounter++;
             document.querySelectorAll('#exitModal input').forEach(input => input.value = '');
             setInputsDisabled(false);
+            document.getElementById('fieldKatiDerchun').classList.add('hidden');
             document.getElementById('btnSave').classList.remove('hidden');
             document.getElementById('btnEdit').classList.add('hidden');
             document.getElementById('btnSecondLoad').classList.add('hidden');
             logAction(`فۆڕمی باری نوێی کردەوە (بار: ${loadCounter})`);
         }
 
-        async function registerTime(timeType) {
+        async function handleTimeClick(timeType) {
+            activeTimeType = timeType;
             let rec = localDatabase.slice().reverse().find(r => r.driver_code === currentUser.code);
-            if (rec) {
+            
+            if (!rec) {
+                alert('تکایە سەرەتا دەرچوون پڕبکەرەوە!');
+                return;
+            }
+
+            if (!rec[timeType]) {
                 let now = new Date();
-                let currentTimeStr = now.getHours() + ':' + String(now.getMinutes()).padStart(2, '0');
-                
+                let currentTimeStr = now.getHours().toString().padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
                 let updateObj = {};
                 updateObj[timeType] = currentTimeStr;
 
@@ -611,7 +684,55 @@
                 await fetchAndRenderData();
                 alert('تۆمارکرا!');
             } else {
-                alert('تکایە سەرەتا دەرچوون پڕبکەرەوە!');
+                document.getElementById('timeModalMessage').innerText = 'کاتەکەت هەڵەکردووە؟';
+                document.getElementById('timeEditInput').classList.add('hidden');
+                document.getElementById('timeEditInput').value = rec[timeType];
+                
+                let btnYes = document.getElementById('btnTimeYes');
+                let btnNo = document.getElementById('btnTimeNo');
+                btnYes.innerText = 'بەڵێ';
+                btnYes.className = 'btn-success';
+                btnNo.innerText = 'نەخێر';
+                btnNo.className = 'btn-danger';
+
+                document.getElementById('confirmTimeModal').classList.remove('hidden');
+            }
+        }
+
+        function onTimeModalYes() {
+            let btnYes = document.getElementById('btnTimeYes');
+            let btnNo = document.getElementById('btnTimeNo');
+            let input = document.getElementById('timeEditInput');
+
+            if (btnYes.innerText === 'بەڵێ') {
+                document.getElementById('timeModalMessage').innerText = 'کاتی نوێ هەڵبژێرە:';
+                input.classList.remove('hidden');
+                btnYes.innerText = 'تۆمار';
+                btnNo.innerText = 'گەڕانەوە';
+                btnNo.className = 'btn-warning';
+            } else {
+                saveEditedTime();
+            }
+        }
+
+        function onTimeModalNo() {
+            document.getElementById('confirmTimeModal').classList.add('hidden');
+        }
+
+        async function saveEditedTime() {
+            let rec = localDatabase.slice().reverse().find(r => r.driver_code === currentUser.code);
+            let newTime = document.getElementById('timeEditInput').value;
+
+            if (rec && activeTimeType && newTime) {
+                let updateObj = {};
+                updateObj[activeTimeType] = newTime;
+                updateObj.is_edited = true;
+
+                await _supabase.from('delivery_records').update(updateObj).eq('id', rec.id);
+                await logAction(`دەستکاری کاتی [${activeTimeType}] کرد بۆ: ${newTime}`);
+                await fetchAndRenderData();
+                document.getElementById('confirmTimeModal').classList.add('hidden');
+                alert('کاتەکە دەستکاری کرا!');
             }
         }
 
@@ -649,13 +770,22 @@
         function openDriverSettingsModal() { document.getElementById('driverSettingsModal').classList.remove('hidden'); }
         function closeDriverSettingsModal() { document.getElementById('driverSettingsModal').classList.add('hidden'); }
 
-        function changeDriverPassword() {
+        async function changeDriverPassword() {
             let oldP = document.getElementById('oldDriverPass').value;
             let newP = document.getElementById('newDriverPass').value;
 
             if (currentUser && currentUser.pass === oldP && newP) {
                 currentUser.pass = newP;
-                logAction('پاسۆردی خۆی گۆڕی');
+                
+                try {
+                    await _supabase.from('drivers').update({ pass: newP }).eq('code', currentUser.code);
+                } catch (e) { console.error('DB driver pass update fail:', e); }
+
+                if (localStorage.getItem('autoLoginUser')) {
+                    localStorage.setItem('autoLoginUser', JSON.stringify(currentUser));
+                }
+
+                await logAction('پاسۆردی خۆی گۆڕی');
                 alert('پاسۆردەکەت بەسەرکەوتوویی گۆڕدرا!');
                 closeDriverSettingsModal();
                 document.getElementById('oldDriverPass').value = '';
@@ -766,7 +896,7 @@
             container.innerHTML = list.map(item => `<div>• ${item}</div>`).join('');
         }
 
-        function addNewName() {
+        async function addNewName() {
             let name = document.getElementById('newNameInput').value;
             let target = document.getElementById('targetListSelect').value;
             let pass = document.getElementById('newDriverPassInput').value;
@@ -779,13 +909,18 @@
                     return;
                 }
                 let newCode = 'DRV-' + String(driversData.length).padStart(3, '0');
-                driversData.push({ name: name, pass: pass, code: newCode });
+                let newDrvObj = { name: name, pass: pass, code: newCode };
+                driversData.push(newDrvObj);
+
+                try {
+                    await _supabase.from('drivers').insert([newDrvObj]);
+                } catch (e) { console.error('DB insert driver fail:', e); }
             }
             if (target === 'dabashkar') dabashkarList.push(name);
             if (target === 'mandoub') mandoubList.push(name);
             if (target === 'nawcha') nawchaList.push(name);
 
-            logAction(`ناوی نوێی زیادکرد: ${name}`);
+            await logAction(`ناوی نوێی زیادکرد: ${name}`);
             populateDataLists();
             renderSelectedCategoryList();
             document.getElementById('newNameInput').value = '';
@@ -862,7 +997,6 @@
             window.print();
         }
 
-        // --- Realtime Database Listener ---
         _supabase
           .channel('schema-db-changes')
           .on('postgres_changes', { event: '*', schema: 'public', table: 'delivery_records' }, payload => {
