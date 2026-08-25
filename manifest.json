@@ -1,0 +1,16 @@
+{
+  "short_name": "گەیاندن",
+  "name": "سیستەمی گەیاندن",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/2972/2972531.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ],
+  "start_url": "./index.html",
+  "background_color": "#2b3a4a",
+  "theme_color": "#2b3a4a",
+  "display": "standalone",
+  "orientation": "portrait"
+}
