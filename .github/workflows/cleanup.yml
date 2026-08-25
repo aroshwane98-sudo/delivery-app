@@ -1,0 +1,16 @@
+name: Weekly Supabase Cleanup
+
+on:
+  schedule:
+    - cron: '0 0 * * 6' # هەموو ڕۆژێکی شەممە کاتژمێر 12ی شەو
+  workflow_dispatch: # ڕێگەت پێدەدات بەدەست تاقی بکەیتەوە
+
+jobs:
+  clean-database:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Delete Weekly Data from Supabase
+        run: |
+          curl -i -X DELETE 'https://YOUR_PROJECT_ID.supabase.co/rest/v1/delivery_records?id=gt.0' \
+          -H "apikey: ${{ secrets.SUPABASE_SERVICE_KEY }}" \
+          -H "Authorization: Bearer ${{ secrets.SUPABASE_SERVICE_KEY }}"
