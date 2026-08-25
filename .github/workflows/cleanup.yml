@@ -2,7 +2,7 @@ name: Weekly Supabase Cleanup
 
 on:
   schedule:
-    - cron: '0 0 * * 6' # هەموو ڕۆژێکی شەممە کاتژمێر 12ی شەو
+    - cron: '0 0 * * 6'
   workflow_dispatch:
 
 jobs:
@@ -24,7 +24,7 @@ jobs:
           const supabase = createClient('https://wzfeklnlgcgcdnlxhzvy.supabase.co', 'sb_secret_08JJHSysHsawGIt3IVO90A_mMcz19WA');
           
           async function run() {
-            const { error } = await supabase.from('delivery_records').delete().gt('id', 0);
+            const { error } = await supabase.from('delivery_records').delete().neq('id', 0);
             if (error) {
               console.error('Error:', error);
               process.exit(1);
