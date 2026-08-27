@@ -10,7 +10,7 @@
     <meta name="apple-mobile-web-app-title" content="گەیاندن">
     <meta name="theme-color" content="#2b3a4a">
 
-    <title>سیستەمی گەیاندن - ئۆنڵاین</title>
+    <title>سیستەمی گەیاندن - داشبۆڕد</title>
     
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
@@ -67,23 +67,23 @@
 
         input, select {
             width: 100%;
-            padding: 12px;
+            padding: 10px;
             border: 1px solid var(--border-color);
             border-radius: 6px;
             outline: none;
             background: #fff;
-            font-size: 14px;
+            font-size: 13px;
         }
 
         button {
             width: 100%;
-            padding: 12px;
+            padding: 10px;
             border: none;
             border-radius: 6px;
             background-color: var(--primary);
             color: #fff;
             font-weight: bold;
-            font-size: 14px;
+            font-size: 13px;
             cursor: pointer;
             transition: 0.2s;
         }
@@ -159,6 +159,7 @@
         }
 
         th { background: #f1f3f5; }
+        tfoot tr { background: #e9ecef; font-weight: bold; }
 
         .checkbox-list {
             display: flex;
@@ -179,11 +180,36 @@
             font-size: 13px;
         }
 
+        .filter-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+            gap: 8px;
+            width: 100%;
+            margin-bottom: 10px;
+        }
+
+        /* Print CSS for A4 Landscape */
+        @page {
+            size: A4 landscape;
+            margin: 10mm;
+        }
+
         @media print {
             body * { visibility: hidden; }
-            #ownerSection, #ownerSection * { visibility: visible; }
-            #ownerSection { position: absolute; left: 0; top: 0; width: 100%; max-width: 100%; }
+            #exportReportModal, #exportReportModal * { visibility: visible; }
+            #exportReportModal {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+                height: 100%;
+                background: white;
+                padding: 0;
+            }
             .no-print { display: none !important; }
+            .table-container { overflow: visible !important; }
+            table { font-size: 10px; width: 100%; }
+            th, td { padding: 4px; }
         }
     </style>
 </head>
@@ -208,9 +234,9 @@
     <!-- Top Form Section (Driver) -->
     <div id="topFormSection" class="mobile-container hidden">
         <div class="header-bar">
-            <span id="displayDay"></span>
+            <span class="displayDay"></span>
             <span id="displayDriverName"></span>
-            <span id="displayDate"></span>
+            <span class="displayDate"></span>
         </div>
 
         <div class="vertical-buttons">
@@ -283,19 +309,16 @@
 
     <!-- Owner Dashboard Section -->
     <div id="ownerSection" class="mobile-container hidden" style="max-width: 98%; max-height: 98%;">
-        <div class="header-bar no-print" style="flex-wrap: wrap; gap: 8px;">
-            <span>ئۆنەر (سیستەمی ئۆنڵاین)</span>
-            <div style="display: flex; gap: 5px; align-items: center;">
-                <label style="font-size: 11px;">from:</label>
-                <input type="date" id="filterFromDate" onchange="fetchAndRenderData()" style="padding: 4px; font-size: 11px;">
-                <label style="font-size: 11px;">to:</label>
-                <input type="date" id="filterToDate" onchange="fetchAndRenderData()" style="padding: 4px; font-size: 11px;">
+        <div class="header-bar" style="flex-wrap: wrap; gap: 8px;">
+            <div>
+                <span class="displayDay" style="color: var(--primary);"></span> | 
+                <span>ئۆنەر - داشبۆڕد</span>
             </div>
-            <div style="display: flex; gap: 5px;">
-                <button onclick="openSettingsModal()" style="width: auto; padding: 5px 10px;">سێتینگ</button>
-                <button onclick="openReportModal()" class="btn-info" style="width: auto; padding: 5px 10px;">پرێنتکردن</button>
-                <button onclick="openActionLogModal()" class="btn-warning" style="width: auto; padding: 5px 10px;">تۆماری کردار</button>
-                <button class="btn-danger" onclick="logout()" style="width: auto; padding: 5px 10px;">لوگ ئاوت</button>
+            <div style="display: flex; gap: 8px;">
+                <button onclick="openExportReportModal()" class="btn-info" style="width: auto; padding: 6px 12px;">فۆڕمی دەرچوون</button>
+                <button onclick="openSettingsModal()" style="width: auto; padding: 6px 12px;">سێتینگ</button>
+                <button onclick="openActionLogModal()" class="btn-warning" style="width: auto; padding: 6px 12px;">تۆماری کردار</button>
+                <button class="btn-danger" onclick="logout()" style="width: auto; padding: 6px 12px;">لوگ ئاوت</button>
             </div>
         </div>
         <div class="table-container">
@@ -323,6 +346,76 @@
                 </thead>
                 <tbody id="dbTableBody"></tbody>
             </table>
+        </div>
+    </div>
+
+    <!-- Export / Print Report Modal (فۆڕمی دەرچوون) -->
+    <div id="exportReportModal" class="modal hidden" style="background: rgba(0,0,0,0.7);">
+        <div class="modal-content" style="max-width: 98%; width: 98%; height: 95vh; max-height: 95vh;">
+            <div class="header-bar no-print" style="margin-bottom: 5px;">
+                <span>فۆڕمی دەرچوون</span>
+                <span class="displayDate"></span>
+            </div>
+
+            <div class="filter-grid no-print">
+                <div>
+                    <label style="font-size: 11px; font-weight: bold;">From Date:</label>
+                    <input type="date" id="filterFromDate" onchange="renderReportTable()">
+                </div>
+                <div>
+                    <label style="font-size: 11px; font-weight: bold;">To Date:</label>
+                    <input type="date" id="filterToDate" onchange="renderReportTable()">
+                </div>
+                <div>
+                    <label style="font-size: 11px; font-weight: bold;">سایەق:</label>
+                    <select id="filterDriverSelect" onchange="renderReportTable()"></select>
+                </div>
+                <div>
+                    <label style="font-size: 11px; font-weight: bold;">دابەشکار:</label>
+                    <select id="filterDabashkarSelect" onchange="renderReportTable()"></select>
+                </div>
+                <div>
+                    <label style="font-size: 11px; font-weight: bold;">مەندوب:</label>
+                    <select id="filterMandoubSelect" onchange="renderReportTable()"></select>
+                </div>
+                <div>
+                    <label style="font-size: 11px; font-weight: bold;">ژمارەی سەیارە:</label>
+                    <select id="filterCarNumSelect" onchange="renderReportTable()"></select>
+                </div>
+            </div>
+
+            <div class="no-print" style="display: flex; justify-content: flex-end; gap: 8px; margin-bottom: 10px;">
+                <button onclick="directPrint()" class="btn-info" style="width: 120px;">پرینت</button>
+                <button onclick="closeExportReportModal()" class="btn-danger" style="width: 120px;">داخستن</button>
+            </div>
+
+            <div class="table-container">
+                <table id="reportTable">
+                    <thead>
+                        <tr>
+                            <th data-col="0">ژمارە</th>
+                            <th data-col="1">سایەق</th>
+                            <th data-col="2">دابەشکار</th>
+                            <th data-col="3">مەندوب</th>
+                            <th data-col="4">کاتی دەرچوون</th>
+                            <th data-col="5">کاتی ناو زۆن</th>
+                            <th data-col="6">کاتی دەرێی زۆن</th>
+                            <th data-col="7">کاتی گەشتنەوە</th>
+                            <th data-col="8">کۆی کات</th>
+                            <th data-col="9">ژمارەی سەیارە</th>
+                            <th data-col="10">ژمارەی پارچە</th>
+                            <th data-col="11">ژمارەی وەسڵ</th>
+                            <th data-col="12">گەڕاوەی مڕەویج</th>
+                            <th data-col="13">پاری هاتنەوە : بەدینار</th>
+                            <th data-col="14">کێشی بار</th>
+                            <th data-col="15">کۆی ماندوو بوو</th>
+                            <th data-col="16">بەروار</th>
+                        </tr>
+                    </thead>
+                    <tbody id="reportTableBody"></tbody>
+                    <tfoot id="reportTableFoot"></tfoot>
+                </table>
+            </div>
         </div>
     </div>
 
@@ -394,16 +487,25 @@
         const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
         let driversData = [
-            { name: 'ئۆنەر', pass: '0', code: 'DRV-000' }, { name: 'احمد رمضان', pass: '12', code: 'DRV-001' },
-            { name: 'احمد کمال', pass: '10', code: 'DRV-002' }, { name: 'احمد نسردین', pass: '11', code: 'DRV-003' },
-            { name: 'بیلال فارس', pass: '3', code: 'DRV-004' }, { name: 'پارس', pass: '4', code: 'DRV-005' },
-            { name: 'دیار', pass: '2', code: 'DRV-006' }, { name: 'ڕیان', pass: '8', code: 'DRV-007' },
-            { name: 'رەزا', pass: '9', code: 'DRV-008' }, { name: 'زریان', pass: '5', code: 'DRV-009' },
-            { name: 'سلام', pass: '6', code: 'DRV-010' }, { name: 'سەمیع', pass: '7', code: 'DRV-011' },
-            { name: 'کاروان', pass: '1', code: 'DRV-012' }, { name: 'محمد ابراهیم', pass: '14', code: 'DRV-013' },
-            { name: 'محمد اسماعیل', pass: '15', code: 'DRV-014' }, { name: 'میرخان', pass: '13', code: 'DRV-015' },
-            { name: 'هیوا', pass: '18', code: 'DRV-016' }, { name: 'هەمزە', pass: '16', code: 'DRV-017' },
-            { name: 'هەوراز', pass: '17', code: 'DRV-018' }
+            { name: 'ئۆنەر', pass: '0', code: 'DRV-000' },
+            { name: 'کاروان', pass: '1', code: 'DRV-001' },
+            { name: 'محمد ابراهیم', pass: '2', code: 'DRV-002' },
+            { name: 'محمد اسماعیل', pass: '3', code: 'DRV-003' },
+            { name: 'احمد کمال', pass: '4', code: 'DRV-004' },
+            { name: 'دیار', pass: '5', code: 'DRV-005' },
+            { name: 'احمد نسردین', pass: '6', code: 'DRV-006' },
+            { name: 'هەمزه', pass: '7', code: 'DRV-007' },
+            { name: 'ریان', pass: '8', code: 'DRV-008' },
+            { name: 'احمد رمضان', pass: '9', code: 'DRV-009' },
+            { name: 'ڕەزا', pass: '10', code: 'DRV-010' },
+            { name: 'میرخان', pass: '11', code: 'DRV-011' },
+            { name: 'فارس', pass: '12', code: 'DRV-012' },
+            { name: 'بیلال فارس', pass: '13', code: 'DRV-013' },
+            { name: 'سلام', pass: '14', code: 'DRV-014' },
+            { name: 'هەوراز', pass: '15', code: 'DRV-015' },
+            { name: 'زریان', pass: '16', code: 'DRV-016' },
+            { name: 'هیوا', pass: '17', code: 'DRV-017' },
+            { name: 'سەمیع', pass: '34', code: 'DRV-018' }
         ];
 
         let dabashkarList = ['ابراهیم محسن', 'اسعد بلال', 'اسماعیل شاخەوان', 'اسماعیل علی', 'امیر', 'بڕوا', 'بەڵێن', 'سمیع', 'سەفین', 'سەرمەد', 'شایان', 'عمر', 'محمد عبدالرحمان', 'هیمداد', 'هۆشەنگ', 'ئومێد', 'ڕەوەز'];
@@ -424,13 +526,19 @@
         let loadCounter = 1;
         let activeTimeType = null;
 
+        // Number Formatter: Integer, Rounded, Commas (e.g. 1,000,000)
+        function formatNumber(val) {
+            if (val === null || val === undefined || isNaN(val) || val === '') return '0';
+            let num = Math.round(Number(val));
+            return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+        }
+
         window.onload = async function() {
             await fetchDriversFromDb();
             populateDataLists();
             setupDateHeader();
             buildColumnsCheckboxList();
 
-            // پشکنینی Auto-Login کاتێک 'Remember Me' تیک درابێت
             let savedUser = localStorage.getItem('autoLoginUser');
             if (savedUser) {
                 let user = JSON.parse(savedUser);
@@ -473,6 +581,11 @@
             fillDatalist('mandoubList', mandoubList);
             fillDatalist('nawchaList', nawchaList);
             fillDatalist('carNumList', carNumList);
+
+            fillSelectOptions('filterDriverSelect', driversData.map(d => d.name));
+            fillSelectOptions('filterDabashkarSelect', dabashkarList);
+            fillSelectOptions('filterMandoubSelect', mandoubList);
+            fillSelectOptions('filterCarNumSelect', carNumList);
         }
 
         function fillDatalist(id, array) {
@@ -485,11 +598,24 @@
             });
         }
 
+        function fillSelectOptions(selectId, array) {
+            const select = document.getElementById(selectId);
+            if(!select) return;
+            select.innerHTML = '<option value="">هەموویان</option>';
+            array.forEach(item => {
+                let option = document.createElement('option');
+                option.value = item;
+                option.innerText = item;
+                select.appendChild(option);
+            });
+        }
+
         function setupDateHeader() {
             const now = new Date();
             const days = ['یەکشەممە', 'دووشەممە', 'سێشەممە', 'چوارشەممە', 'پێنجشەممە', 'هەینی', 'شەممە'];
-            document.getElementById('displayDay').innerText = days[now.getDay()];
-            document.getElementById('displayDate').innerText = now.toISOString().split('T')[0];
+            
+            document.querySelectorAll('.displayDay').forEach(el => el.innerText = days[now.getDay()]);
+            document.querySelectorAll('.displayDate').forEach(el => el.innerText = now.toISOString().split('T')[0]);
         }
 
         function togglePass() {
@@ -508,7 +634,6 @@
             if (user) {
                 currentUser = user;
 
-                // ئەگەر چێکبۆکسی لەبیرم مەبڕەوە تیک درابوو پاشەکەوتی دەکات
                 if (isRemember) {
                     localStorage.setItem('autoLoginUser', JSON.stringify(user));
                 } else {
@@ -624,9 +749,9 @@
                 mandoub: document.getElementById('fieldMandoub').value,
                 nawcha: document.getElementById('fieldNawcha').value,
                 car_num: document.getElementById('fieldCarNum').value,
-                weight: Number(document.getElementById('fieldWeight').value) || 0,
-                parts: Number(document.getElementById('fieldParts').value) || 0,
-                invoice: Number(document.getElementById('fieldInvoice').value) || 0,
+                weight: Math.round(Number(document.getElementById('fieldWeight').value)) || 0,
+                parts: Math.round(Number(document.getElementById('fieldParts').value)) || 0,
+                invoice: Math.round(Number(document.getElementById('fieldInvoice').value)) || 0,
             };
 
             let editedTime = document.getElementById('fieldKatiDerchun').value;
@@ -750,8 +875,8 @@
         async function saveInfoData() {
             let rec = localDatabase.slice().reverse().find(r => r.driver_code === currentUser.code);
             if(rec) {
-                let mrawij = Number(document.getElementById('fieldMrawij').value) || 0;
-                let moneyReturn = Number(document.getElementById('fieldMoneyReturn').value) || 0;
+                let mrawij = Math.round(Number(document.getElementById('fieldMrawij').value)) || 0;
+                let moneyReturn = Math.round(Number(document.getElementById('fieldMoneyReturn').value)) || 0;
 
                 await _supabase.from('delivery_records').update({
                     mrawij: mrawij,
@@ -804,7 +929,7 @@
             return Math.floor(diff / 60) + ':' + String(diff % 60).padStart(2, '0');
         }
 
-        function calculateManduu(rec) {
+        function calculateManduuVal(rec) {
             let car = Number(rec.car_num) || 0;
             let pcs = Number(rec.parts) || 0;
             let inv = Number(rec.invoice) || 0;
@@ -813,27 +938,22 @@
             let money = Number(rec.money_return) || 0;
 
             let total = (car * 0.001) + (pcs * 0.5) + (inv * 1.5) + (w * 0.05) + (mrw * 0.2) + (money * 0.0001);
-            return Math.min(Math.round(total), 100) + '%';
+            return Math.min(Math.round(total), 100);
         }
 
         function renderTable() {
             let tbody = document.getElementById('dbTableBody');
             tbody.innerHTML = '';
 
-            let fromD = document.getElementById('filterFromDate').value;
-            let toD = document.getElementById('filterToDate').value;
-
             let filteredData = localDatabase.filter(rec => {
                 if (currentUser && currentUser.name !== 'ئۆنەر' && rec.driver_code !== currentUser.code) return false;
-                if (fromD && rec.created_at < fromD) return false;
-                if (toD && rec.created_at > toD) return false;
                 return true;
             });
 
             filteredData.forEach((rec, index) => {
                 let tr = document.createElement('tr');
                 tr.innerHTML = `
-                    <td data-col="0">${index + 1}</td>
+                    <td data-col="0">${formatNumber(index + 1)}</td>
                     <td data-col="1">${rec.driver_name} ${rec.is_edited ? '✏️' : ''}</td>
                     <td data-col="2">${rec.dabashkar || ''}</td>
                     <td data-col="3">${rec.mandoub || ''}</td>
@@ -843,17 +963,115 @@
                     <td data-col="7">${rec.kati_gashtnawa || ''}</td>
                     <td data-col="8">${calculateTotalTime(rec.kati_derchun, rec.kati_gashtnawa)}</td>
                     <td data-col="9">${rec.car_num || ''}</td>
-                    <td data-col="10">${rec.parts || 0}</td>
-                    <td data-col="11">${rec.invoice || 0}</td>
-                    <td data-col="12">${rec.mrawij || '-'}</td>
-                    <td data-col="13">${rec.money_return || '-'}</td>
-                    <td data-col="14">${rec.weight || 0} kg</td>
-                    <td data-col="15">${calculateManduu(rec)}</td>
+                    <td data-col="10">${formatNumber(rec.parts)}</td>
+                    <td data-col="11">${formatNumber(rec.invoice)}</td>
+                    <td data-col="12">${formatNumber(rec.mrawij)}</td>
+                    <td data-col="13">${formatNumber(rec.money_return)}</td>
+                    <td data-col="14">${formatNumber(rec.weight)} kg</td>
+                    <td data-col="15">${formatNumber(calculateManduuVal(rec))}%</td>
                     <td data-col="16">${rec.created_at || ''}</td>
                 `;
                 tbody.appendChild(tr);
             });
             applyColumnVisibility();
+        }
+
+        // --- فۆڕمی دەرچوون (Export / Report Modal) ---
+        function openExportReportModal() {
+            document.getElementById('exportReportModal').classList.remove('hidden');
+            renderReportTable();
+        }
+
+        function closeExportReportModal() {
+            document.getElementById('exportReportModal').classList.add('hidden');
+        }
+
+        function renderReportTable() {
+            let tbody = document.getElementById('reportTableBody');
+            let tfoot = document.getElementById('reportTableFoot');
+            tbody.innerHTML = '';
+            tfoot.innerHTML = '';
+
+            let fromD = document.getElementById('filterFromDate').value;
+            let toD = document.getElementById('filterToDate').value;
+            let selDrv = document.getElementById('filterDriverSelect').value;
+            let selDab = document.getElementById('filterDabashkarSelect').value;
+            let selMan = document.getElementById('filterMandoubSelect').value;
+            let selCar = document.getElementById('filterCarNumSelect').value;
+
+            let filteredData = localDatabase.filter(rec => {
+                if (fromD && rec.created_at < fromD) return false;
+                if (toD && rec.created_at > toD) return false;
+                if (selDrv && !rec.driver_name.includes(selDrv)) return false;
+                if (selDab && rec.dabashkar !== selDab) return false;
+                if (selMan && rec.mandoub !== selMan) return false;
+                if (selCar && rec.car_num !== selCar) return false;
+                return true;
+            });
+
+            let totParts = 0;
+            let totInvoice = 0;
+            let totMrawij = 0;
+            let totMoney = 0;
+            let totWeight = 0;
+            let totManduu = 0;
+
+            filteredData.forEach((rec, index) => {
+                let parts = Math.round(Number(rec.parts)) || 0;
+                let invoice = Math.round(Number(rec.invoice)) || 0;
+                let mrawij = Math.round(Number(rec.mrawij)) || 0;
+                let money = Math.round(Number(rec.money_return)) || 0;
+                let weight = Math.round(Number(rec.weight)) || 0;
+                let manduu = calculateManduuVal(rec);
+
+                totParts += parts;
+                totInvoice += invoice;
+                totMrawij += mrawij;
+                totMoney += money;
+                totWeight += weight;
+                totManduu += manduu;
+
+                let tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td data-col="0">${formatNumber(index + 1)}</td>
+                    <td data-col="1">${rec.driver_name} ${rec.is_edited ? '✏️' : ''}</td>
+                    <td data-col="2">${rec.dabashkar || ''}</td>
+                    <td data-col="3">${rec.mandoub || ''}</td>
+                    <td data-col="4">${rec.kati_derchun || ''}</td>
+                    <td data-col="5">${rec.kati_nazon || ''}</td>
+                    <td data-col="6">${rec.kati_dere_zon || ''}</td>
+                    <td data-col="7">${rec.kati_gashtnawa || ''}</td>
+                    <td data-col="8">${calculateTotalTime(rec.kati_derchun, rec.kati_gashtnawa)}</td>
+                    <td data-col="9">${rec.car_num || ''}</td>
+                    <td data-col="10">${formatNumber(parts)}</td>
+                    <td data-col="11">${formatNumber(invoice)}</td>
+                    <td data-col="12">${formatNumber(mrawij)}</td>
+                    <td data-col="13">${formatNumber(money)}</td>
+                    <td data-col="14">${formatNumber(weight)} kg</td>
+                    <td data-col="15">${formatNumber(manduu)}%</td>
+                    <td data-col="16">${rec.created_at || ''}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            let footTr = document.createElement('tr');
+            footTr.innerHTML = `
+                <td colspan="10" style="text-align: left; font-weight: bold;">کۆی گشتی (Total):</td>
+                <td data-col="10">${formatNumber(totParts)}</td>
+                <td data-col="11">${formatNumber(totInvoice)}</td>
+                <td data-col="12">${formatNumber(totMrawij)}</td>
+                <td data-col="13">${formatNumber(totMoney)}</td>
+                <td data-col="14">${formatNumber(totWeight)} kg</td>
+                <td data-col="15">${formatNumber(totManduu)}%</td>
+                <td data-col="16">-</td>
+            `;
+            tfoot.appendChild(footTr);
+
+            applyColumnVisibility();
+        }
+
+        function directPrint() {
+            window.print();
         }
 
         function openSettingsModal() { document.getElementById('settingsModal').classList.remove('hidden'); }
@@ -967,7 +1185,7 @@
         }
 
         function applyColumnVisibility() {
-            document.querySelectorAll('#mainTable [data-col]').forEach(el => {
+            document.querySelectorAll('#mainTable [data-col], #reportTable [data-col]').forEach(el => {
                 let colIdx = parseInt(el.getAttribute('data-col'));
                 if (hiddenColumns.includes(colIdx)) {
                     el.classList.add('hidden');
@@ -992,10 +1210,6 @@
         }
 
         function closeActionLogModal() { document.getElementById('actionLogModal').classList.add('hidden'); }
-
-        function openReportModal() {
-            window.print();
-        }
 
         _supabase
           .channel('schema-db-changes')
