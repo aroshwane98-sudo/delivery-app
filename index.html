@@ -358,7 +358,6 @@
             <div style="display: flex; gap: 8px;">
                 <button onclick="openExportReportModal()" class="btn-info" style="width: auto; padding: 6px 12px;">فۆڕمی دەرچوون</button>
                 <button onclick="openSettingsModal()" style="width: auto; padding: 6px 12px;">کارمەندان</button>
-                <button onclick="openActionLogModal()" class="btn-warning" style="width: auto; padding: 6px 12px;">تۆماری کردار</button>
                 <button class="btn-danger" onclick="logout()" style="width: auto; padding: 6px 12px;">لوگ ئاوت</button>
             </div>
         </div>
@@ -553,14 +552,6 @@
         </div>
     </div>
 
-    <!-- Action Log Modal -->
-    <div id="actionLogModal" class="modal hidden">
-        <div class="modal-content">
-            <div id="actionLogList" style="max-height: 300px; overflow-y: auto; font-size: 12px; text-align: right; border: 1px solid #ccc; padding: 10px; border-radius: 6px;"></div>
-            <button onclick="closeActionLogModal()" class="btn-danger" style="margin-top: 10px;">داخستن</button>
-        </div>
-    </div>
-
     <datalist id="driversList"></datalist>
     <datalist id="dabashkarList"></datalist>
     <datalist id="mandoubList"></datalist>
@@ -572,36 +563,15 @@
         const SUPABASE_KEY = "sb_publishable_Chpd_Xgyls9HJQJl3TPV3A_UMojpoGA";
         const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        let driversData = [
-            { name: 'ئۆنەر', pass: '0', code: 'DRV-000' },
-            { name: 'کاروان', pass: '1', code: 'DRV-001' },
-            { name: 'محمد ابراهیم', pass: '2', code: 'DRV-002' },
-            { name: 'محمد اسماعیل', pass: '3', code: 'DRV-003' },
-            { name: 'احمد کمال', pass: '4', code: 'DRV-004' },
-            { name: 'دیار', pass: '5', code: 'DRV-005' },
-            { name: 'احمد نسردین', pass: '6', code: 'DRV-006' },
-            { name: 'هەمزه', pass: '7', code: 'DRV-007' },
-            { name: 'ریان', pass: '8', code: 'DRV-008' },
-            { name: 'احمد رمضان', pass: '9', code: 'DRV-009' },
-            { name: 'ڕەزا', pass: '10', code: 'DRV-010' },
-            { name: 'میرخان', pass: '11', code: 'DRV-011' },
-            { name: 'فارس', pass: '12', code: 'DRV-012' },
-            { name: 'بیلال فارس', pass: '13', code: 'DRV-013' },
-            { name: 'سلام', pass: '14', code: 'DRV-014' },
-            { name: 'هەوراز', pass: '15', code: 'DRV-015' },
-            { name: 'زریان', pass: '16', code: 'DRV-016' },
-            { name: 'هیوا', pass: '17', code: 'DRV-017' },
-            { name: 'سەمیع', pass: '34', code: 'DRV-018' }
-        ];
-
-        let dabashkarList = ['ابراهیم محسن', 'اسعد بلال', 'اسماعیل شاخەوان', 'اسماعیل علی', 'امیر', 'بڕوا', 'بەڵێن', 'سمیع', 'سەفین', 'سەرمەد', 'شایان', 'عمر', 'محمد عبدالرحمان', 'هیمداد', 'هۆشەنگ', 'ئومێد', 'ڕەوەز'];
-        let mandoubList = ['ابراهیم', 'حسن', 'ڕابەر', 'ڕێژوان', 'زانا', 'عبد الصمد', 'عبدواللە', 'عەلی', 'قاسم', 'محمد اسوەد', 'مووبارەك', 'ئاری', 'ئاکام'];
+        let driversData = [];
+        let dabashkarList = [];
+        let mandoubList = [];
         let nawchaList = ['ئازادی', 'ئاری', 'ئومێد', 'ئیسکان', 'باداوە', 'باداوەی نوێ', 'بەختیاری', 'بەحرکە', 'بنەسڵاوە', 'پیرزین', 'تەعجیل', 'تەیراوە', 'حی شوڕتە', 'چۆمان', 'خانەقا', 'خەبات', 'درۆسەکەی ٦٠ مەتری', 'ڕاستی', 'ڕاستی نوێ', 'ڕانیە (گەڕەکی ڕانیە لە هەولێر)', 'ڕواندز', 'ڕۆشنبیری', 'زانكۆ', 'ژین', 'سەربەستی (٥٠مەتری)', 'سەیداوە', 'سۆران', 'شەقڵاوە', 'شۆڕش', 'عەنکاوە', 'عەرەبان', 'فرمانبەران', 'کسنەزان', 'کوران', 'کوردسات', 'کۆیە', 'مامۆستایان', 'منارە', 'مەلا ئۆمەر', 'مەخموور', 'مێرگەسۆر', 'نازناز', 'نەورۆز', 'نەورۆزی نوێ', 'نزارکێ', 'وەزارەت'];
-        let carNumList = ['24127', '21210', '20612', '27515', '28366', '39115', '39325', '24683', '20636', '24867', '25498', '29957', '28756', '27640', '25721', '23756', '29901', '36981', '94640', '20396', '20711', '22698', '13841', '24548', '61462', '28545', '12650', '10287', '13734', '80444', '11854', '11890'];
+        let carNumList = [];
 
         const columnNames = [
             "ژمارە", "سایەق", "دابەشکار", "مەندوب", "کاتی دەرچوون", 
-            "کاتی ناو زۆن", "کاتی دەرێی زۆن", "کاتی گەشتنەوە", "کۆی کات", 
+            "کاتی ناو زۆن", "کاتی دەرێی زۆن", "کۆی کات", "کۆی کات", 
             "ژمارەی سەیارە", "ژمارەی پارچە", "ژمارەی وەسڵ", "گەڕاوەی مڕەویج", 
             "پاری هاتنەوە : بەدینار", "کێشی بار", "کۆی ماندوو بوو", "بەروار"
         ];
@@ -665,9 +635,9 @@
                 let { data, error } = await _supabase.from('system_metadata').select('*');
                 if (!error && data) {
                     data.forEach(item => {
-                        if (item.type === 'dabashkar') dabashkarList = item.values || dabashkarList;
-                        if (item.type === 'mandoub') mandoubList = item.values || mandoubList;
-                        if (item.type === 'car_num') carNumList = item.values || carNumList;
+                        if (item.type === 'dabashkar') dabashkarList = item.values || [];
+                        if (item.type === 'mandoub') mandoubList = item.values || [];
+                        if (item.type === 'car_num') carNumList = item.values || [];
                     });
                 }
             } catch (e) { console.error("Metadata fetch error:", e); }
@@ -677,13 +647,6 @@
             try {
                 await _supabase.from('system_metadata').upsert({ type: type, values: valuesArr }, { onConflict: 'type' });
             } catch (e) { console.error("Metadata save error:", e); }
-        }
-
-        async function logAction(description) {
-            let userStr = currentUser ? currentUser.name : 'سیستەم';
-            try {
-                await _supabase.from('action_logs').insert([{ user_name: userStr, action_text: description }]);
-            } catch (e) { console.error('Error logging:', e); }
         }
 
         function populateDataLists() {
@@ -754,7 +717,6 @@
                     localStorage.removeItem('autoLoginUser');
                 }
 
-                await logAction('چووە ژوورەوە');
                 document.getElementById('loginSection').classList.add('hidden');
 
                 if (user.name === 'ئۆنەر') {
@@ -773,7 +735,6 @@
 
         function logout() {
             showLoading();
-            logAction('دەروون لە سیستەم (Log Out)');
             localStorage.removeItem('autoLoginUser');
             currentUser = null;
             loadCounter = 1;
@@ -881,12 +842,10 @@
                 payload.is_edited = true;
                 if (editedTime) payload.kati_derchun = editedTime;
                 await _supabase.from('delivery_records').update(payload).eq('id', rec.id);
-                await logAction(`دەستکاری داتاکانی کرد (چاککردن)`);
             } else {
                 payload.kati_derchun = currentTimeStr;
                 payload.created_at = todayDateStr;
                 await _supabase.from('delivery_records').insert([payload]);
-                await logAction(`داتای دەرچوونی تۆمارکرد (سەیارە: ${payload.car_num})`);
             }
 
             await fetchAndRenderData();
@@ -909,7 +868,6 @@
             document.getElementById('btnSave').classList.remove('hidden');
             document.getElementById('btnEdit').classList.add('hidden');
             document.getElementById('btnSecondLoad').classList.add('hidden');
-            logAction(`فۆڕمی باری نوێی کردەوە (بار: ${loadCounter})`);
         }
 
         async function handleTimeClick(timeType) {
@@ -929,7 +887,6 @@
                 updateObj[timeType] = currentTimeStr;
 
                 await _supabase.from('delivery_records').update(updateObj).eq('id', rec.id);
-                await logAction(`کاتی [${timeType}] تۆمارکرد: ${currentTimeStr}`);
                 await fetchAndRenderData();
                 hideLoading();
                 alert('تۆمارکرا!');
@@ -980,7 +937,6 @@
                 updateObj.is_edited = true;
 
                 await _supabase.from('delivery_records').update(updateObj).eq('id', rec.id);
-                await logAction(`دەستکاری کاتی [${activeTimeType}] کرد بۆ: ${newTime}`);
                 await fetchAndRenderData();
                 document.getElementById('confirmTimeModal').classList.add('hidden');
                 hideLoading();
@@ -1013,7 +969,6 @@
                     money_return: moneyReturn
                 }).eq('id', rec.id);
 
-                await logAction('زانیارییەکانی (مڕەویج/پاری هاتنەوە) نوێکردەوە');
                 await fetchAndRenderData();
                 closeInfoModal();
                 hideLoading();
@@ -1052,7 +1007,6 @@
                     return;
                 }
 
-                await logAction('پاسۆردی خۆی گۆڕی و سڕایەوە');
                 localStorage.removeItem('autoLoginUser');
                 
                 hideLoading();
@@ -1270,7 +1224,6 @@
                 await _supabase.from('drivers').insert([newDrvObj]);
             } catch (e) { console.error('DB insert driver fail:', e); }
 
-            await logAction(`سایەقی نوێی زیادکرد: ${name}`);
             populateDataLists();
             renderDriversListContainer();
             document.getElementById('newDriverName').value = '';
@@ -1305,7 +1258,6 @@
                     await _supabase.from('drivers').update({ name: name, pass: pass }).eq('code', code);
                 } catch(e) { console.error('DB update driver error:', e); }
 
-                await logAction(`زانیاری سایەقی گۆڕی: ${name}`);
                 populateDataLists();
                 renderDriversListContainer();
                 closeEditDriverModal();
@@ -1324,7 +1276,6 @@
                     await _supabase.from('drivers').delete().eq('code', code);
                 } catch(e) { console.error('DB delete driver error:', e); }
 
-                await logAction(`سایەقی سڕییەوە`);
                 populateDataLists();
                 renderDriversListContainer();
                 hideLoading();
@@ -1355,7 +1306,6 @@
             if(!val) { hideLoading(); return; }
             dabashkarList.push(val);
             await saveMetaDataToDb('dabashkar', dabashkarList);
-            await logAction(`دابەشکاری نوێی زیادکرد: ${val}`);
             populateDataLists();
             renderDabashkarListContainer();
             document.getElementById('newDabashkarInput').value = '';
@@ -1364,9 +1314,8 @@
 
         async function deleteDabashkar(idx) {
             showLoading();
-            let removed = dabashkarList.splice(idx, 1);
+            dabashkarList.splice(idx, 1);
             await saveMetaDataToDb('dabashkar', dabashkarList);
-            await logAction(`دابەشکاری سڕییەوە: ${removed}`);
             populateDataLists();
             renderDabashkarListContainer();
             hideLoading();
@@ -1395,7 +1344,6 @@
             if(!val) { hideLoading(); return; }
             mandoubList.push(val);
             await saveMetaDataToDb('mandoub', mandoubList);
-            await logAction(`مەندوبی نوێی زیادکرد: ${val}`);
             populateDataLists();
             renderMandoubListContainer();
             document.getElementById('newMandoubInput').value = '';
@@ -1404,9 +1352,8 @@
 
         async function deleteMandoub(idx) {
             showLoading();
-            let removed = mandoubList.splice(idx, 1);
+            mandoubList.splice(idx, 1);
             await saveMetaDataToDb('mandoub', mandoubList);
-            await logAction(`مەندوبی سڕییەوە: ${removed}`);
             populateDataLists();
             renderMandoubListContainer();
             hideLoading();
@@ -1435,7 +1382,6 @@
             if (!num) { hideLoading(); return; }
             carNumList.push(num);
             await saveMetaDataToDb('car_num', carNumList);
-            await logAction(`ژمارەی سەیارەی نوێی زیادکرد: ${num}`);
             populateDataLists();
             renderCarNumListContainer();
             document.getElementById('newCarNumInput').value = '';
@@ -1444,9 +1390,8 @@
 
         async function deleteCarNum(idx) {
             showLoading();
-            let removed = carNumList.splice(idx, 1);
+            carNumList.splice(idx, 1);
             await saveMetaDataToDb('car_num', carNumList);
-            await logAction(`ژمارەی سەیارەی سڕییەوە: ${removed}`);
             populateDataLists();
             renderCarNumListContainer();
             hideLoading();
@@ -1491,24 +1436,6 @@
                 }
             });
         }
-
-        async function openActionLogModal() {
-            showLoading();
-            let { data, error } = await _supabase.from('action_logs').select('*').order('id', { ascending: false }).limit(50);
-            let list = document.getElementById('actionLogList');
-            
-            if (data) {
-                list.innerHTML = data.map(log => `
-                    <p style="margin-bottom: 5px; border-bottom: 1px #eee solid; padding-bottom: 2px;">
-                        [${new Date(log.created_at).toLocaleTimeString()}] <b>${log.user_name}</b>: ${log.action_text}
-                    </p>
-                `).join('');
-            }
-            hideLoading();
-            document.getElementById('actionLogModal').classList.remove('hidden');
-        }
-
-        function closeActionLogModal() { document.getElementById('actionLogModal').classList.add('hidden'); }
 
         // پشکنینی بەردەوام بۆ ئەوەی ئەگەر پاسۆردی بەکارھێنەری ئێستا گۆڕدرا، لۆگ ئاوت بێت
         setInterval(async () => {
