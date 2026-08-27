@@ -188,6 +188,39 @@
             margin-bottom: 10px;
         }
 
+        /* Loading Spinner Overlay */
+        #globalLoading {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.4);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+        .spinner-box {
+            background: #fff;
+            padding: 20px 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            font-weight: bold;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .spinner {
+            width: 20px;
+            height: 20px;
+            border: 3px solid #ccc;
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
         @page {
             size: A4 landscape;
             margin: 10mm;
@@ -213,6 +246,14 @@
     </style>
 </head>
 <body>
+
+    <!-- Global Loading Overlay -->
+    <div id="globalLoading" class="hidden">
+        <div class="spinner-box">
+            <div class="spinner"></div>
+            <span>Loading... تکایە چاوەڕوان بە...</span>
+        </div>
+    </div>
 
     <!-- Login Section -->
     <div id="loginSection" class="mobile-container">
@@ -318,7 +359,7 @@
             </div>
             <div style="display: flex; gap: 8px;">
                 <button onclick="openExportReportModal()" class="btn-info" style="width: auto; padding: 6px 12px;">فۆڕمی دەرچوون</button>
-                <button onclick="openSettingsModal()" style="width: auto; padding: 6px 12px;">سێتینگ</button>
+                <button onclick="openSettingsModal()" style="width: auto; padding: 6px 12px;">کارمەندان</button>
                 <button onclick="openActionLogModal()" class="btn-warning" style="width: auto; padding: 6px 12px;">تۆماری کردار</button>
                 <button class="btn-danger" onclick="logout()" style="width: auto; padding: 6px 12px;">لوگ ئاوت</button>
             </div>
@@ -421,43 +462,88 @@
         </div>
     </div>
 
-    <!-- Settings Modal -->
+    <!-- کارمەندان Modal (Settings Modal) -->
     <div id="settingsModal" class="modal hidden">
         <div class="modal-content">
-            <button onclick="openAddNamesModal()" class="btn-info">زیادکردنی ناوەکان</button>
-            <button onclick="openAddCarNumModal()" class="btn-info">زیادکردنی ژمارەی سەیارە</button>
-            <button onclick="openColumnsModal()" class="btn-info">ڕیزەکان</button>
+            <button onclick="openDriversManagerModal()" class="btn-info">سایەق</button>
+            <button onclick="openDabashkarManagerModal()" class="btn-info">دابەشکار</button>
+            <button onclick="openMandoubManagerModal()" class="btn-info">مەندوب</button>
+            <button onclick="openCarNumManagerModal()" class="btn-info">ژمارەی سەیارە</button>
+            <button onclick="openColumnsModal()" class="btn-warning" style="margin-top: 5px;">ڕیزەکان ( Columns )</button>
             <button onclick="closeSettingsModal()" class="btn-danger" style="margin-top: 10px;">داخستن</button>
         </div>
     </div>
 
-    <!-- Add Names Modal -->
-    <div id="addNamesModal" class="modal hidden">
+    <!-- Drivers Manager Modal -->
+    <div id="driversManagerModal" class="modal hidden">
         <div class="modal-content">
-            <input type="text" id="newNameInput" placeholder="ناو">
-            <select id="targetListSelect" onchange="checkDriverSelection(); renderSelectedCategoryList();">
-                <option value="dabashkar">ناوی دابەشکار</option>
-                <option value="mandoub">ناوی مەندووب</option>
-                <option value="nawcha">ناوچەکان</option>
-                <option value="driver">ناوی سایەق</option>
-            </select>
-            <input type="password" id="newDriverPassInput" placeholder="پاسۆرد" class="hidden">
-            <div id="categoryPreviewList" style="max-height: 120px; overflow-y: auto; border: 1px solid #ccc; padding: 5px; font-size: 12px; border-radius: 4px;"></div>
-            <div style="display: flex; gap: 8px; margin-top: 5px;">
-                <button onclick="addNewName()" class="btn-success">تۆمار</button>
-                <button onclick="closeAddNamesModal()" class="btn-danger">داخستن</button>
+            <h3 style="text-align: center; color: var(--primary);">بەڕێوەبردنی سایەقەکان</h3>
+            <div class="input-group">
+                <input type="text" id="newDriverName" placeholder="ناوی سایەقی نوێ">
+            </div>
+            <div class="input-group">
+                <input type="password" id="newDriverPass" placeholder="پاسۆرد">
+            </div>
+            <button onclick="addNewDriverRecord()" class="btn-success" style="margin-bottom: 10px;">زیادکردن</button>
+            <div style="max-height: 200px; overflow-y: auto; border: 1px solid var(--border-color); padding: 5px; border-radius: 6px;" id="driversListContainer"></div>
+            <button onclick="closeDriversManagerModal()" class="btn-danger" style="margin-top: 10px;">داخستن</button>
+        </div>
+    </div>
+
+    <!-- Edit Driver Modal -->
+    <div id="editDriverModal" class="modal hidden">
+        <div class="modal-content">
+            <h3 style="text-align: center; color: var(--primary);">گۆڕینی زانیاری سایەق</h3>
+            <input type="hidden" id="editDriverCode">
+            <div class="input-group">
+                <input type="text" id="editDriverNameInput" placeholder="ناوی سایەق">
+            </div>
+            <div class="input-group">
+                <input type="text" id="editDriverPassInput" placeholder="پاسۆرد">
+            </div>
+            <div style="display: flex; gap: 8px;">
+                <button onclick="saveEditedDriver()" class="btn-success">گۆڕین</button>
+                <button onclick="closeEditDriverModal()" style="background:#6c757d;">گەڕانەوە</button>
             </div>
         </div>
     </div>
 
-    <!-- Add Car Modal -->
-    <div id="addCarNumModal" class="modal hidden">
+    <!-- Dabashkar Manager Modal -->
+    <div id="dabashkarManagerModal" class="modal hidden">
         <div class="modal-content">
-            <input type="number" id="newCarNumInput" placeholder="ژمارەی سەیارە">
-            <div style="display: flex; gap: 8px;">
-                <button onclick="addNewCarNumber()" class="btn-success">تۆمار</button>
-                <button onclick="closeAddCarNumModal()" class="btn-danger">داخستن</button>
+            <h3 style="text-align: center; color: var(--primary);">بەڕێوەبردنی دابەشکار</h3>
+            <div class="input-group" style="display: flex; gap: 5px;">
+                <input type="text" id="newDabashkarInput" placeholder="ناوی دابەشکار">
+                <button onclick="addNewDabashkar()" class="btn-success" style="width: 100px;">زیادکردن</button>
             </div>
+            <div style="max-height: 220px; overflow-y: auto; border: 1px solid var(--border-color); padding: 5px; border-radius: 6px;" id="dabashkarListContainer"></div>
+            <button onclick="closeDabashkarManagerModal()" class="btn-danger" style="margin-top: 10px;">داخستن</button>
+        </div>
+    </div>
+
+    <!-- Mandoub Manager Modal -->
+    <div id="mandoubManagerModal" class="modal hidden">
+        <div class="modal-content">
+            <h3 style="text-align: center; color: var(--primary);">بەڕێوەبردنی مەندوب</h3>
+            <div class="input-group" style="display: flex; gap: 5px;">
+                <input type="text" id="newMandoubInput" placeholder="ناوی مەندوب">
+                <button onclick="addNewMandoub()" class="btn-success" style="width: 100px;">زیادکردن</button>
+            </div>
+            <div style="max-height: 220px; overflow-y: auto; border: 1px solid var(--border-color); padding: 5px; border-radius: 6px;" id="mandoubListContainer"></div>
+            <button onclick="closeMandoubManagerModal()" class="btn-danger" style="margin-top: 10px;">داخستن</button>
+        </div>
+    </div>
+
+    <!-- Car Number Manager Modal -->
+    <div id="carNumManagerModal" class="modal hidden">
+        <div class="modal-content">
+            <h3 style="text-align: center; color: var(--primary);">بەڕێوەبردنی ژمارەی سەیارە</h3>
+            <div class="input-group" style="display: flex; gap: 5px;">
+                <input type="text" id="newCarNumInput" placeholder="ژمارەی سەیارە">
+                <button onclick="addNewCarNumber()" class="btn-success" style="width: 100px;">زیادکردن</button>
+            </div>
+            <div style="max-height: 220px; overflow-y: auto; border: 1px solid var(--border-color); padding: 5px; border-radius: 6px;" id="carNumListContainer"></div>
+            <button onclick="closeCarNumManagerModal()" class="btn-danger" style="margin-top: 10px;">داخستن</button>
         </div>
     </div>
 
@@ -529,6 +615,9 @@
         let activeTimeType = null;
         let todayDateStr = "";
 
+        function showLoading() { document.getElementById('globalLoading').classList.remove('hidden'); }
+        function hideLoading() { document.getElementById('globalLoading').classList.add('hidden'); }
+
         function formatNumber(val) {
             if (val === null || val === undefined || isNaN(val) || val === '') return '0';
             let num = Math.round(Number(val));
@@ -536,7 +625,9 @@
         }
 
         window.onload = async function() {
+            showLoading();
             await fetchDriversFromDb();
+            await fetchMetaDataFromDb();
             populateDataLists();
             setupDateHeader();
             buildColumnsCheckboxList();
@@ -557,6 +648,7 @@
                     await fetchAndRenderData();
                 }
             }
+            hideLoading();
         };
 
         async function fetchDriversFromDb() {
@@ -568,6 +660,25 @@
             } catch (e) {
                 console.error("Drivers DB fetch error:", e);
             }
+        }
+
+        async function fetchMetaDataFromDb() {
+            try {
+                let { data, error } = await _supabase.from('system_metadata').select('*');
+                if (!error && data) {
+                    data.forEach(item => {
+                        if (item.type === 'dabashkar') dabashkarList = item.values || dabashkarList;
+                        if (item.type === 'mandoub') mandoubList = item.values || mandoubList;
+                        if (item.type === 'car_num') carNumList = item.values || carNumList;
+                    });
+                }
+            } catch (e) { console.error("Metadata fetch error:", e); }
+        }
+
+        async function saveMetaDataToDb(type, valuesArr) {
+            try {
+                await _supabase.from('system_metadata').upsert({ type: type, values: valuesArr }, { onConflict: 'type' });
+            } catch (e) { console.error("Metadata save error:", e); }
         }
 
         async function logAction(description) {
@@ -628,6 +739,7 @@
         }
 
         async function login() {
+            showLoading();
             let name = document.getElementById('loginDriver').value;
             let pass = document.getElementById('loginPass').value;
             let isRemember = document.getElementById('rememberMe').checked;
@@ -658,9 +770,11 @@
             } else {
                 alert('ناو یان پاسۆرد هەڵەیە!');
             }
+            hideLoading();
         }
 
         function logout() {
+            showLoading();
             logAction('دەروون لە سیستەم (Log Out)');
             localStorage.removeItem('autoLoginUser');
             currentUser = null;
@@ -668,6 +782,7 @@
             document.getElementById('topFormSection').classList.add('hidden');
             document.getElementById('ownerSection').classList.add('hidden');
             document.getElementById('loginSection').classList.remove('hidden');
+            hideLoading();
         }
 
         function validateInput(inputEl, list) {
@@ -678,14 +793,17 @@
         }
 
         async function fetchAndRenderData() {
+            showLoading();
             let query = _supabase.from('delivery_records').select('*');
             let { data, error } = await query;
             if (error) {
                 console.error(error);
+                hideLoading();
                 return;
             }
             localDatabase = data || [];
             renderTable();
+            hideLoading();
         }
 
         function openExitModal() {
@@ -735,6 +853,7 @@
         }
 
         async function saveRecord() {
+            showLoading();
             let now = new Date();
             let currentTimeStr = now.getHours().toString().padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
 
@@ -774,6 +893,7 @@
 
             await fetchAndRenderData();
             closeExitModal();
+            hideLoading();
         }
 
         function enableEdit() {
@@ -804,6 +924,7 @@
             }
 
             if (!rec[timeType]) {
+                showLoading();
                 let now = new Date();
                 let currentTimeStr = now.getHours().toString().padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
                 let updateObj = {};
@@ -812,6 +933,7 @@
                 await _supabase.from('delivery_records').update(updateObj).eq('id', rec.id);
                 await logAction(`کاتی [${timeType}] تۆمارکرد: ${currentTimeStr}`);
                 await fetchAndRenderData();
+                hideLoading();
                 alert('تۆمارکرا!');
             } else {
                 document.getElementById('timeModalMessage').innerText = 'کاتەکەت هەڵەکردووە؟';
@@ -850,6 +972,7 @@
         }
 
         async function saveEditedTime() {
+            showLoading();
             let rec = localDatabase.slice().reverse().find(r => r.driver_code === currentUser.code && (r.created_at && r.created_at.startsWith(todayDateStr)));
             let newTime = document.getElementById('timeEditInput').value;
 
@@ -862,7 +985,10 @@
                 await logAction(`دەستکاری کاتی [${activeTimeType}] کرد بۆ: ${newTime}`);
                 await fetchAndRenderData();
                 document.getElementById('confirmTimeModal').classList.add('hidden');
+                hideLoading();
                 alert('کاتەکە دەستکاری کرا!');
+            } else {
+                hideLoading();
             }
         }
 
@@ -878,6 +1004,7 @@
         function closeInfoModal() { document.getElementById('infoModal').classList.add('hidden'); }
 
         async function saveInfoData() {
+            showLoading();
             let rec = localDatabase.slice().reverse().find(r => r.driver_code === currentUser.code && (r.created_at && r.created_at.startsWith(todayDateStr)));
             if(rec) {
                 let mrawij = Math.round(Number(document.getElementById('fieldMrawij').value)) || 0;
@@ -891,8 +1018,10 @@
                 await logAction('زانیارییەکانی (مڕەویج/پاری هاتنەوە) نوێکردەوە');
                 await fetchAndRenderData();
                 closeInfoModal();
+                hideLoading();
                 alert('زانیارییەکان تۆمارکران!');
             } else {
+                hideLoading();
                 alert('تکایە سەرەتا دەرچوون پڕبکەرەوە!');
             }
         }
@@ -901,6 +1030,7 @@
         function closeDriverSettingsModal() { document.getElementById('driverSettingsModal').classList.add('hidden'); }
 
         async function changeDriverPassword() {
+            showLoading();
             let oldP = document.getElementById('oldDriverPass').value;
             let newP = document.getElementById('newDriverPass').value;
 
@@ -916,11 +1046,13 @@
                 }
 
                 await logAction('پاسۆردی خۆی گۆڕی');
+                hideLoading();
                 alert('پاسۆردەکەت بەسەرکەوتوویی گۆڕدرا!');
                 closeDriverSettingsModal();
                 document.getElementById('oldDriverPass').value = '';
                 document.getElementById('newDriverPass').value = '';
             } else {
+                hideLoading();
                 alert('پاسۆردی کۆن هەڵەیە یان پاسۆردی نوێ بەتاڵە!');
             }
         }
@@ -1082,85 +1214,231 @@
             window.print();
         }
 
+        // کارمەندان (Settings) Modal Functions
         function openSettingsModal() { document.getElementById('settingsModal').classList.remove('hidden'); }
         function closeSettingsModal() { document.getElementById('settingsModal').classList.add('hidden'); }
 
-        function openAddNamesModal() {
+        // سایەقەکان Manager Logic
+        function openDriversManagerModal() {
             closeSettingsModal();
-            document.getElementById('addNamesModal').classList.remove('hidden');
-            checkDriverSelection();
-            renderSelectedCategoryList();
+            renderDriversListContainer();
+            document.getElementById('driversManagerModal').classList.remove('hidden');
         }
-        function closeAddNamesModal() { document.getElementById('addNamesModal').classList.add('hidden'); }
+        function closeDriversManagerModal() { document.getElementById('driversManagerModal').classList.add('hidden'); }
 
-        function openAddCarNumModal() {
-            closeSettingsModal();
-            document.getElementById('addCarNumModal').classList.remove('hidden');
+        function renderDriversListContainer() {
+            let container = document.getElementById('driversListContainer');
+            container.innerHTML = driversData.map(d => `
+                <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; padding: 5px; font-size: 13px;">
+                    <div><b>${d.name}</b> (پاسۆرد: ${d.pass})</div>
+                    <div style="display: flex; gap: 5px;">
+                        <button onclick="openEditDriver('${d.code}')" class="btn-warning" style="padding: 3px 8px; font-size: 11px;">گۆڕین</button>
+                        ${d.name !== 'ئۆنەر' ? `<button onclick="deleteDriver('${d.code}')" class="btn-danger" style="padding: 3px 8px; font-size: 11px;">سڕینەوە</button>` : ''}
+                    </div>
+                </div>
+            `).join('');
         }
-        function closeAddCarNumModal() { document.getElementById('addCarNumModal').classList.add('hidden'); }
 
-        function checkDriverSelection() {
-            let target = document.getElementById('targetListSelect').value;
-            let passInput = document.getElementById('newDriverPassInput');
-            if (target === 'driver') {
-                passInput.classList.remove('hidden');
-            } else {
-                passInput.classList.add('hidden');
+        async function addNewDriverRecord() {
+            showLoading();
+            let name = document.getElementById('newDriverName').value;
+            let pass = document.getElementById('newDriverPass').value;
+            if (!name || !pass) {
+                hideLoading();
+                alert('تکایە ناو و پاسۆرد بنووسە!');
+                return;
+            }
+            let newCode = 'DRV-' + String(driversData.length + 10).padStart(3, '0');
+            let newDrvObj = { name: name, pass: pass, code: newCode };
+            driversData.push(newDrvObj);
+
+            try {
+                await _supabase.from('drivers').insert([newDrvObj]);
+            } catch (e) { console.error('DB insert driver fail:', e); }
+
+            await logAction(`سایەقی نوێی زیادکرد: ${name}`);
+            populateDataLists();
+            renderDriversListContainer();
+            document.getElementById('newDriverName').value = '';
+            document.getElementById('newDriverPass').value = '';
+            hideLoading();
+            alert('سایەق بە سەرکەوتوویی زیادکرا!');
+        }
+
+        function openEditDriver(code) {
+            let drv = driversData.find(d => d.code === code);
+            if(drv) {
+                document.getElementById('editDriverCode').value = drv.code;
+                document.getElementById('editDriverNameInput').value = drv.name;
+                document.getElementById('editDriverPassInput').value = drv.pass;
+                document.getElementById('editDriverModal').classList.remove('hidden');
             }
         }
+        function closeEditDriverModal() { document.getElementById('editDriverModal').classList.add('hidden'); }
 
-        function renderSelectedCategoryList() {
-            let target = document.getElementById('targetListSelect').value;
-            let container = document.getElementById('categoryPreviewList');
-            let list = [];
+        async function saveEditedDriver() {
+            showLoading();
+            let code = document.getElementById('editDriverCode').value;
+            let name = document.getElementById('editDriverNameInput').value;
+            let pass = document.getElementById('editDriverPassInput').value;
 
-            if (target === 'dabashkar') list = dabashkarList;
-            if (target === 'mandoub') list = mandoubList;
-            if (target === 'nawcha') list = nawchaList;
-            if (target === 'driver') list = driversData.map(d => `${d.name} (${d.code})`);
-
-            container.innerHTML = list.map(item => `<div>• ${item}</div>`).join('');
-        }
-
-        async function addNewName() {
-            let name = document.getElementById('newNameInput').value;
-            let target = document.getElementById('targetListSelect').value;
-            let pass = document.getElementById('newDriverPassInput').value;
-
-            if (!name) return;
-
-            if (target === 'driver') {
-                if (!pass) {
-                    alert('تکایە پاسۆرد بنووسە!');
-                    return;
-                }
-                let newCode = 'DRV-' + String(driversData.length).padStart(3, '0');
-                let newDrvObj = { name: name, pass: pass, code: newCode };
-                driversData.push(newDrvObj);
+            let drv = driversData.find(d => d.code === code);
+            if(drv && name && pass) {
+                drv.name = name;
+                drv.pass = pass;
 
                 try {
-                    await _supabase.from('drivers').insert([newDrvObj]);
-                } catch (e) { console.error('DB insert driver fail:', e); }
-            }
-            if (target === 'dabashkar') dabashkarList.push(name);
-            if (target === 'mandoub') mandoubList.push(name);
-            if (target === 'nawcha') nawchaList.push(name);
+                    await _supabase.from('drivers').update({ name: name, pass: pass }).eq('code', code);
+                } catch(e) { console.error('DB update driver error:', e); }
 
-            await logAction(`ناوی نوێی زیادکرد: ${name}`);
-            populateDataLists();
-            renderSelectedCategoryList();
-            document.getElementById('newNameInput').value = '';
-            document.getElementById('newDriverPassInput').value = '';
+                await logAction(`زانیاری سایەقی گۆڕی: ${name}`);
+                populateDataLists();
+                renderDriversListContainer();
+                closeEditDriverModal();
+                hideLoading();
+                alert('بە سەرکەوتوویی نوێکرایەوە!');
+            } else {
+                hideLoading();
+            }
         }
 
-        function addNewCarNumber() {
-            let num = document.getElementById('newCarNumInput').value;
-            if (!num) return;
-            carNumList.push(num);
-            logAction(`ژمارەی سەیارەی نوێی زیادکرد: ${num}`);
+        async function deleteDriver(code) {
+            if(confirm('دڵنیای لە سڕینەوەی ئەم سایەقە؟')) {
+                showLoading();
+                driversData = driversData.filter(d => d.code !== code);
+                try {
+                    await _supabase.from('drivers').delete().eq('code', code);
+                } catch(e) { console.error('DB delete driver error:', e); }
+
+                await logAction(`سایەقی سڕییەوە`);
+                populateDataLists();
+                renderDriversListContainer();
+                hideLoading();
+                alert('سڕایەوە!');
+            }
+        }
+
+        // دابەشکار Manager Logic
+        function openDabashkarManagerModal() {
+            closeSettingsModal();
+            renderDabashkarListContainer();
+            document.getElementById('dabashkarManagerModal').classList.remove('hidden');
+        }
+        function closeDabashkarManagerModal() { document.getElementById('dabashkarManagerModal').classList.add('hidden'); }
+
+        function renderDabashkarListContainer() {
+            let container = document.getElementById('dabashkarListContainer');
+            container.innerHTML = dabashkarList.map((item, idx) => `
+                <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; padding: 5px; font-size: 13px;">
+                    <div><b>${item}</b></div>
+                    <button onclick="deleteDabashkar(${idx})" class="btn-danger" style="padding: 3px 8px; font-size: 11px;">سڕینەوە</button>
+                </div>
+            `).join('');
+        }
+
+        async function addNewDabashkar() {
+            showLoading();
+            let val = document.getElementById('newDabashkarInput').value;
+            if(!val) { hideLoading(); return; }
+            dabashkarList.push(val);
+            await saveMetaDataToDb('dabashkar', dabashkarList);
+            await logAction(`دابەشکاری نوێی زیادکرد: ${val}`);
             populateDataLists();
+            renderDabashkarListContainer();
+            document.getElementById('newDabashkarInput').value = '';
+            hideLoading();
+        }
+
+        async function deleteDabashkar(idx) {
+            showLoading();
+            let removed = dabashkarList.splice(idx, 1);
+            await saveMetaDataToDb('dabashkar', dabashkarList);
+            await logAction(`دابەشکاری سڕییەوە: ${removed}`);
+            populateDataLists();
+            renderDabashkarListContainer();
+            hideLoading();
+        }
+
+        // مەندوب Manager Logic
+        function openMandoubManagerModal() {
+            closeSettingsModal();
+            renderMandoubListContainer();
+            document.getElementById('mandoubManagerModal').classList.remove('hidden');
+        }
+        function closeMandoubManagerModal() { document.getElementById('mandoubManagerModal').classList.add('hidden'); }
+
+        function renderMandoubListContainer() {
+            let container = document.getElementById('mandoubListContainer');
+            container.innerHTML = mandoubList.map((item, idx) => `
+                <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; padding: 5px; font-size: 13px;">
+                    <div><b>${item}</b></div>
+                    <button onclick="deleteMandoub(${idx})" class="btn-danger" style="padding: 3px 8px; font-size: 11px;">سڕینەوە</button>
+                </div>
+            `).join('');
+        }
+
+        async function addNewMandoub() {
+            showLoading();
+            let val = document.getElementById('newMandoubInput').value;
+            if(!val) { hideLoading(); return; }
+            mandoubList.push(val);
+            await saveMetaDataToDb('mandoub', mandoubList);
+            await logAction(`مەندوبی نوێی زیادکرد: ${val}`);
+            populateDataLists();
+            renderMandoubListContainer();
+            document.getElementById('newMandoubInput').value = '';
+            hideLoading();
+        }
+
+        async function deleteMandoub(idx) {
+            showLoading();
+            let removed = mandoubList.splice(idx, 1);
+            await saveMetaDataToDb('mandoub', mandoubList);
+            await logAction(`مەندوبی سڕییەوە: ${removed}`);
+            populateDataLists();
+            renderMandoubListContainer();
+            hideLoading();
+        }
+
+        // ژمارەی سەیارە Manager Logic
+        function openCarNumManagerModal() {
+            closeSettingsModal();
+            renderCarNumListContainer();
+            document.getElementById('carNumManagerModal').classList.remove('hidden');
+        }
+        function closeCarNumManagerModal() { document.getElementById('carNumManagerModal').classList.add('hidden'); }
+
+        function renderCarNumListContainer() {
+            let container = document.getElementById('carNumListContainer');
+            container.innerHTML = carNumList.map((item, idx) => `
+                <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; padding: 5px; font-size: 13px;">
+                    <div><b>${item}</b></div>
+                    <button onclick="deleteCarNum(${idx})" class="btn-danger" style="padding: 3px 8px; font-size: 11px;">سڕینەوە</button>
+                </div>
+            `).join('');
+        }
+
+        async function addNewCarNumber() {
+            showLoading();
+            let num = document.getElementById('newCarNumInput').value;
+            if (!num) { hideLoading(); return; }
+            carNumList.push(num);
+            await saveMetaDataToDb('car_num', carNumList);
+            await logAction(`ژمارەی سەیارەی نوێی زیادکرد: ${num}`);
+            populateDataLists();
+            renderCarNumListContainer();
             document.getElementById('newCarNumInput').value = '';
-            closeAddCarNumModal();
+            hideLoading();
+        }
+
+        async function deleteCarNum(idx) {
+            showLoading();
+            let removed = carNumList.splice(idx, 1);
+            await saveMetaDataToDb('car_num', carNumList);
+            await logAction(`ژمارەی سەیارەی سڕییەوە: ${removed}`);
+            populateDataLists();
+            renderCarNumListContainer();
+            hideLoading();
         }
 
         function buildColumnsCheckboxList() {
@@ -1204,6 +1482,7 @@
         }
 
         async function openActionLogModal() {
+            showLoading();
             let { data, error } = await _supabase.from('action_logs').select('*').order('id', { ascending: false }).limit(50);
             let list = document.getElementById('actionLogList');
             
@@ -1214,6 +1493,7 @@
                     </p>
                 `).join('');
             }
+            hideLoading();
             document.getElementById('actionLogModal').classList.remove('hidden');
         }
 
