@@ -188,7 +188,6 @@
             margin-bottom: 10px;
         }
 
-        /* Print CSS for A4 Landscape */
         @page {
             size: A4 landscape;
             margin: 10mm;
@@ -234,15 +233,15 @@
     <!-- Top Form Section (Driver) -->
     <div id="topFormSection" class="mobile-container hidden">
         <div class="header-bar">
-            <span class="displayDay"></span>
+            <div>
+                <span class="displayDay"></span>
+                <span class="displayDate" style="color: var(--info); margin-right: 5px;"></span>
+            </div>
             <span id="displayDriverName"></span>
-            <span class="displayDate"></span>
         </div>
 
         <div class="vertical-buttons">
             <button class="btn-danger" onclick="openExitModal()">دەرچوون</button>
-            <button onclick="handleTimeClick('kati_nazon')">گەشتنە ناوزۆن</button>
-            <button onclick="handleTimeClick('kati_dere_zon')">دەرچوون لەزۆن</button>
             <button onclick="handleTimeClick('kati_gashtnawa')">گەشتنەوە</button>
             <button class="btn-info" onclick="openInfoModal()">زانیارییەکان</button>
             <button class="btn-warning" onclick="openDriverSettingsModal()">سێتینگ</button>
@@ -311,7 +310,8 @@
     <div id="ownerSection" class="mobile-container hidden" style="max-width: 98%; max-height: 98%;">
         <div class="header-bar" style="flex-wrap: wrap; gap: 8px;">
             <div>
-                <span class="displayDay" style="color: var(--primary);"></span> | 
+                <span class="displayDay" style="color: var(--primary);"></span>
+                <span class="displayDate" style="color: var(--info); margin-right: 5px;"></span> | 
                 <span>ئۆنەر - داشبۆڕد</span>
             </div>
             <div style="display: flex; gap: 8px;">
@@ -330,18 +330,16 @@
                         <th data-col="2">دابەشکار</th>
                         <th data-col="3">مەندوب</th>
                         <th data-col="4">کاتی دەرچوون</th>
-                        <th data-col="5">کاتی ناو زۆن</th>
-                        <th data-col="6">کاتی دەرێی زۆن</th>
-                        <th data-col="7">کاتی گەشتنەوە</th>
-                        <th data-col="8">کۆی کات</th>
-                        <th data-col="9">ژمارەی سەیارە</th>
-                        <th data-col="10">ژمارەی پارچە</th>
-                        <th data-col="11">ژمارەی وەسڵ</th>
-                        <th data-col="12">گەڕاوەی مڕەویج</th>
-                        <th data-col="13">پاری هاتنەوە : بەدینار</th>
-                        <th data-col="14">کێشی بار</th>
-                        <th data-col="15">کۆی ماندوو بوو</th>
-                        <th data-col="16">بەروار</th>
+                        <th data-col="5">کاتی گەشتنەوە</th>
+                        <th data-col="6">کۆی کات</th>
+                        <th data-col="7">ژمارەی سەیارە</th>
+                        <th data-col="8">ژمارەی پارچە</th>
+                        <th data-col="9">ژمارەی وەسڵ</th>
+                        <th data-col="10">گەڕاوەی مڕەویج</th>
+                        <th data-col="11">پاری هاتنەوە : بەدینار</th>
+                        <th data-col="12">کێشی بار</th>
+                        <th data-col="13">کۆی ماندوو بوو</th>
+                        <th data-col="14">بەروار</th>
                     </tr>
                 </thead>
                 <tbody id="dbTableBody"></tbody>
@@ -349,7 +347,7 @@
         </div>
     </div>
 
-    <!-- Export / Print Report Modal (فۆڕمی دەرچوون) -->
+    <!-- Export / Print Report Modal -->
     <div id="exportReportModal" class="modal hidden" style="background: rgba(0,0,0,0.7);">
         <div class="modal-content" style="max-width: 98%; width: 98%; height: 95vh; max-height: 95vh;">
             <div class="header-bar no-print" style="margin-bottom: 5px;">
@@ -385,6 +383,7 @@
             </div>
 
             <div class="no-print" style="display: flex; justify-content: flex-end; gap: 8px; margin-bottom: 10px;">
+                <button onclick="openColumnsModal()" class="btn-warning" style="width: 120px;">ڕیزەکان</button>
                 <button onclick="directPrint()" class="btn-info" style="width: 120px;">پرینت</button>
                 <button onclick="closeExportReportModal()" class="btn-danger" style="width: 120px;">داخستن</button>
             </div>
@@ -398,18 +397,16 @@
                             <th data-col="2">دابەشکار</th>
                             <th data-col="3">مەندوب</th>
                             <th data-col="4">کاتی دەرچوون</th>
-                            <th data-col="5">کاتی ناو زۆن</th>
-                            <th data-col="6">کاتی دەرێی زۆن</th>
-                            <th data-col="7">کاتی گەشتنەوە</th>
-                            <th data-col="8">کۆی کات</th>
-                            <th data-col="9">ژمارەی سەیارە</th>
-                            <th data-col="10">ژمارەی پارچە</th>
-                            <th data-col="11">ژمارەی وەسڵ</th>
-                            <th data-col="12">گەڕاوەی مڕەویج</th>
-                            <th data-col="13">پاری هاتنەوە : بەدینار</th>
-                            <th data-col="14">کێشی بار</th>
-                            <th data-col="15">کۆی ماندوو بوو</th>
-                            <th data-col="16">بەروار</th>
+                            <th data-col="5">کاتی گەشتنەوە</th>
+                            <th data-col="6">کۆی کات</th>
+                            <th data-col="7">ژمارەی سەیارە</th>
+                            <th data-col="8">ژمارەی پارچە</th>
+                            <th data-col="9">ژمارەی وەسڵ</th>
+                            <th data-col="10">گەڕاوەی مڕەویج</th>
+                            <th data-col="11">پاری هاتنەوە : بەدینار</th>
+                            <th data-col="12">کێشی بار</th>
+                            <th data-col="13">کۆی ماندوو بوو</th>
+                            <th data-col="14">بەروار</th>
                         </tr>
                     </thead>
                     <tbody id="reportTableBody"></tbody>
@@ -462,6 +459,7 @@
     <!-- Columns Modal -->
     <div id="columnsModal" class="modal hidden">
         <div class="modal-content">
+            <h3 style="font-size: 15px; text-align: center; margin-bottom: 5px;">دیاریکردنی ڕیزەکان بۆ پشاندان / پرێنت</h3>
             <div class="checkbox-list" id="columnsList"></div>
             <button onclick="closeColumnsModal()" class="btn-success" style="margin-top: 10px;">داخستن</button>
         </div>
@@ -510,14 +508,14 @@
 
         let dabashkarList = ['ابراهیم محسن', 'اسعد بلال', 'اسماعیل شاخەوان', 'اسماعیل علی', 'امیر', 'بڕوا', 'بەڵێن', 'سمیع', 'سەفین', 'سەرمەد', 'شایان', 'عمر', 'محمد عبدالرحمان', 'هیمداد', 'هۆشەنگ', 'ئومێد', 'ڕەوەز'];
         let mandoubList = ['ابراهیم', 'حسن', 'ڕابەر', 'ڕێژوان', 'زانا', 'عبد الصمد', 'عبدواللە', 'عەلی', 'قاسم', 'محمد اسوەد', 'مووبارەك', 'ئاری', 'ئاکام'];
-        let nawchaList = ['ئازادی', 'ئاری', 'ئومێد', 'ئیسکان', 'باداوە', 'باداوەی نوێ', 'بەختیاری', 'بەحرکە', 'بنەسڵاوە', 'پیرزین', 'تەعجیل', 'تەیراوە', 'حی شوڕتە', 'چۆمان', 'خانەقا', 'خەبات', 'درۆسەکەی ٦٠ مەتری', 'ڕاستی', 'ڕاستی نوێ', 'ڕانیە (گەڕەکی ڕانیە لە هەولێر)', 'ڕواندز', 'ڕۆشنبیری', 'زانكۆ', 'ژین', 'سەربەستی (٥٠مەتری)', 'سەیداوە', 'سۆران', 'شەقڵاوە', 'شۆڕش', 'عەنکاوە', 'عەرەبان', 'فرمانبەران', 'کسنەزان', 'کوران', 'کوردسات', 'کۆیە', 'مامۆستایان', 'منارە', 'مەلا ئۆمەر', 'مەخموور', 'مێرگەسۆر', 'نازناز', 'نەورۆز', 'نەورۆزی نوێ', 'نزارکێ', 'وەزارەت'];
+        let nawchaList = ['ئازادی', 'ئاری', 'ئومێد', 'ئیسکان', 'باداوە', 'باداوەی نوێ', 'بەختیاری', 'بەحرکە', 'بنەسڵاوە', 'پیرزین', 'تەعجیل', 'تەیراوە', 'حی شوڕتە', 'چۆمان', 'خانەقا', 'خەبات', 'درۆسەکەی ٦٠ مەتری', 'ڕاستی', 'ڕاستی نوێ', 'ڕانیە (گەڕەکی ڕانیە لە هەولێر)', 'ڕواندز', 'ڕۆشنبیری', 'زانكۆ', 'ژین', 'سەربەستی (٥0مەتری)', 'سەیداوە', 'سۆران', 'شەقڵاوە', 'شۆڕش', 'عەنکاوە', 'عەرەبان', 'فرمانبەران', 'کسنەزان', 'کوران', 'کوردسات', 'کۆیە', 'مامۆستایان', 'منارە', 'مەلا ئۆمەر', 'مەخموور', 'مێرگەسۆر', 'نازناز', 'نەورۆز', 'نەورۆزی نوێ', 'نزارکێ', 'وەزارەت'];
         let carNumList = ['24127', '21210', '20612', '27515', '28366', '39115', '39325', '24683', '20636', '24867', '25498', '29957', '28756', '27640', '25721', '23756', '29901', '36981', '94640', '20396', '20711', '22698', '13841', '24548', '61462', '28545', '12650', '10287', '13734', '80444', '11854', '11890'];
 
         const columnNames = [
             "ژمارە", "سایەق", "دابەشکار", "مەندوب", "کاتی دەرچوون", 
-            "کاتی ناو زۆن", "کاتی دەرێی زۆن", "کاتی گەشتنەوە", "کۆی کات", 
-            "ژمارەی سەیارە", "ژمارەی پارچە", "ژمارەی وەسڵ", "گەڕاوەی مڕەویج", 
-            "پاری هاتنەوە : بەدینار", "کێشی بار", "کۆی ماندوو بوو", "بەروار"
+            "کاتی گەشتنەوە", "کۆی کات", "ژمارەی سەیارە", "ژمارەی پارچە", 
+            "ژمارەی وەسڵ", "گەڕاوەی مڕەویج", "پاری هاتنەوە : بەدینار", 
+            "کێشی بار", "کۆی ماندوو بوو", "بەروار"
         ];
 
         let hiddenColumns = [];
@@ -525,8 +523,8 @@
         let localDatabase = [];
         let loadCounter = 1;
         let activeTimeType = null;
+        let todayDateStr = "";
 
-        // Number Formatter: Integer, Rounded, Commas (e.g. 1,000,000)
         function formatNumber(val) {
             if (val === null || val === undefined || isNaN(val) || val === '') return '0';
             let num = Math.round(Number(val));
@@ -614,8 +612,10 @@
             const now = new Date();
             const days = ['یەکشەممە', 'دووشەممە', 'سێشەممە', 'چوارشەممە', 'پێنجشەممە', 'هەینی', 'شەممە'];
             
+            todayDateStr = now.toISOString().split('T')[0];
+            
             document.querySelectorAll('.displayDay').forEach(el => el.innerText = days[now.getDay()]);
-            document.querySelectorAll('.displayDate').forEach(el => el.innerText = now.toISOString().split('T')[0]);
+            document.querySelectorAll('.displayDate').forEach(el => el.innerText = `(${todayDateStr})`);
         }
 
         function togglePass() {
@@ -686,7 +686,7 @@
 
         function openExitModal() {
             document.getElementById('exitModal').classList.remove('hidden');
-            let existingRecord = localDatabase.find(r => r.driver_code === currentUser.code && r.load_index === loadCounter);
+            let existingRecord = localDatabase.find(r => r.driver_code === currentUser.code && r.load_index === loadCounter && (r.created_at && r.created_at.startsWith(todayDateStr)));
             
             let btnSecondLoad = document.getElementById('btnSecondLoad');
             let fieldKatiDerchun = document.getElementById('fieldKatiDerchun');
@@ -739,7 +739,7 @@
             if (loadCounter === 3) displayDriverName += ' سێ';
             if (loadCounter >= 4) displayDriverName += ` ${loadCounter}`;
 
-            let rec = localDatabase.find(r => r.driver_code === currentUser.code && r.load_index === loadCounter);
+            let rec = localDatabase.find(r => r.driver_code === currentUser.code && r.load_index === loadCounter && (r.created_at && r.created_at.startsWith(todayDateStr)));
             
             let payload = {
                 driver_code: currentUser.code,
@@ -763,6 +763,7 @@
                 await logAction(`دەستکاری داتاکانی کرد (چاککردن)`);
             } else {
                 payload.kati_derchun = currentTimeStr;
+                payload.created_at = todayDateStr;
                 await _supabase.from('delivery_records').insert([payload]);
                 await logAction(`داتای دەرچوونی تۆمارکرد (سەیارە: ${payload.car_num})`);
             }
@@ -791,7 +792,7 @@
 
         async function handleTimeClick(timeType) {
             activeTimeType = timeType;
-            let rec = localDatabase.slice().reverse().find(r => r.driver_code === currentUser.code);
+            let rec = localDatabase.slice().reverse().find(r => r.driver_code === currentUser.code && (r.created_at && r.created_at.startsWith(todayDateStr)));
             
             if (!rec) {
                 alert('تکایە سەرەتا دەرچوون پڕبکەرەوە!');
@@ -845,7 +846,7 @@
         }
 
         async function saveEditedTime() {
-            let rec = localDatabase.slice().reverse().find(r => r.driver_code === currentUser.code);
+            let rec = localDatabase.slice().reverse().find(r => r.driver_code === currentUser.code && (r.created_at && r.created_at.startsWith(todayDateStr)));
             let newTime = document.getElementById('timeEditInput').value;
 
             if (rec && activeTimeType && newTime) {
@@ -863,7 +864,7 @@
 
         function openInfoModal() {
             document.getElementById('infoModal').classList.remove('hidden');
-            let rec = localDatabase.slice().reverse().find(r => r.driver_code === currentUser.code);
+            let rec = localDatabase.slice().reverse().find(r => r.driver_code === currentUser.code && (r.created_at && r.created_at.startsWith(todayDateStr)));
             if(rec) {
                 document.getElementById('fieldMrawij').value = rec.mrawij || '';
                 document.getElementById('fieldMoneyReturn').value = rec.money_return || '';
@@ -873,7 +874,7 @@
         function closeInfoModal() { document.getElementById('infoModal').classList.add('hidden'); }
 
         async function saveInfoData() {
-            let rec = localDatabase.slice().reverse().find(r => r.driver_code === currentUser.code);
+            let rec = localDatabase.slice().reverse().find(r => r.driver_code === currentUser.code && (r.created_at && r.created_at.startsWith(todayDateStr)));
             if(rec) {
                 let mrawij = Math.round(Number(document.getElementById('fieldMrawij').value)) || 0;
                 let moneyReturn = Math.round(Number(document.getElementById('fieldMoneyReturn').value)) || 0;
@@ -946,6 +947,7 @@
             tbody.innerHTML = '';
 
             let filteredData = localDatabase.filter(rec => {
+                if (!rec.created_at || !rec.created_at.startsWith(todayDateStr)) return false;
                 if (currentUser && currentUser.name !== 'ئۆنەر' && rec.driver_code !== currentUser.code) return false;
                 return true;
             });
@@ -958,27 +960,26 @@
                     <td data-col="2">${rec.dabashkar || ''}</td>
                     <td data-col="3">${rec.mandoub || ''}</td>
                     <td data-col="4">${rec.kati_derchun || ''}</td>
-                    <td data-col="5">${rec.kati_nazon || ''}</td>
-                    <td data-col="6">${rec.kati_dere_zon || ''}</td>
-                    <td data-col="7">${rec.kati_gashtnawa || ''}</td>
-                    <td data-col="8">${calculateTotalTime(rec.kati_derchun, rec.kati_gashtnawa)}</td>
-                    <td data-col="9">${rec.car_num || ''}</td>
-                    <td data-col="10">${formatNumber(rec.parts)}</td>
-                    <td data-col="11">${formatNumber(rec.invoice)}</td>
-                    <td data-col="12">${formatNumber(rec.mrawij)}</td>
-                    <td data-col="13">${formatNumber(rec.money_return)}</td>
-                    <td data-col="14">${formatNumber(rec.weight)} kg</td>
-                    <td data-col="15">${formatNumber(calculateManduuVal(rec))}%</td>
-                    <td data-col="16">${rec.created_at || ''}</td>
+                    <td data-col="5">${rec.kati_gashtnawa || ''}</td>
+                    <td data-col="6">${calculateTotalTime(rec.kati_derchun, rec.kati_gashtnawa)}</td>
+                    <td data-col="7">${rec.car_num || ''}</td>
+                    <td data-col="8">${formatNumber(rec.parts)}</td>
+                    <td data-col="9">${formatNumber(rec.invoice)}</td>
+                    <td data-col="10">${formatNumber(rec.mrawij)}</td>
+                    <td data-col="11">${formatNumber(rec.money_return)}</td>
+                    <td data-col="12">${formatNumber(rec.weight)} kg</td>
+                    <td data-col="13">${formatNumber(calculateManduuVal(rec))}%</td>
+                    <td data-col="14">${rec.created_at || ''}</td>
                 `;
                 tbody.appendChild(tr);
             });
             applyColumnVisibility();
         }
 
-        // --- فۆڕمی دەرچوون (Export / Report Modal) ---
         function openExportReportModal() {
             document.getElementById('exportReportModal').classList.remove('hidden');
+            document.getElementById('filterFromDate').value = todayDateStr;
+            document.getElementById('filterToDate').value = todayDateStr;
             renderReportTable();
         }
 
@@ -1000,8 +1001,9 @@
             let selCar = document.getElementById('filterCarNumSelect').value;
 
             let filteredData = localDatabase.filter(rec => {
-                if (fromD && rec.created_at < fromD) return false;
-                if (toD && rec.created_at > toD) return false;
+                let recDate = rec.created_at ? rec.created_at.substring(0, 10) : '';
+                if (fromD && recDate < fromD) return false;
+                if (toD && recDate > toD) return false;
                 if (selDrv && !rec.driver_name.includes(selDrv)) return false;
                 if (selDab && rec.dabashkar !== selDab) return false;
                 if (selMan && rec.mandoub !== selMan) return false;
@@ -1038,32 +1040,30 @@
                     <td data-col="2">${rec.dabashkar || ''}</td>
                     <td data-col="3">${rec.mandoub || ''}</td>
                     <td data-col="4">${rec.kati_derchun || ''}</td>
-                    <td data-col="5">${rec.kati_nazon || ''}</td>
-                    <td data-col="6">${rec.kati_dere_zon || ''}</td>
-                    <td data-col="7">${rec.kati_gashtnawa || ''}</td>
-                    <td data-col="8">${calculateTotalTime(rec.kati_derchun, rec.kati_gashtnawa)}</td>
-                    <td data-col="9">${rec.car_num || ''}</td>
-                    <td data-col="10">${formatNumber(parts)}</td>
-                    <td data-col="11">${formatNumber(invoice)}</td>
-                    <td data-col="12">${formatNumber(mrawij)}</td>
-                    <td data-col="13">${formatNumber(money)}</td>
-                    <td data-col="14">${formatNumber(weight)} kg</td>
-                    <td data-col="15">${formatNumber(manduu)}%</td>
-                    <td data-col="16">${rec.created_at || ''}</td>
+                    <td data-col="5">${rec.kati_gashtnawa || ''}</td>
+                    <td data-col="6">${calculateTotalTime(rec.kati_derchun, rec.kati_gashtnawa)}</td>
+                    <td data-col="7">${rec.car_num || ''}</td>
+                    <td data-col="8">${formatNumber(parts)}</td>
+                    <td data-col="9">${formatNumber(invoice)}</td>
+                    <td data-col="10">${formatNumber(mrawij)}</td>
+                    <td data-col="11">${formatNumber(money)}</td>
+                    <td data-col="12">${formatNumber(weight)} kg</td>
+                    <td data-col="13">${formatNumber(manduu)}%</td>
+                    <td data-col="14">${rec.created_at || ''}</td>
                 `;
                 tbody.appendChild(tr);
             });
 
             let footTr = document.createElement('tr');
             footTr.innerHTML = `
-                <td colspan="10" style="text-align: left; font-weight: bold;">کۆی گشتی (Total):</td>
-                <td data-col="10">${formatNumber(totParts)}</td>
-                <td data-col="11">${formatNumber(totInvoice)}</td>
-                <td data-col="12">${formatNumber(totMrawij)}</td>
-                <td data-col="13">${formatNumber(totMoney)}</td>
-                <td data-col="14">${formatNumber(totWeight)} kg</td>
-                <td data-col="15">${formatNumber(totManduu)}%</td>
-                <td data-col="16">-</td>
+                <td colspan="8" style="text-align: left; font-weight: bold;">کۆی گشتی (Total):</td>
+                <td data-col="8">${formatNumber(totParts)}</td>
+                <td data-col="9">${formatNumber(totInvoice)}</td>
+                <td data-col="10">${formatNumber(totMrawij)}</td>
+                <td data-col="11">${formatNumber(totMoney)}</td>
+                <td data-col="12">${formatNumber(totWeight)} kg</td>
+                <td data-col="13">${formatNumber(totManduu)}%</td>
+                <td data-col="14">-</td>
             `;
             tfoot.appendChild(footTr);
 
