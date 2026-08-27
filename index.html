@@ -188,7 +188,6 @@
             margin-bottom: 10px;
         }
 
-        /* Loading Spinner Overlay */
         #globalLoading {
             position: fixed;
             top: 0; left: 0; right: 0; bottom: 0;
@@ -247,7 +246,6 @@
 </head>
 <body>
 
-    <!-- Global Loading Overlay -->
     <div id="globalLoading" class="hidden">
         <div class="spinner-box">
             <div class="spinner"></div>
@@ -1038,16 +1036,34 @@
                 currentUser.pass = newP;
                 
                 try {
-                    await _supabase.from('drivers').update({ pass: newP }).eq('code', currentUser.code);
-                } catch (e) { console.error('DB driver pass update fail:', e); }
+                    let { error } = await _supabase
+                        .from('drivers')
+                        .update({ pass: newP })
+                        .eq('code', currentUser.code);
 
-                if (localStorage.getItem('autoLoginUser')) {
-                    localStorage.setItem('autoLoginUser', JSON.stringify(currentUser));
+                    if (error) {
+                        hideLoading();
+                        alert('هەڵە ڕوویدا لە گۆڕینی پاسۆرد لە داتابەیس!');
+                        return;
+                    }
+                } catch (e) { 
+                    console.error('DB driver pass update fail:', e); 
+                    hideLoading();
+                    return;
                 }
 
-                await logAction('پاسۆردی خۆی گۆڕی');
+                await logAction('پاسۆردی خۆی گۆڕی و سڕایەوە');
+                localStorage.removeItem('autoLoginUser');
+                
                 hideLoading();
-                alert('پاسۆردەکەت بەسەرکەوتوویی گۆڕدرا!');
+                alert('پاسۆردەکەت بەسەرکەوتوویی گۆڕدرا! تکایە دووبارە بە پاسۆردە نوێیەکە بچۆرە ژوورەوە.');
+                
+                currentUser = null;
+                loadCounter = 1;
+                document.getElementById('topFormSection').classList.add('hidden');
+                document.getElementById('ownerSection').classList.add('hidden');
+                document.getElementById('loginSection').classList.remove('hidden');
+                
                 closeDriverSettingsModal();
                 document.getElementById('oldDriverPass').value = '';
                 document.getElementById('newDriverPass').value = '';
@@ -1214,11 +1230,9 @@
             window.print();
         }
 
-        // کارمەندان (Settings) Modal Functions
         function openSettingsModal() { document.getElementById('settingsModal').classList.remove('hidden'); }
         function closeSettingsModal() { document.getElementById('settingsModal').classList.add('hidden'); }
 
-        // سایەقەکان Manager Logic
         function openDriversManagerModal() {
             closeSettingsModal();
             renderDriversListContainer();
@@ -1318,7 +1332,6 @@
             }
         }
 
-        // دابەشکار Manager Logic
         function openDabashkarManagerModal() {
             closeSettingsModal();
             renderDabashkarListContainer();
@@ -1359,7 +1372,6 @@
             hideLoading();
         }
 
-        // مەندوب Manager Logic
         function openMandoubManagerModal() {
             closeSettingsModal();
             renderMandoubListContainer();
@@ -1400,7 +1412,6 @@
             hideLoading();
         }
 
-        // ژمارەی سەیارە Manager Logic
         function openCarNumManagerModal() {
             closeSettingsModal();
             renderCarNumListContainer();
@@ -1498,6 +1509,27 @@
         }
 
         function closeActionLogModal() { document.getElementById('actionLogModal').classList.add('hidden'); }
+
+        // پشکنینی بەردەوام بۆ ئەوەی ئەگەر پاسۆردی بەکارھێنەری ئێستا گۆڕدرا، لۆگ ئاوت بێت
+        setInterval(async () => {
+            if (currentUser && currentUser.name !== 'ئۆنەر') {
+                try {
+                    let { data, error } = await _supabase
+                        .from('drivers')
+                        .select('pass')
+                        .eq('code', currentUser.code)
+                        .single();
+                    
+                    if (data && data.pass !== currentUser.pass) {
+                        alert('پاسۆردەکەت گۆڕدرا لەلایەن بەڕێوەبەرەوە، تکایە دووبارە بچۆرە ژوورەوە.');
+                        localStorage.removeItem('autoLoginUser');
+                        location.reload();
+                    }
+                } catch (e) {
+                    console.error(e);
+                }
+            }
+        }, 10000);
 
         _supabase
           .channel('schema-db-changes')
