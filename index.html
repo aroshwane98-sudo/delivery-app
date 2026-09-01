@@ -2,8 +2,14 @@
 <html lang="ckb" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>سیستەمی لۆگینی سایەق و فرە-بار</title>
+    
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#8b5cf6">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         :root {
@@ -55,102 +61,94 @@
         }
 
         * { box-sizing: border-box; }
+        
+        html, body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            position: fixed;
+        }
+
         body {
             font-family: 'Segoe UI', Tahoma, sans-serif;
             background: var(--bg-gradient);
             background-size: cover;
-            margin: 0;
-            padding: 15px;
             direction: rtl;
-            min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
             transition: background 0.3s;
         }
+
         .container {
-            width: 100%;
-            max-width: 420px;
-            height: 620px;
+            width: 100vw;
+            height: 100vh;
+            max-width: none;
+            max-height: none;
             background: var(--container-bg);
-            padding: 25px;
-            border-radius: 20px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            padding: 15px;
+            border-radius: 0;
+            box-shadow: none;
             position: relative;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
             transition: background 0.3s;
         }
+
+        @media (min-width: 480px) {
+            .container {
+                max-width: 420px;
+                height: 85vh;
+                max-height: 750px;
+                border-radius: 24px;
+                box-shadow: 0 15px 35px rgba(0,0,0,0.3);
+            }
+        }
+
         .app-screens-wrapper {
             flex: 1;
             overflow-y: auto;
-            padding-bottom: 20px;
+            overflow-x: hidden;
+            padding-bottom: 15px;
+            scrollbar-width: none;
         }
+        .app-screens-wrapper::-webkit-scrollbar { display: none; }
+
         #loginScreen {
             display: flex;
             flex-direction: column;
-            gap: 18px;
+            gap: 15px;
             text-align: center;
             justify-content: center;
             height: 100%;
         }
-        #loginScreen h2 {
-            color: var(--text-primary);
-            margin: 0 0 5px 0;
-            font-size: 26px;
-            font-weight: bold;
-        }
-        #loginScreen p {
-            color: var(--text-secondary);
-            font-size: 14px;
-            margin: 0 0 20px 0;
-        }
-        .login-input-group {
-            display: flex;
-            flex-direction: column;
-            text-align: right;
-            position: relative;
-            margin-bottom: 15px;
-        }
+        #loginScreen h2 { color: var(--text-primary); margin: 0 0 5px 0; font-size: 24px; font-weight: bold; }
+        #loginScreen p { color: var(--text-secondary); font-size: 13px; margin: 0 0 15px 0; }
+        .login-input-group { display: flex; flex-direction: column; text-align: right; position: relative; margin-bottom: 12px; }
         .login-input-group input {
             width: 100%;
-            padding: 16px 18px;
+            padding: 14px 16px;
             background: var(--input-bg);
             border: 1px solid var(--input-border);
-            border-radius: 14px;
-            font-size: 16px;
+            border-radius: 12px;
+            font-size: 15px;
             outline: none;
             color: var(--input-text);
             transition: all 0.3s;
         }
-        .login-input-group input:focus {
-            border-color: #8b5cf6;
-            box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
-        }
-        .remember-row {
-            display: flex;
-            align-items: center;
-            justify-content: flex-start;
-            gap: 10px;
-            font-size: 14px;
-            color: var(--text-secondary);
-            margin-bottom: 15px;
-            cursor: pointer;
-        }
-        .remember-row input[type="checkbox"] {
-            width: 18px;
-            height: 18px;
-            cursor: pointer;
-            accent-color: #8b5cf6;
-        }
+        .login-input-group input:focus { border-color: #8b5cf6; box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1); }
+        .remember-row { display: flex; align-items: center; justify-content: flex-start; gap: 10px; font-size: 13px; color: var(--text-secondary); margin-bottom: 12px; cursor: pointer; }
+        .remember-row input[type="checkbox"] { width: 18px; height: 18px; cursor: pointer; accent-color: #8b5cf6; }
         .btn-login {
             background: #8b5cf6;
             color: white;
             border: none;
-            padding: 16px;
-            border-radius: 14px;
-            font-size: 18px;
+            padding: 14px;
+            border-radius: 12px;
+            font-size: 16px;
             font-weight: bold;
             cursor: pointer;
             width: 100%;
@@ -159,108 +157,82 @@
         }
         .btn-login:hover { background: #7c3aed; }
 
-        #mainApp {
-            display: none;
-            flex-direction: column;
-            height: 100%;
-        }
-
-        .app-tab-content {
-            display: none;
-        }
-        .app-tab-content.active {
-            display: block;
-        }
+        #mainApp { display: none; flex-direction: column; height: 100%; }
+        .app-tab-content { display: none; }
+        .app-tab-content.active { display: block; }
 
         .header-info {
             display: flex;
             justify-content: space-between;
             background: var(--header-bg);
-            padding: 10px 15px;
-            border-radius: 12px;
-            margin-bottom: 12px;
+            padding: 10px 14px;
+            border-radius: 10px;
+            margin-bottom: 10px;
             font-weight: bold;
             color: var(--text-primary);
-            font-size: 15px;
+            font-size: 14px;
         }
         .driver-badge {
             background: var(--card-bg);
             border: 1px solid var(--card-border);
-            padding: 10px 15px;
-            border-radius: 12px;
-            margin-bottom: 12px;
+            padding: 10px 14px;
+            border-radius: 10px;
+            margin-bottom: 10px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            font-size: 15px;
+            font-size: 14px;
             color: var(--text-primary);
             font-weight: bold;
         }
         .batch-indicator {
             background: var(--batch-bg);
             color: var(--batch-text);
-            padding: 10px;
-            border-radius: 12px;
+            padding: 8px;
+            border-radius: 10px;
             text-align: center;
             font-weight: bold;
-            margin-bottom: 12px;
-            font-size: 16px;
+            margin-bottom: 10px;
+            font-size: 15px;
             border: 1px solid var(--batch-border);
         }
-        .time-buttons-wrapper {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            margin-bottom: 15px;
-        }
+        .time-buttons-wrapper { display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; }
         .time-row {
             display: flex;
             align-items: center;
             justify-content: space-between;
             background: var(--time-row-bg);
             border: 1px solid var(--time-row-border);
-            padding: 10px 15px;
-            border-radius: 12px;
+            padding: 8px 12px;
+            border-radius: 10px;
             width: 100%;
         }
         .time-row button {
-            width: 140px;
-            padding: 10px;
+            width: 130px;
+            padding: 9px;
             background: #8b5cf6;
             color: white;
             border: none;
             border-radius: 8px;
             cursor: pointer;
             font-weight: bold;
-            font-size: 15px;
+            font-size: 14px;
             text-align: center;
             order: 1;
         }
-        .time-row button:disabled {
-            background: var(--disabled-bg);
-            cursor: not-allowed;
-            color: var(--disabled-text);
-        }
+        .time-row button:disabled { background: var(--disabled-bg); cursor: not-allowed; color: var(--disabled-text); }
         .time-row button:hover:not(:disabled) { background: #7c3aed; }
-        .time-display {
-            font-size: 16px;
-            color: var(--text-primary);
-            font-weight: bold;
-            order: 2;
-        }
-        .next-batch-btn-container {
-            margin-top: 10px;
-            display: none;
-        }
+        .time-display { font-size: 15px; color: var(--text-primary); font-weight: bold; order: 2; cursor: pointer; }
+        .next-batch-btn-container { margin-top: 8px; display: none; }
         .btn-next-batch {
             width: 100%;
-            padding: 14px;
+            padding: 12px;
             background: #16a34a;
             color: white;
             border: none;
-            border-radius: 12px;
+            border-radius: 10px;
             font-weight: bold;
-            font-size: 16px;
+            font-size: 15px;
             cursor: pointer;
             text-align: center;
         }
@@ -268,15 +240,20 @@
 
         .bottom-nav {
             display: none;
-            height: 65px;
+            height: 60px;
             background: var(--nav-bg);
             border-top: 1px solid var(--nav-border);
             justify-content: space-around;
             align-items: center;
-            margin: -25px -25px -25px -25px;
-            border-bottom-left-radius: 20px;
-            border-bottom-right-radius: 20px;
+            margin: -15px -15px -15px -15px;
+            border-bottom-left-radius: 0;
+            border-bottom-right-radius: 0;
+            position: relative;
+            z-index: 10;
             transition: background 0.3s;
+        }
+        @media (min-width: 480px) {
+            .bottom-nav { border-bottom-left-radius: 24px; border-bottom-right-radius: 24px; }
         }
         .nav-item {
             background: none;
@@ -287,38 +264,16 @@
             justify-content: center;
             cursor: pointer;
             color: var(--text-secondary);
-            font-size: 12px;
-            gap: 3px;
+            font-size: 11px;
+            gap: 2px;
             flex: 1;
             height: 100%;
         }
-        .nav-item svg {
-            width: 22px;
-            height: 22px;
-            fill: currentColor;
-        }
-        .nav-item.active {
-            color: #8b5cf6;
-            font-weight: bold;
-        }
+        .nav-item svg { width: 20px; height: 20px; fill: currentColor; }
+        .nav-item.active { color: #8b5cf6; font-weight: bold; }
 
-        .settings-container, .data-container {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-            margin-top: 10px;
-        }
-        .settings-btn {
-            width: 100%;
-            padding: 16px;
-            border: none;
-            border-radius: 12px;
-            font-size: 16px;
-            font-weight: bold;
-            cursor: pointer;
-            text-align: center;
-            color: white;
-        }
+        .settings-container, .data-container { display: flex; flex-direction: column; gap: 12px; margin-top: 5px; }
+        .settings-btn { width: 100%; padding: 14px; border: none; border-radius: 10px; font-size: 15px; font-weight: bold; cursor: pointer; text-align: center; color: white; }
         .btn-logout-main { background: #ef4444; }
         .btn-logout-main:hover { background: #dc2626; }
         .btn-changepass { background: #3b82f6; }
@@ -330,150 +285,66 @@
             align-items: center;
             background: var(--card-bg);
             border: 1px solid var(--card-border);
-            padding: 14px 18px;
-            border-radius: 12px;
+            padding: 12px 16px;
+            border-radius: 10px;
             font-weight: bold;
             color: var(--text-primary);
-            font-size: 16px;
+            font-size: 15px;
         }
-        .switch {
-            position: relative;
-            display: inline-block;
-            width: 50px;
-            height: 26px;
-        }
-        .switch input { 
-            opacity: 0;
-            width: 0;
-            height: 0;
-        }
+        .switch { position: relative; display: inline-block; width: 46px; height: 24px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
         .slider {
-            position: absolute;
-            cursor: pointer;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background-color: #cbd5e1;
-            transition: .4s;
-            border-radius: 34px;
+            position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
+            background-color: #cbd5e1; transition: .4s; border-radius: 34px;
         }
         .slider:before {
-            position: absolute;
-            content: "";
-            height: 20px;
-            width: 20px;
-            left: 3px;
-            bottom: 3px;
-            background-color: white;
-            transition: .4s;
-            border-radius: 50%;
+            position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px;
+            background-color: white; transition: .4s; border-radius: 50%;
         }
-        input:checked + .slider {
-            background-color: #8b5cf6;
-        }
-        input:checked + .slider:before {
-            transform: translateX(24px);
-        }
+        input:checked + .slider { background-color: #8b5cf6; }
+        input:checked + .slider:before { transform: translateX(22px); }
 
         .local-records-box {
             background: var(--card-bg);
             border: 1px solid var(--card-border);
-            border-radius: 12px;
-            padding: 12px;
-            max-height: 400px;
+            border-radius: 10px;
+            padding: 10px;
+            max-height: calc(100vh - 180px);
             overflow-y: auto;
+            scrollbar-width: none;
         }
+        .local-records-box::-webkit-scrollbar { display: none; }
         .record-card {
             background: var(--card-inner-bg);
             border: 1px solid var(--card-border);
             padding: 10px;
             border-radius: 8px;
-            margin-bottom: 10px;
-            font-size: 14px;
+            margin-bottom: 8px;
+            font-size: 13px;
             color: var(--text-primary);
         }
-        .record-card b {
-            color: #8b5cf6;
-        }
+        .record-card b { color: #8b5cf6; }
 
         .modal {
-            display: none;
-            position: fixed;
-            z-index: 1000;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0,0,0,0.5);
-            overflow-y: auto;
-            padding: 15px;
+            display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%;
+            background-color: rgba(0,0,0,0.6); backdrop-filter: blur(3px); overflow-y: auto; padding: 15px; scrollbar-width: none;
         }
+        .modal::-webkit-scrollbar { display: none; }
         .modal-content {
-            background: var(--modal-bg);
-            width: 100%;
-            max-width: 420px;
-            margin: 30px auto;
-            padding: 25px;
-            border-radius: 16px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-            position: relative;
+            background: var(--modal-bg); width: 100%; max-width: 400px; margin: 20px auto; padding: 20px;
+            border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.3); position: relative;
         }
-        .close-modal {
-            position: absolute;
-            left: 18px;
-            top: 18px;
-            font-size: 26px;
-            font-weight: bold;
-            color: var(--text-secondary);
-            cursor: pointer;
-        }
-        .form-grid {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-            margin-top: 15px;
-        }
-        .form-group {
-            display: flex;
-            flex-direction: column;
-        }
-        .form-group label {
-            margin-bottom: 5px;
-            font-weight: bold;
-            color: var(--text-primary);
-            font-size: 13px;
-        }
+        .close-modal { position: absolute; left: 15px; top: 15px; font-size: 24px; font-weight: bold; color: var(--text-secondary); cursor: pointer; }
+        .form-grid { display: flex; flex-direction: column; gap: 10px; margin-top: 12px; }
+        .form-group { display: flex; flex-direction: column; }
+        .form-group label { margin-bottom: 4px; font-weight: bold; color: var(--text-primary); font-size: 12px; }
         .form-group input {
-            padding: 10px;
-            background: var(--input-bg);
-            border: 1px solid var(--input-border);
-            border-radius: 8px;
-            font-size: 15px;
-            outline: none;
-            color: var(--input-text);
+            padding: 9px 12px; background: var(--input-bg); border: 1px solid var(--input-border);
+            border-radius: 8px; font-size: 14px; outline: none; color: var(--input-text);
         }
-        .form-group input:disabled {
-            background: var(--disabled-bg);
-            color: var(--disabled-text);
-            cursor: not-allowed;
-        }
-        .action-buttons {
-            display: flex;
-            gap: 12px;
-            justify-content: space-between;
-            margin-top: 18px;
-            border-top: 1px solid var(--card-border);
-            padding-top: 15px;
-        }
-        .btn {
-            flex: 1;
-            padding: 12px;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: bold;
-            font-size: 15px;
-            color: white;
-            text-align: center;
-        }
+        .form-group input:disabled { background: var(--disabled-bg); color: var(--disabled-text); cursor: not-allowed; }
+        .action-buttons { display: flex; gap: 10px; justify-content: space-between; margin-top: 15px; border-top: 1px solid var(--card-border); padding-top: 12px; }
+        .btn { flex: 1; padding: 11px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 14px; color: white; text-align: center; }
         .btn-save { background: #16a34a; }
         .btn-save:hover { background: #15803d; }
         .btn-update { background: #2563eb; display: none; }
@@ -521,19 +392,19 @@
 
                 <div class="time-buttons-wrapper">
                     <div class="time-row">
-                        <span class="time-display" id="disp_departure_time">--:--</span>
+                        <span class="time-display" id="disp_departure_time" onclick="handleTimeDisplayClick('departure_time')">--:--</span>
                         <button id="btn_departure" onclick="handleTimeButtonClick('departure_time')">دەرچوون</button>
                     </div>
                     <div class="time-row">
-                        <span class="time-display" id="disp_in_zone_time">--:--</span>
+                        <span class="time-display" id="disp_in_zone_time" onclick="handleTimeDisplayClick('in_zone_time')">--:--</span>
                         <button id="btn_in_zone" onclick="handleTimeButtonClick('in_zone_time')" disabled>ناوزۆن</button>
                     </div>
                     <div class="time-row">
-                        <span class="time-display" id="disp_out_zone_time">--:--</span>
+                        <span class="time-display" id="disp_out_zone_time" onclick="handleTimeDisplayClick('out_zone_time')">--:--</span>
                         <button id="btn_out_zone" onclick="handleTimeButtonClick('out_zone_time')" disabled>دەرێی زۆن</button>
                     </div>
                     <div class="time-row">
-                        <span class="time-display" id="disp_arrival_time">--:--</span>
+                        <span class="time-display" id="disp_arrival_time" onclick="handleTimeDisplayClick('arrival_time')">--:--</span>
                         <button id="btn_arrival" onclick="handleTimeButtonClick('arrival_time')" disabled>گەشتنەوە</button>
                     </div>
                 </div>
@@ -543,9 +414,9 @@
                 </div>
             </div>
 
-            <!-- ٢. تابی وەرەقە و قەڵەم (لۆکاڵ و فۆرم) -->
+            <!-- ٢. تابی وەرەقە و قەڵەم -->
             <div id="tab-form" class="app-tab-content">
-                <h3 style="color: var(--text-primary); margin-top: 0; font-size: 16px;">فۆرمی تۆمارکراوی گەشت</h3>
+                <h3 style="color: var(--text-primary); margin-top: 0; font-size: 15px;">فۆرمی تۆمارکراوی گەشت</h3>
                 <div class="local-records-box" id="localRecordsList">
                     <p style="color: var(--text-secondary); text-align: center; font-size: 13px;">هیچ دەرچوونێک لە لۆکاڵ نەدۆزراوەتەوە.</p>
                 </div>
@@ -553,7 +424,7 @@
 
             <!-- ٣. تابی داتا -->
             <div id="tab-data" class="app-tab-content">
-                <h3 style="color: var(--text-primary); margin-top: 0; font-size: 16px;">بەڕێوەبردنی داتا</h3>
+                <h3 style="color: var(--text-primary); margin-top: 0; font-size: 15px;">بەڕێوەبردنی داتا</h3>
                 <div class="data-container">
                     <div class="form-group">
                         <label>پارەی هێنراوە</label>
@@ -563,16 +434,14 @@
                         <label>گەڕاوەی مڕویج</label>
                         <input type="number" id="data_returned_meruj" placeholder="٠" oninput="handleMerujInput()">
                     </div>
-                    <!-- دووگمەی تۆمارکردن -->
-                    <button id="btnDataSave" class="btn btn-save" style="margin-top: 10px; padding: 14px;" onclick="saveDataToSupabase()">تۆمارکردن</button>
-                    <!-- دووگمەی گۆڕانکاری (ئەگەر خانەکە دەستکاری کرا) -->
-                    <button id="btnDataUpdate" class="btn btn-update" style="margin-top: 10px; padding: 14px;" onclick="updateDataInSupabase()">گۆڕانکاری</button>
+                    <button id="btnDataSave" class="btn btn-save" style="margin-top: 5px; padding: 12px;" onclick="saveDataToSupabase()">تۆمارکردن</button>
+                    <button id="btnDataUpdate" class="btn btn-update" style="margin-top: 5px; padding: 12px;" onclick="updateDataInSupabase()">گۆڕانکاری</button>
                 </div>
             </div>
 
             <!-- ٤. تابی سێتینگ -->
             <div id="tab-settings" class="app-tab-content">
-                <h3 style="color: var(--text-primary); margin-top: 0; font-size: 16px;">ڕێکخستنەکانی هەژمار</h3>
+                <h3 style="color: var(--text-primary); margin-top: 0; font-size: 15px;">ڕێکخستنەکانی هەژمار</h3>
                 <div class="settings-container">
                     <div class="theme-toggle-row">
                         <span>دۆخی تاریک (دارک مۆد)</span>
@@ -608,44 +477,49 @@
     </div>
 </div>
 
+<!-- مۆدالی فۆرمی دەرچوون (بۆ دەستکاریکردنی تەواوی داتا و کاتی دەرچوون) -->
 <div id="formModal" class="modal">
     <div class="modal-content">
         <span class="close-modal" onclick="closeModal()">&times;</span>
-        <h3 style="margin-top: 0; color: var(--text-primary); font-size: 20px;">تۆمارکردنی زانیاری دەرچوون</h3>
+        <h3 style="margin-top: 0; color: var(--text-primary); font-size: 18px;" id="modalTitleText">تۆمارکردنی زانیاری دەرچوون</h3>
         
         <form id="driverForm" onsubmit="saveFormData(event)">
             <div class="form-grid">
-                <div class="form-group">
+                <div class="form-group" id="group_departure_time">
+                    <label>کاتی دەرچوون (سیستەمی 24 کاتژمێری) *</label>
+                    <input type="time" id="modal_departure_time" required style="font-size: 16px; text-align: center; padding: 10px;">
+                </div>
+                <div class="form-group" id="group_distributor">
                     <label>ناوی دابەشکار *</label>
-                    <input type="text" id="distributor" required list="distributorsList" placeholder="ناوی دابەشکار بنووسە...">
+                    <input type="text" id="distributor" list="distributorsList" placeholder="ناوی دابەشکار بنووسە...">
                     <datalist id="distributorsList"></datalist>
                 </div>
-                <div class="form-group">
+                <div class="form-group" id="group_delegate">
                     <label>ناوی مەندوب *</label>
-                    <input type="text" id="delegate" required list="delegatesList" placeholder="ناوی مەندوب بنووسە...">
+                    <input type="text" id="delegate" list="delegatesList" placeholder="ناوی مەندوب بنووسە...">
                     <datalist id="delegatesList"></datalist>
                 </div>
-                <div class="form-group">
+                <div class="form-group" id="group_zone">
                     <label>زۆن *</label>
-                    <input type="text" id="zone" required list="zonesList" placeholder="زۆن بنووسە...">
+                    <input type="text" id="zone" list="zonesList" placeholder="زۆن بنووسە...">
                     <datalist id="zonesList"></datalist>
                 </div>
-                <div class="form-group">
+                <div class="form-group" id="group_vehicle">
                     <label>ژمارەی سەیارە *</label>
-                    <input type="text" id="vehicle" required list="vehiclesList" placeholder="ژمارەی سەیارە بنووسە...">
+                    <input type="text" id="vehicle" list="vehiclesList" placeholder="ژمارەی سەیارە بنووسە...">
                     <datalist id="vehiclesList"></datalist>
                 </div>
-                <div class="form-group">
+                <div class="form-group" id="group_cargo">
                     <label>کێشی بار (ژمارە) *</label>
-                    <input type="number" id="cargo_weight" required placeholder="٠">
+                    <input type="number" id="cargo_weight" placeholder="٠">
                 </div>
-                <div class="form-group">
+                <div class="form-group" id="group_pieces">
                     <label>ژمارەی پارچە (ژمارە) *</label>
-                    <input type="number" id="pieces_count" required placeholder="٠">
+                    <input type="number" id="pieces_count" placeholder="٠">
                 </div>
-                <div class="form-group">
+                <div class="form-group" id="group_receipt">
                     <label>ژمارەی وەسڵ (ژمارە) *</label>
-                    <input type="number" id="receipt_number" required placeholder="٠">
+                    <input type="number" id="receipt_number" placeholder="٠">
                 </div>
             </div>
 
@@ -657,10 +531,32 @@
     </div>
 </div>
 
+<!-- مۆدالی تایبەت بە گۆڕینی کات (Time Picker Modal) بۆ کاتەکانی تر -->
+<div id="timePickerModal" class="modal">
+    <div class="modal-content" style="max-width: 320px;">
+        <span class="close-modal" onclick="closeTimePickerModal()">&times;</span>
+        <h3 style="margin-top: 0; color: var(--text-primary); font-size: 16px;" id="timeModalTitle">گۆڕینی کات</h3>
+        
+        <form onsubmit="saveCustomTimeModal(event)">
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>کات (سیستەمی 24 کاتژمێری) *</label>
+                    <input type="time" id="customTimeInput" required style="font-size: 18px; text-align: center; padding: 12px;">
+                </div>
+            </div>
+
+            <div class="action-buttons">
+                <button type="button" class="btn btn-back" onclick="closeTimePickerModal()">گەڕانەوە</button>
+                <button type="submit" class="btn btn-save">پاشەکەوت</button>
+            </div>
+        </form>
+    </div>
+</div>
+
 <div id="passwordModal" class="modal">
     <div class="modal-content">
         <span class="close-modal" onclick="closePasswordModal()">&times;</span>
-        <h3 style="margin-top: 0; color: var(--text-primary); font-size: 20px;">گۆڕینی تێپەڕەوشە</h3>
+        <h3 style="margin-top: 0; color: var(--text-primary); font-size: 18px;">گۆڕینی تێپەڕەوشە</h3>
         
         <form onsubmit="updatePasswordInSupabase(event)">
             <div class="form-grid">
@@ -710,7 +606,14 @@
         loadDropdownData();
         checkExistingSession();
         loadSavedTheme();
+        registerServiceWorker();
     };
+
+    function registerServiceWorker() {
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js').catch(err => console.log('SW registration failed:', err));
+        }
+    }
 
     function loadSavedTheme() {
         const savedTheme = localStorage.getItem('app_theme');
@@ -1004,7 +907,9 @@
             const disp = document.getElementById(`disp_${field}`);
             if (batchData[field]) {
                 let val = batchData[field];
-                if (batchData[`${field}_edited`]) val += ' (دەستکاری)';
+                if (batchData[`${field}_edited`] && !val.includes('E')) {
+                    val += ' E';
+                }
                 disp.textContent = val;
             } else {
                 disp.textContent = '--:--';
@@ -1025,7 +930,6 @@
 
         document.getElementById('data_returned_meruj').value = batchData.returned_meruj !== undefined ? batchData.returned_meruj : '';
 
-        // ڕێکخستنی قفڵ و دووگمەکان بەپێی دۆخیis_saved
         if (batchData.is_saved) {
             moneyField.disabled = true;
             saveBtn.style.display = 'none';
@@ -1072,37 +976,103 @@
         }
     }
 
+    // دوگمەی دەرچوون: هەمیشە فۆرمەکە دەکاتەوە و تێیدا دەکرێت کاتەکەش دەستکاری بکرێت
     function handleTimeButtonClick(field) {
+        activeTimeField = field;
+        let batchData = allBatchesData[currentBatch];
+
         if (field === 'departure_time') {
-            activeTimeField = field;
-            let batchData = allBatchesData[currentBatch];
-            if (batchData[field]) {
-                if (!confirm("دەتەوێت زانیارییە تۆمارکراوەکانت دەستکاری بکەیت؟")) return;
-            }
+            document.getElementById('modalTitleText').textContent = "تۆمارکردن / دەستکاریکردنی دەرچوون";
+            document.getElementById('group_departure_time').style.display = 'flex';
+            document.getElementById('group_distributor').style.display = 'flex';
+            document.getElementById('group_delegate').style.display = 'flex';
+            document.getElementById('group_zone').style.display = 'flex';
+            document.getElementById('group_vehicle').style.display = 'flex';
+            document.getElementById('group_cargo').style.display = 'flex';
+            document.getElementById('group_pieces').style.display = 'flex';
+            document.getElementById('group_receipt').style.display = 'flex';
+
+            let now = new Date();
+            let currentTimeStr = batchData.departure_time ? batchData.departure_time.replace(' E', '') : now.toTimeString().split(' ')[0].substring(0, 5);
+            document.getElementById('modal_departure_time').value = currentTimeStr;
+
+            document.getElementById('distributor').value = batchData.distributor || '';
+            document.getElementById('delegate').value = batchData.delegate || '';
+            document.getElementById('zone').value = batchData.zone || '';
+            document.getElementById('vehicle').value = batchData.vehicle || '';
+            document.getElementById('cargo_weight').value = batchData.cargo_weight || '';
+            document.getElementById('pieces_count').value = batchData.pieces_count || '';
+            document.getElementById('receipt_number').value = batchData.receipt_number || '';
+
             document.getElementById('formModal').style.display = 'block';
         } else {
-            let batchData = allBatchesData[currentBatch];
-            if (batchData[field]) {
-                if (!confirm("دەتەوێت ئەم کاتە دووبارە تۆماربکەیتەوە؟")) return;
+            // بۆ دوگمەکانی تر (ناوزۆن، دەرێی زۆن، گەشتنەوە): 
+            // ئەگەر جاری یەکەم بێت (کاتەکە بوونی نەبێت)، ڕاستەوخۆ کاتی ئێستا تۆماردەکات بەبێ مۆدال!
+            // ئەگەر پێشتر تۆمار کرابێت (جاری دووەم یان زیاتر)، مۆدالی گۆڕینی کات دەکرێتەوە.
+            if (!batchData[field]) {
+                const now = new Date();
+                const timeStr = now.toTimeString().split(' ')[0].substring(0, 5);
+                const todayStr = now.toISOString().split('T')[0];
+                
+                batchData[field] = timeStr;
+                batchData.record_date = todayStr;
+                if (!batchData.record_time) batchData.record_time = timeStr;
+                if (!batchData.driver) {
+                    let suffixArr = { 1: '', 2: ' دوو', 3: ' سێ', 4: ' چوار' };
+                    batchData.driver = baseDriverName + suffixArr[currentBatch];
+                }
+
+                updateUIForCurrentBatch();
+                syncWithSupabase(batchData);
+            } else {
+                openTimePickerModalForField(field);
             }
-            recordTimeOnly(field);
         }
     }
 
-    async function recordTimeOnly(field) {
-        const now = new Date();
-        const timeStr = now.toTimeString().split(' ')[0].substring(0, 5);
-        const todayStr = now.toISOString().split('T')[0];
+    // لێدانی ڕاستەوخۆی سەر دەقە کاتەکە (Time Text Display) یان بۆ کاتەکانی تر لە دوگمەی دووەم بەدواوە
+    function handleTimeDisplayClick(field) {
+        let batchData = allBatchesData[currentBatch];
+        if (field === 'departure_time') {
+            handleTimeButtonClick('departure_time');
+        } else {
+            if (batchData[field]) {
+                openTimePickerModalForField(field);
+            }
+        }
+    }
+
+    function openTimePickerModalForField(field) {
+        activeTimeField = field;
+        let batchData = allBatchesData[currentBatch];
+        let titles = {
+            'in_zone_time': 'گۆڕینی کاتی ناوزۆن',
+            'out_zone_time': 'گۆڕینی کاتی دەرێی زۆن',
+            'arrival_time': 'گۆڕینی کاتی گەشتنەوە'
+        };
+        document.getElementById('timeModalTitle').textContent = titles[field];
+        
+        let now = new Date();
+        let currentTimeStr = batchData[field] ? batchData[field].replace(' E', '') : now.toTimeString().split(' ')[0].substring(0, 5);
+        document.getElementById('customTimeInput').value = currentTimeStr;
+
+        document.getElementById('timePickerModal').style.display = 'block';
+    }
+
+    async function saveCustomTimeModal(e) {
+        e.preventDefault();
+        const customTime = document.getElementById('customTimeInput').value;
+        if (!customTime || !activeTimeField) return;
 
         let batchData = allBatchesData[currentBatch];
-        if (batchData[field]) {
-            batchData[`${field}_edited`] = true;
-        }
+        const todayStr = new Date().toISOString().split('T')[0];
 
-        batchData[field] = timeStr;
+        batchData[activeTimeField] = customTime + ' E';
+        batchData[`${activeTimeField}_edited`] = true;
         batchData.record_date = todayStr;
+
         if (!batchData.record_time) {
-            batchData.record_time = timeStr;
+            batchData.record_time = customTime;
         }
         if (!batchData.driver) {
             let suffixArr = { 1: '', 2: ' دوو', 3: ' سێ', 4: ' چوار' };
@@ -1110,13 +1080,14 @@
         }
 
         updateUIForCurrentBatch();
+        closeTimePickerModal();
 
         try {
             let recId = batchRecordIds[currentBatch];
-            let updateData = { [field]: timeStr };
-            if (batchData[`${field}_edited`]) {
-                updateData[`${field}_edited`] = true;
-            }
+            let updateData = { 
+                [activeTimeField]: customTime,
+                [`${activeTimeField}_edited`]: true 
+            };
 
             if (recId) {
                 await supabaseClient
@@ -1136,7 +1107,7 @@
                 updateData.record_time = batchData.record_time;
                 updateData.is_second_load = batchData.is_second_load;
 
-                const { data, error } = await supabaseClient
+                const { data } = await supabaseClient
                     .from('delivery_records')
                     .insert([updateData])
                     .select();
@@ -1264,6 +1235,11 @@
         activeTimeField = null;
     }
 
+    function closeTimePickerModal() {
+        document.getElementById('timePickerModal').style.display = 'none';
+        activeTimeField = null;
+    }
+
     function openChangePasswordModal() {
         document.getElementById('current_password').value = '';
         document.getElementById('new_password').value = '';
@@ -1334,9 +1310,8 @@
 
     function saveFormData(e) {
         e.preventDefault();
-        const now = new Date();
-        const timeStr = now.toTimeString().split(' ')[0].substring(0, 5);
-        const todayStr = now.toISOString().split('T')[0];
+        const customDepartureTime = document.getElementById('modal_departure_time').value;
+        const todayStr = new Date().toISOString().split('T')[0];
 
         let batchData = allBatchesData[currentBatch];
 
@@ -1353,17 +1328,17 @@
         batchData.receipt_number = Number(document.getElementById('receipt_number').value) || 0;
         batchData.record_date = todayStr;
 
-        if (activeTimeField) {
-            if (batchData[activeTimeField]) {
-                batchData[activeTimeField] = timeStr;
-                batchData[`${activeTimeField}_edited`] = true;
+        if (customDepartureTime) {
+            if (batchData.departure_time) {
+                batchData.departure_time = customDepartureTime + ' E';
+                batchData.departure_time_edited = true;
             } else {
-                batchData[activeTimeField] = timeStr;
+                batchData.departure_time = customDepartureTime;
             }
         }
 
-        if (!batchData.record_time) {
-            batchData.record_time = timeStr;
+        if (!batchData.record_time && customDepartureTime) {
+            batchData.record_time = customDepartureTime;
         }
 
         updateUIForCurrentBatch();
@@ -1381,6 +1356,19 @@
             delete dbData.arrival_time_edited;
             delete dbData.is_saved;
             delete dbData.id;
+
+            if (typeof dbData.departure_time === 'string' && dbData.departure_time.includes(' E')) {
+                dbData.departure_time = dbData.departure_time.replace(' E', '');
+            }
+            if (typeof dbData.in_zone_time === 'string' && dbData.in_zone_time.includes(' E')) {
+                dbData.in_zone_time = dbData.in_zone_time.replace(' E', '');
+            }
+            if (typeof dbData.out_zone_time === 'string' && dbData.out_zone_time.includes(' E')) {
+                dbData.out_zone_time = dbData.out_zone_time.replace(' E', '');
+            }
+            if (typeof dbData.arrival_time === 'string' && dbData.arrival_time.includes(' E')) {
+                dbData.arrival_time = dbData.arrival_time.replace(' E', '');
+            }
 
             dbData.collected_money = dbData.collected_money === '' ? 0 : Number(dbData.collected_money);
             dbData.returned_meruj = dbData.returned_meruj === '' ? 0 : Number(dbData.returned_meruj);
