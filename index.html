@@ -4,12 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>سیستەمی لۆگینی سایەق و فرە-بار</title>
-    
-    <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#8b5cf6">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         :root {
@@ -129,31 +123,15 @@
         #loginScreen p { color: var(--text-secondary); font-size: 13px; margin: 0 0 15px 0; }
         .login-input-group { display: flex; flex-direction: column; text-align: right; position: relative; margin-bottom: 12px; }
         .login-input-group input {
-            width: 100%;
-            padding: 14px 16px;
-            background: var(--input-bg);
-            border: 1px solid var(--input-border);
-            border-radius: 12px;
-            font-size: 15px;
-            outline: none;
-            color: var(--input-text);
-            transition: all 0.3s;
+            width: 100%; padding: 14px 16px; background: var(--input-bg); border: 1px solid var(--input-border);
+            border-radius: 12px; font-size: 15px; outline: none; color: var(--input-text); transition: all 0.3s;
         }
         .login-input-group input:focus { border-color: #8b5cf6; box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1); }
         .remember-row { display: flex; align-items: center; justify-content: flex-start; gap: 10px; font-size: 13px; color: var(--text-secondary); margin-bottom: 12px; cursor: pointer; }
         .remember-row input[type="checkbox"] { width: 18px; height: 18px; cursor: pointer; accent-color: #8b5cf6; }
         .btn-login {
-            background: #8b5cf6;
-            color: white;
-            border: none;
-            padding: 14px;
-            border-radius: 12px;
-            font-size: 16px;
-            font-weight: bold;
-            cursor: pointer;
-            width: 100%;
-            box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
-            transition: background 0.3s;
+            background: #8b5cf6; color: white; border: none; padding: 14px; border-radius: 12px;
+            font-size: 16px; font-weight: bold; cursor: pointer; width: 100%; box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3); transition: background 0.3s;
         }
         .btn-login:hover { background: #7c3aed; }
 
@@ -161,196 +139,67 @@
         .app-tab-content { display: none; }
         .app-tab-content.active { display: block; }
 
-        .header-info {
-            display: flex;
-            justify-content: space-between;
-            background: var(--header-bg);
-            padding: 10px 14px;
-            border-radius: 10px;
-            margin-bottom: 10px;
-            font-weight: bold;
-            color: var(--text-primary);
-            font-size: 14px;
-        }
-        .driver-badge {
-            background: var(--card-bg);
-            border: 1px solid var(--card-border);
-            padding: 10px 14px;
-            border-radius: 10px;
-            margin-bottom: 10px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-size: 14px;
-            color: var(--text-primary);
-            font-weight: bold;
-        }
-        .batch-indicator {
-            background: var(--batch-bg);
-            color: var(--batch-text);
-            padding: 8px;
-            border-radius: 10px;
-            text-align: center;
-            font-weight: bold;
-            margin-bottom: 10px;
-            font-size: 15px;
-            border: 1px solid var(--batch-border);
-        }
+        .header-info { display: flex; justify-content: space-between; background: var(--header-bg); padding: 10px 14px; border-radius: 10px; margin-bottom: 10px; font-weight: bold; color: var(--text-primary); font-size: 14px; }
+        .driver-badge { background: var(--card-bg); border: 1px solid var(--card-border); padding: 10px 14px; border-radius: 10px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; font-size: 14px; color: var(--text-primary); font-weight: bold; }
+        .batch-indicator { background: var(--batch-bg); color: var(--batch-text); padding: 8px; border-radius: 10px; text-align: center; font-weight: bold; margin-bottom: 10px; font-size: 15px; border: 1px solid var(--batch-border); }
+        
         .time-buttons-wrapper { display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; }
-        .time-row {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            background: var(--time-row-bg);
-            border: 1px solid var(--time-row-border);
-            padding: 8px 12px;
-            border-radius: 10px;
-            width: 100%;
-        }
-        .time-row button {
-            width: 130px;
-            padding: 9px;
-            background: #8b5cf6;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: bold;
-            font-size: 14px;
-            text-align: center;
-            order: 1;
-        }
+        .time-row { display: flex; align-items: center; justify-content: space-between; background: var(--time-row-bg); border: 1px solid var(--time-row-border); padding: 8px 12px; border-radius: 10px; width: 100%; }
+        .time-row button { width: 130px; padding: 9px; background: #8b5cf6; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 14px; text-align: center; order: 1; }
         .time-row button:disabled { background: var(--disabled-bg); cursor: not-allowed; color: var(--disabled-text); }
         .time-row button:hover:not(:disabled) { background: #7c3aed; }
-        .time-display { font-size: 15px; color: var(--text-primary); font-weight: bold; order: 2; cursor: pointer; }
+        .time-display { font-size: 15px; color: var(--text-primary); font-weight: bold; order: 2; }
+        
         .next-batch-btn-container { margin-top: 8px; display: none; }
-        .btn-next-batch {
-            width: 100%;
-            padding: 12px;
-            background: #16a34a;
-            color: white;
-            border: none;
-            border-radius: 10px;
-            font-weight: bold;
-            font-size: 15px;
-            cursor: pointer;
-            text-align: center;
-        }
+        .btn-next-batch { width: 100%; padding: 12px; background: #16a34a; color: white; border: none; border-radius: 10px; font-weight: bold; font-size: 15px; cursor: pointer; text-align: center; }
         .btn-next-batch:hover { background: #15803d; }
 
         .bottom-nav {
-            display: none;
-            height: 60px;
-            background: var(--nav-bg);
-            border-top: 1px solid var(--nav-border);
-            justify-content: space-around;
-            align-items: center;
-            margin: -15px -15px -15px -15px;
-            border-bottom-left-radius: 0;
-            border-bottom-right-radius: 0;
-            position: relative;
-            z-index: 10;
-            transition: background 0.3s;
+            display: none; height: 60px; background: var(--nav-bg); border-top: 1px solid var(--nav-border);
+            justify-content: space-around; align-items: center; margin: -15px -15px -15px -15px;
+            border-bottom-left-radius: 0; border-bottom-right-radius: 0; transition: background 0.3s;
         }
         @media (min-width: 480px) {
             .bottom-nav { border-bottom-left-radius: 24px; border-bottom-right-radius: 24px; }
         }
-        .nav-item {
-            background: none;
-            border: none;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            color: var(--text-secondary);
-            font-size: 11px;
-            gap: 2px;
-            flex: 1;
-            height: 100%;
-        }
+        .nav-item { background: none; border: none; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; color: var(--text-secondary); font-size: 11px; gap: 2px; flex: 1; height: 100%; }
         .nav-item svg { width: 20px; height: 20px; fill: currentColor; }
         .nav-item.active { color: #8b5cf6; font-weight: bold; }
 
         .settings-container, .data-container { display: flex; flex-direction: column; gap: 12px; margin-top: 5px; }
         .settings-btn { width: 100%; padding: 14px; border: none; border-radius: 10px; font-size: 15px; font-weight: bold; cursor: pointer; text-align: center; color: white; }
-        .btn-logout-main { background: #ef4444; }
-        .btn-logout-main:hover { background: #dc2626; }
-        .btn-changepass { background: #3b82f6; }
-        .btn-changepass:hover { background: #2563eb; }
+        .btn-logout-main { background: #ef4444; } .btn-logout-main:hover { background: #dc2626; }
+        .btn-changepass { background: #3b82f6; } .btn-changepass:hover { background: #2563eb; }
         
-        .theme-toggle-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background: var(--card-bg);
-            border: 1px solid var(--card-border);
-            padding: 12px 16px;
-            border-radius: 10px;
-            font-weight: bold;
-            color: var(--text-primary);
-            font-size: 15px;
-        }
+        .theme-toggle-row { display: flex; justify-content: space-between; align-items: center; background: var(--card-bg); border: 1px solid var(--card-border); padding: 12px 16px; border-radius: 10px; font-weight: bold; color: var(--text-primary); font-size: 15px; }
         .switch { position: relative; display: inline-block; width: 46px; height: 24px; }
         .switch input { opacity: 0; width: 0; height: 0; }
-        .slider {
-            position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
-            background-color: #cbd5e1; transition: .4s; border-radius: 34px;
-        }
-        .slider:before {
-            position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px;
-            background-color: white; transition: .4s; border-radius: 50%;
-        }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #cbd5e1; transition: .4s; border-radius: 34px; }
+        .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
         input:checked + .slider { background-color: #8b5cf6; }
         input:checked + .slider:before { transform: translateX(22px); }
 
-        .local-records-box {
-            background: var(--card-bg);
-            border: 1px solid var(--card-border);
-            border-radius: 10px;
-            padding: 10px;
-            max-height: calc(100vh - 180px);
-            overflow-y: auto;
-            scrollbar-width: none;
-        }
+        .local-records-box { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 10px; padding: 10px; max-height: calc(100vh - 180px); overflow-y: auto; scrollbar-width: none; }
         .local-records-box::-webkit-scrollbar { display: none; }
-        .record-card {
-            background: var(--card-inner-bg);
-            border: 1px solid var(--card-border);
-            padding: 10px;
-            border-radius: 8px;
-            margin-bottom: 8px;
-            font-size: 13px;
-            color: var(--text-primary);
-        }
+        .record-card { background: var(--card-inner-bg); border: 1px solid var(--card-border); padding: 10px; border-radius: 8px; margin-bottom: 8px; font-size: 13px; color: var(--text-primary); }
         .record-card b { color: #8b5cf6; }
 
-        .modal {
-            display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%;
-            background-color: rgba(0,0,0,0.6); backdrop-filter: blur(3px); overflow-y: auto; padding: 15px; scrollbar-width: none;
-        }
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.6); backdrop-filter: blur(3px); overflow-y: auto; padding: 15px; scrollbar-width: none; }
         .modal::-webkit-scrollbar { display: none; }
-        .modal-content {
-            background: var(--modal-bg); width: 100%; max-width: 400px; margin: 20px auto; padding: 20px;
-            border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.3); position: relative;
-        }
+        .modal-content { background: var(--modal-bg); width: 100%; max-width: 400px; margin: 20px auto; padding: 20px; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.3); position: relative; }
         .close-modal { position: absolute; left: 15px; top: 15px; font-size: 24px; font-weight: bold; color: var(--text-secondary); cursor: pointer; }
+        
         .form-grid { display: flex; flex-direction: column; gap: 10px; margin-top: 12px; }
         .form-group { display: flex; flex-direction: column; }
         .form-group label { margin-bottom: 4px; font-weight: bold; color: var(--text-primary); font-size: 12px; }
-        .form-group input {
-            padding: 9px 12px; background: var(--input-bg); border: 1px solid var(--input-border);
-            border-radius: 8px; font-size: 14px; outline: none; color: var(--input-text);
-        }
+        .form-group input { padding: 9px 12px; background: var(--input-bg); border: 1px solid var(--input-border); border-radius: 8px; font-size: 14px; outline: none; color: var(--input-text); }
         .form-group input:disabled { background: var(--disabled-bg); color: var(--disabled-text); cursor: not-allowed; }
+        
         .action-buttons { display: flex; gap: 10px; justify-content: space-between; margin-top: 15px; border-top: 1px solid var(--card-border); padding-top: 12px; }
         .btn { flex: 1; padding: 11px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 14px; color: white; text-align: center; }
-        .btn-save { background: #16a34a; }
-        .btn-save:hover { background: #15803d; }
-        .btn-update { background: #2563eb; display: none; }
-        .btn-update:hover { background: #1d4ed8; }
-        .btn-back { background: #64748b; }
-        .btn-back:hover { background: #475569; }
+        .btn-save { background: #16a34a; } .btn-save:hover { background: #15803d; }
+        .btn-update { background: #2563eb; display: none; } .btn-update:hover { background: #1d4ed8; }
+        .btn-back { background: #64748b; } .btn-back:hover { background: #475569; }
     </style>
 </head>
 <body>
@@ -377,11 +226,11 @@
 
     <div id="mainApp">
         <div class="app-screens-wrapper">
-            <!-- ١. تابی سەیارەی بار (گەشت) -->
+            <!-- ١. تابی گەشت -->
             <div id="tab-truck" class="app-tab-content active">
                 <div class="header-info">
-                    <span id="currentDate">31/08/2026</span>
-                    <span id="currentDay">شەممە</span>
+                    <span id="currentDate">--/--/----</span>
+                    <span id="currentDay">---</span>
                 </div>
 
                 <div class="driver-badge">
@@ -392,29 +241,29 @@
 
                 <div class="time-buttons-wrapper">
                     <div class="time-row">
-                        <span class="time-display" id="disp_departure_time" onclick="handleTimeDisplayClick('departure_time')">--:--</span>
+                        <span class="time-display" id="disp_departure_time">--:--</span>
                         <button id="btn_departure" onclick="handleTimeButtonClick('departure_time')">دەرچوون</button>
                     </div>
                     <div class="time-row">
-                        <span class="time-display" id="disp_in_zone_time" onclick="handleTimeDisplayClick('in_zone_time')">--:--</span>
+                        <span class="time-display" id="disp_in_zone_time">--:--</span>
                         <button id="btn_in_zone" onclick="handleTimeButtonClick('in_zone_time')" disabled>ناوزۆن</button>
                     </div>
                     <div class="time-row">
-                        <span class="time-display" id="disp_out_zone_time" onclick="handleTimeDisplayClick('out_zone_time')">--:--</span>
+                        <span class="time-display" id="disp_out_zone_time">--:--</span>
                         <button id="btn_out_zone" onclick="handleTimeButtonClick('out_zone_time')" disabled>دەرێی زۆن</button>
                     </div>
                     <div class="time-row">
-                        <span class="time-display" id="disp_arrival_time" onclick="handleTimeDisplayClick('arrival_time')">--:--</span>
+                        <span class="time-display" id="disp_arrival_time">--:--</span>
                         <button id="btn_arrival" onclick="handleTimeButtonClick('arrival_time')" disabled>گەشتنەوە</button>
                     </div>
                 </div>
 
                 <div id="nextBatchContainer" class="next-batch-btn-container">
-                    <button id="nextBatchBtn" class="btn-next-batch" onclick="startNextBatch()">تۆمارکردنی باری نوێ (باری دووەم)</button>
+                    <button id="nextBatchBtn" class="btn-next-batch" onclick="startNextBatch()">تۆمارکردنی باری نوێ</button>
                 </div>
             </div>
 
-            <!-- ٢. تابی وەرەقە و قەڵەم -->
+            <!-- ٢. تابی فۆرم -->
             <div id="tab-form" class="app-tab-content">
                 <h3 style="color: var(--text-primary); margin-top: 0; font-size: 15px;">فۆرمی تۆمارکراوی گەشت</h3>
                 <div class="local-records-box" id="localRecordsList">
@@ -422,17 +271,13 @@
                 </div>
             </div>
 
-            <!-- ٣. تابی داتا -->
+            <!-- ٣. تابی داتا (پارەی هێنراوە) -->
             <div id="tab-data" class="app-tab-content">
                 <h3 style="color: var(--text-primary); margin-top: 0; font-size: 15px;">بەڕێوەبردنی داتا</h3>
                 <div class="data-container">
                     <div class="form-group">
-                        <label>پارەی هێنراوە</label>
+                        <label>پارەی هێنراوە (collected_money)</label>
                         <input type="text" id="data_collected_money" placeholder="٠" oninput="handleAmountInput(this)">
-                    </div>
-                    <div class="form-group">
-                        <label>گەڕاوەی مڕویج</label>
-                        <input type="number" id="data_returned_meruj" placeholder="٠" oninput="handleMerujInput()">
                     </div>
                     <button id="btnDataSave" class="btn btn-save" style="margin-top: 5px; padding: 12px;" onclick="saveDataToSupabase()">تۆمارکردن</button>
                     <button id="btnDataUpdate" class="btn btn-update" style="margin-top: 5px; padding: 12px;" onclick="updateDataInSupabase()">گۆڕانکاری</button>
@@ -477,49 +322,45 @@
     </div>
 </div>
 
-<!-- مۆدالی فۆرمی دەرچوون (بۆ دەستکاریکردنی تەواوی داتا و کاتی دەرچوون) -->
+<!-- مۆدالی فۆرمی دەرچوون -->
 <div id="formModal" class="modal">
     <div class="modal-content">
         <span class="close-modal" onclick="closeModal()">&times;</span>
-        <h3 style="margin-top: 0; color: var(--text-primary); font-size: 18px;" id="modalTitleText">تۆمارکردنی زانیاری دەرچوون</h3>
+        <h3 style="margin-top: 0; color: var(--text-primary); font-size: 18px;">تۆمارکردنی زانیاری دەرچوون</h3>
         
         <form id="driverForm" onsubmit="saveFormData(event)">
             <div class="form-grid">
-                <div class="form-group" id="group_departure_time">
-                    <label>کاتی دەرچوون (سیستەمی 24 کاتژمێری) *</label>
-                    <input type="time" id="modal_departure_time" required style="font-size: 16px; text-align: center; padding: 10px;">
-                </div>
-                <div class="form-group" id="group_distributor">
-                    <label>ناوی دابەشکار *</label>
-                    <input type="text" id="distributor" list="distributorsList" placeholder="ناوی دابەشکار بنووسە...">
+                <div class="form-group">
+                    <label>ناوی دابەشکار (distributor) *</label>
+                    <input type="text" id="distributor" required list="distributorsList" placeholder="ناوی دابەشکار...">
                     <datalist id="distributorsList"></datalist>
                 </div>
-                <div class="form-group" id="group_delegate">
-                    <label>ناوی مەندوب *</label>
-                    <input type="text" id="delegate" list="delegatesList" placeholder="ناوی مەندوب بنووسە...">
+                <div class="form-group">
+                    <label>ناوی مەندوب (delegate) *</label>
+                    <input type="text" id="delegate" required list="delegatesList" placeholder="ناوی مەندوب...">
                     <datalist id="delegatesList"></datalist>
                 </div>
-                <div class="form-group" id="group_zone">
-                    <label>زۆن *</label>
-                    <input type="text" id="zone" list="zonesList" placeholder="زۆن بنووسە...">
+                <div class="form-group">
+                    <label>زۆن (zone) *</label>
+                    <input type="text" id="zone" required list="zonesList" placeholder="زۆن...">
                     <datalist id="zonesList"></datalist>
                 </div>
-                <div class="form-group" id="group_vehicle">
-                    <label>ژمارەی سەیارە *</label>
-                    <input type="text" id="vehicle" list="vehiclesList" placeholder="ژمارەی سەیارە بنووسە...">
+                <div class="form-group">
+                    <label>ژمارەی سەیارە (vehicle) *</label>
+                    <input type="text" id="vehicle" required list="vehiclesList" placeholder="ژمارەی سەیارە...">
                     <datalist id="vehiclesList"></datalist>
                 </div>
-                <div class="form-group" id="group_cargo">
-                    <label>کێشی بار (ژمارە) *</label>
-                    <input type="number" id="cargo_weight" placeholder="٠">
+                <div class="form-group">
+                    <label>کێشی بار (cargo_weight) *</label>
+                    <input type="number" id="cargo_weight" required placeholder="٠">
                 </div>
-                <div class="form-group" id="group_pieces">
-                    <label>ژمارەی پارچە (ژمارە) *</label>
-                    <input type="number" id="pieces_count" placeholder="٠">
+                <div class="form-group">
+                    <label>ژمارەی پارچە (pieces_count) *</label>
+                    <input type="number" id="pieces_count" required placeholder="٠">
                 </div>
-                <div class="form-group" id="group_receipt">
-                    <label>ژمارەی وەسڵ (ژمارە) *</label>
-                    <input type="number" id="receipt_number" placeholder="٠">
+                <div class="form-group">
+                    <label>ژمارەی وەسڵ (receipt_number) *</label>
+                    <input type="number" id="receipt_number" required placeholder="٠">
                 </div>
             </div>
 
@@ -531,28 +372,7 @@
     </div>
 </div>
 
-<!-- مۆدالی تایبەت بە گۆڕینی کات (Time Picker Modal) بۆ کاتەکانی تر -->
-<div id="timePickerModal" class="modal">
-    <div class="modal-content" style="max-width: 320px;">
-        <span class="close-modal" onclick="closeTimePickerModal()">&times;</span>
-        <h3 style="margin-top: 0; color: var(--text-primary); font-size: 16px;" id="timeModalTitle">گۆڕینی کات</h3>
-        
-        <form onsubmit="saveCustomTimeModal(event)">
-            <div class="form-grid">
-                <div class="form-group">
-                    <label>کات (سیستەمی 24 کاتژمێری) *</label>
-                    <input type="time" id="customTimeInput" required style="font-size: 18px; text-align: center; padding: 12px;">
-                </div>
-            </div>
-
-            <div class="action-buttons">
-                <button type="button" class="btn btn-back" onclick="closeTimePickerModal()">گەڕانەوە</button>
-                <button type="submit" class="btn btn-save">پاشەکەوت</button>
-            </div>
-        </form>
-    </div>
-</div>
-
+<!-- مۆدالی گۆڕینی پاسۆڕد -->
 <div id="passwordModal" class="modal">
     <div class="modal-content">
         <span class="close-modal" onclick="closePasswordModal()">&times;</span>
@@ -562,11 +382,11 @@
             <div class="form-grid">
                 <div class="form-group">
                     <label>تێپەڕەوشەی ئێستا *</label>
-                    <input type="password" id="current_password" required placeholder="پاسۆڕدی ئێستا بنووسە...">
+                    <input type="password" id="current_password" required placeholder="پاسۆڕدی ئێستا...">
                 </div>
                 <div class="form-group">
                     <label>تێپەڕەوشەی نوێ *</label>
-                    <input type="password" id="new_password" required placeholder="پاسۆڕدی نوێ بنووسە...">
+                    <input type="password" id="new_password" required placeholder="پاسۆڕدی نوێ...">
                 </div>
                 <div class="form-group">
                     <label>دووبارەکردنەوەی تێپەڕەوشەی نوێ *</label>
@@ -593,10 +413,10 @@
     let batchRecordIds = {}; 
     
     let allBatchesData = {
-        1: { driver: '', distributor: '', delegate: '', zone: '', vehicle: '', cargo_weight: 0, pieces_count: 0, receipt_number: 0, departure_time: null, in_zone_time: null, out_zone_time: null, arrival_time: null, is_second_load: false, collected_money: '', returned_meruj: '', is_saved: false },
-        2: { driver: '', distributor: '', delegate: '', zone: '', vehicle: '', cargo_weight: 0, pieces_count: 0, receipt_number: 0, departure_time: null, in_zone_time: null, out_zone_time: null, arrival_time: null, is_second_load: true, collected_money: '', returned_meruj: '', is_saved: false },
-        3: { driver: '', distributor: '', delegate: '', zone: '', vehicle: '', cargo_weight: 0, pieces_count: 0, receipt_number: 0, departure_time: null, in_zone_time: null, out_zone_time: null, arrival_time: null, is_second_load: true, collected_money: '', returned_meruj: '', is_saved: false },
-        4: { driver: '', distributor: '', delegate: '', zone: '', vehicle: '', cargo_weight: 0, pieces_count: 0, receipt_number: 0, departure_time: null, in_zone_time: null, out_zone_time: null, arrival_time: null, is_second_load: true, collected_money: '', returned_meruj: '', is_saved: false }
+        1: { driver: '', distributor: '', delegate: '', zone: '', vehicle: '', cargo_weight: 0, pieces_count: 0, receipt_number: 0, departure_time: null, in_zone_time: null, out_zone_time: null, arrival_time: null, collected_money: '', is_saved: false },
+        2: { driver: '', distributor: '', delegate: '', zone: '', vehicle: '', cargo_weight: 0, pieces_count: 0, receipt_number: 0, departure_time: null, in_zone_time: null, out_zone_time: null, arrival_time: null, collected_money: '', is_saved: false },
+        3: { driver: '', distributor: '', delegate: '', zone: '', vehicle: '', cargo_weight: 0, pieces_count: 0, receipt_number: 0, departure_time: null, in_zone_time: null, out_zone_time: null, arrival_time: null, collected_money: '', is_saved: false },
+        4: { driver: '', distributor: '', delegate: '', zone: '', vehicle: '', cargo_weight: 0, pieces_count: 0, receipt_number: 0, departure_time: null, in_zone_time: null, out_zone_time: null, arrival_time: null, collected_money: '', is_saved: false }
     };
 
     let baseDriverName = '';
@@ -606,14 +426,7 @@
         loadDropdownData();
         checkExistingSession();
         loadSavedTheme();
-        registerServiceWorker();
     };
-
-    function registerServiceWorker() {
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('sw.js').catch(err => console.log('SW registration failed:', err));
-        }
-    }
 
     function loadSavedTheme() {
         const savedTheme = localStorage.getItem('app_theme');
@@ -701,7 +514,6 @@
         });
 
         values.sort((a, b) => String(a).localeCompare(String(b), 'ckb'));
-
         values.forEach(val => {
             const option = document.createElement('option');
             option.value = val;
@@ -759,7 +571,6 @@
         }
 
         document.getElementById('displayDriverName').textContent = loggedInDriver;
-
         document.getElementById('loginScreen').style.display = 'none';
         document.getElementById('mainApp').style.display = 'flex';
         document.getElementById('bottomNav').style.display = 'flex';
@@ -796,10 +607,10 @@
         currentBatch = 1;
         batchRecordIds = {};
         allBatchesData = {
-            1: { driver: loggedInDriver, distributor: '', delegate: '', zone: '', vehicle: '', cargo_weight: '', pieces_count: '', receipt_number: '', departure_time: null, in_zone_time: null, out_zone_time: null, arrival_time: null, is_second_load: false, collected_money: '', returned_meruj: '', is_saved: false },
-            2: { driver: loggedInDriver + ' دوو', distributor: '', delegate: '', zone: '', vehicle: '', cargo_weight: '', pieces_count: '', receipt_number: '', departure_time: null, in_zone_time: null, out_zone_time: null, arrival_time: null, is_second_load: true, collected_money: '', returned_meruj: '', is_saved: false },
-            3: { driver: loggedInDriver + ' سێ', distributor: '', delegate: '', zone: '', vehicle: '', cargo_weight: '', pieces_count: '', receipt_number: '', departure_time: null, in_zone_time: null, out_zone_time: null, arrival_time: null, is_second_load: true, collected_money: '', returned_meruj: '', is_saved: false },
-            4: { driver: loggedInDriver + ' چوار', distributor: '', delegate: '', zone: '', vehicle: '', cargo_weight: '', pieces_count: '', receipt_number: '', departure_time: null, in_zone_time: null, out_zone_time: null, arrival_time: null, is_second_load: true, collected_money: '', returned_meruj: '', is_saved: false }
+            1: { driver: baseDriverName, distributor: '', delegate: '', zone: '', vehicle: '', cargo_weight: '', pieces_count: '', receipt_number: '', departure_time: null, in_zone_time: null, out_zone_time: null, arrival_time: null, collected_money: '', is_saved: false },
+            2: { driver: baseDriverName + ' دوو', distributor: '', delegate: '', zone: '', vehicle: '', cargo_weight: '', pieces_count: '', receipt_number: '', departure_time: null, in_zone_time: null, out_zone_time: null, arrival_time: null, collected_money: '', is_saved: false },
+            3: { driver: baseDriverName + ' سێ', distributor: '', delegate: '', zone: '', vehicle: '', cargo_weight: '', pieces_count: '', receipt_number: '', departure_time: null, in_zone_time: null, out_zone_time: null, arrival_time: null, collected_money: '', is_saved: false },
+            4: { driver: baseDriverName + ' چوار', distributor: '', delegate: '', zone: '', vehicle: '', cargo_weight: '', pieces_count: '', receipt_number: '', departure_time: null, in_zone_time: null, out_zone_time: null, arrival_time: null, collected_money: '', is_saved: false }
         };
     }
 
@@ -815,13 +626,13 @@
             let driverRecords = data.filter(rec => rec.driver && rec.driver.includes(loggedInDriver));
 
             driverRecords.forEach(rec => {
-                let bNum = rec.is_second_load ? 2 : 1;
+                let bNum = 1;
                 if (rec.driver === baseDriverName + ' دوو') bNum = 2;
                 else if (rec.driver === baseDriverName + ' سێ') bNum = 3;
                 else if (rec.driver === baseDriverName + ' چوار') bNum = 4;
                 else if (rec.driver === baseDriverName) bNum = 1;
 
-                if (rec.amount_brought !== undefined && rec.amount_brought !== null && rec.amount_brought !== '') {
+                if (rec.collected_money !== undefined && rec.collected_money !== null && rec.collected_money !== '' && Number(rec.collected_money) > 0) {
                     rec.is_saved = true;
                 }
                 allBatchesData[bNum] = rec;
@@ -870,8 +681,7 @@
                             ⏰ ناوزۆن: ${batch.in_zone_time || '--:--'}<br>
                             ⏰ دەرێی زۆن: ${batch.out_zone_time || '--:--'}<br>
                             ⏰ گەشتنەوە: ${batch.arrival_time || '--:--'}<br>
-                            💰 پارەی هێنراوە: ${batch.amount_brought || batch.collected_money || 0}<br>
-                            ↩️ گەڕاوەی مڕویج: ${batch.returned_meruj || 0}
+                            💰 پارەی هێنراوە: ${batch.collected_money || 0}
                         </div>
                     `;
                 }
@@ -889,14 +699,11 @@
 
     function updateUIForCurrentBatch() {
         const batchData = allBatchesData[currentBatch] || {};
-        
         let suffix = "";
         let batchNames = { 1: "یەکەم", 2: "دووەم", 3: "سێیەم", 4: "چوارەم" };
         document.getElementById('batchIndicator').textContent = `باری ${batchNames[currentBatch]}`;
 
-        if (currentBatch > 1) {
-            suffix = ` ${currentBatch}`;
-        }
+        if (currentBatch > 1) { suffix = ` ${currentBatch}`; }
 
         document.getElementById('btn_departure').textContent = `دەرچوون${suffix}`;
         document.getElementById('btn_in_zone').textContent = `ناوزۆن${suffix}`;
@@ -907,9 +714,7 @@
             const disp = document.getElementById(`disp_${field}`);
             if (batchData[field]) {
                 let val = batchData[field];
-                if (batchData[`${field}_edited`] && !val.includes('E')) {
-                    val += ' E';
-                }
+                if (batchData[`${field}_edited`]) val += ' (دەستکاری)';
                 disp.textContent = val;
             } else {
                 disp.textContent = '--:--';
@@ -920,15 +725,13 @@
         let saveBtn = document.getElementById('btnDataSave');
         let updateBtn = document.getElementById('btnDataUpdate');
 
-        let valToShow = batchData.amount_brought !== undefined && batchData.amount_brought !== '' ? batchData.amount_brought : batchData.collected_money;
+        let valToShow = batchData.collected_money;
         if (valToShow !== undefined && valToShow !== '' && valToShow !== null) {
             let cleanVal = String(valToShow).replace(/,/g, '');
             moneyField.value = Number(cleanVal) ? Number(cleanVal).toLocaleString() : cleanVal;
         } else {
             moneyField.value = '';
         }
-
-        document.getElementById('data_returned_meruj').value = batchData.returned_meruj !== undefined ? batchData.returned_meruj : '';
 
         if (batchData.is_saved) {
             moneyField.disabled = true;
@@ -976,124 +779,52 @@
         }
     }
 
-    // دوگمەی دەرچوون: هەمیشە فۆرمەکە دەکاتەوە و تێیدا دەکرێت کاتەکەش دەستکاری بکرێت
     function handleTimeButtonClick(field) {
-        activeTimeField = field;
-        let batchData = allBatchesData[currentBatch];
-
         if (field === 'departure_time') {
-            document.getElementById('modalTitleText').textContent = "تۆمارکردن / دەستکاریکردنی دەرچوون";
-            document.getElementById('group_departure_time').style.display = 'flex';
-            document.getElementById('group_distributor').style.display = 'flex';
-            document.getElementById('group_delegate').style.display = 'flex';
-            document.getElementById('group_zone').style.display = 'flex';
-            document.getElementById('group_vehicle').style.display = 'flex';
-            document.getElementById('group_cargo').style.display = 'flex';
-            document.getElementById('group_pieces').style.display = 'flex';
-            document.getElementById('group_receipt').style.display = 'flex';
-
-            let now = new Date();
-            let currentTimeStr = batchData.departure_time ? batchData.departure_time.replace(' E', '') : now.toTimeString().split(' ')[0].substring(0, 5);
-            document.getElementById('modal_departure_time').value = currentTimeStr;
-
-            document.getElementById('distributor').value = batchData.distributor || '';
-            document.getElementById('delegate').value = batchData.delegate || '';
-            document.getElementById('zone').value = batchData.zone || '';
-            document.getElementById('vehicle').value = batchData.vehicle || '';
-            document.getElementById('cargo_weight').value = batchData.cargo_weight || '';
-            document.getElementById('pieces_count').value = batchData.pieces_count || '';
-            document.getElementById('receipt_number').value = batchData.receipt_number || '';
-
+            activeTimeField = field;
+            let batchData = allBatchesData[currentBatch];
+            if (batchData[field]) {
+                if (!confirm("دەتەوێت زانیارییە تۆمارکراوەکانت دەستکاری بکەیت؟")) return;
+            }
             document.getElementById('formModal').style.display = 'block';
         } else {
-            // بۆ دوگمەکانی تر (ناوزۆن، دەرێی زۆن، گەشتنەوە): 
-            // ئەگەر جاری یەکەم بێت (کاتەکە بوونی نەبێت)، ڕاستەوخۆ کاتی ئێستا تۆماردەکات بەبێ مۆدال!
-            // ئەگەر پێشتر تۆمار کرابێت (جاری دووەم یان زیاتر)، مۆدالی گۆڕینی کات دەکرێتەوە.
-            if (!batchData[field]) {
-                const now = new Date();
-                const timeStr = now.toTimeString().split(' ')[0].substring(0, 5);
-                const todayStr = now.toISOString().split('T')[0];
-                
-                batchData[field] = timeStr;
-                batchData.record_date = todayStr;
-                if (!batchData.record_time) batchData.record_time = timeStr;
-                if (!batchData.driver) {
-                    let suffixArr = { 1: '', 2: ' دوو', 3: ' سێ', 4: ' چوار' };
-                    batchData.driver = baseDriverName + suffixArr[currentBatch];
-                }
-
-                updateUIForCurrentBatch();
-                syncWithSupabase(batchData);
-            } else {
-                openTimePickerModalForField(field);
-            }
-        }
-    }
-
-    // لێدانی ڕاستەوخۆی سەر دەقە کاتەکە (Time Text Display) یان بۆ کاتەکانی تر لە دوگمەی دووەم بەدواوە
-    function handleTimeDisplayClick(field) {
-        let batchData = allBatchesData[currentBatch];
-        if (field === 'departure_time') {
-            handleTimeButtonClick('departure_time');
-        } else {
+            let batchData = allBatchesData[currentBatch];
             if (batchData[field]) {
-                openTimePickerModalForField(field);
+                if (!confirm("دەتەوێت ئەم کاتە دووبارە تۆماربکەیتەوە؟")) return;
             }
+            recordTimeOnly(field);
         }
     }
 
-    function openTimePickerModalForField(field) {
-        activeTimeField = field;
-        let batchData = allBatchesData[currentBatch];
-        let titles = {
-            'in_zone_time': 'گۆڕینی کاتی ناوزۆن',
-            'out_zone_time': 'گۆڕینی کاتی دەرێی زۆن',
-            'arrival_time': 'گۆڕینی کاتی گەشتنەوە'
-        };
-        document.getElementById('timeModalTitle').textContent = titles[field];
-        
-        let now = new Date();
-        let currentTimeStr = batchData[field] ? batchData[field].replace(' E', '') : now.toTimeString().split(' ')[0].substring(0, 5);
-        document.getElementById('customTimeInput').value = currentTimeStr;
-
-        document.getElementById('timePickerModal').style.display = 'block';
-    }
-
-    async function saveCustomTimeModal(e) {
-        e.preventDefault();
-        const customTime = document.getElementById('customTimeInput').value;
-        if (!customTime || !activeTimeField) return;
+    async function recordTimeOnly(field) {
+        const now = new Date();
+        const timeStr = now.toTimeString().split(' ')[0].substring(0, 5);
+        const todayStr = now.toISOString().split('T')[0];
 
         let batchData = allBatchesData[currentBatch];
-        const todayStr = new Date().toISOString().split('T')[0];
+        if (batchData[field]) {
+            batchData[`${field}_edited`] = true;
+        }
 
-        batchData[activeTimeField] = customTime + ' E';
-        batchData[`${activeTimeField}_edited`] = true;
+        batchData[field] = timeStr;
         batchData.record_date = todayStr;
-
-        if (!batchData.record_time) {
-            batchData.record_time = customTime;
-        }
+        if (!batchData.record_time) { batchData.record_time = timeStr; }
         if (!batchData.driver) {
             let suffixArr = { 1: '', 2: ' دوو', 3: ' سێ', 4: ' چوار' };
             batchData.driver = baseDriverName + suffixArr[currentBatch];
         }
 
         updateUIForCurrentBatch();
-        closeTimePickerModal();
 
         try {
             let recId = batchRecordIds[currentBatch];
-            let updateData = { 
-                [activeTimeField]: customTime,
-                [`${activeTimeField}_edited`]: true 
-            };
+            let updateData = { [field]: timeStr };
+            if (batchData[`${field}_edited`]) {
+                updateData[`${field}_edited`] = true;
+            }
 
             if (recId) {
-                await supabaseClient
-                    .from('delivery_records')
-                    .update(updateData)
-                    .eq('id', recId);
+                await supabaseClient.from('delivery_records').update(updateData).eq('id', recId);
             } else {
                 updateData.record_date = todayStr;
                 updateData.driver = batchData.driver;
@@ -1105,12 +836,9 @@
                 updateData.pieces_count = batchData.pieces_count || 0;
                 updateData.receipt_number = batchData.receipt_number || 0;
                 updateData.record_time = batchData.record_time;
-                updateData.is_second_load = batchData.is_second_load;
+                updateData.collected_money = 0;
 
-                const { data } = await supabaseClient
-                    .from('delivery_records')
-                    .insert([updateData])
-                    .select();
+                const { data } = await supabaseClient.from('delivery_records').insert([updateData]).select();
                 if (data && data.length > 0) {
                     batchRecordIds[currentBatch] = data[0].id;
                     batchData.id = data[0].id;
@@ -1137,21 +865,10 @@
         saveDataFields();
     }
 
-    function handleMerujInput() {
-        let batchData = allBatchesData[currentBatch];
-        if (batchData.is_saved) {
-            document.getElementById('btnDataSave').style.display = 'none';
-            document.getElementById('btnDataUpdate').style.display = 'block';
-        }
-        saveDataFields();
-    }
-
     function saveDataFields() {
         let batchData = allBatchesData[currentBatch];
         let rawMoney = document.getElementById('data_collected_money').value.replace(/,/g, '');
         batchData.collected_money = rawMoney;
-        batchData.amount_brought = rawMoney;
-        batchData.returned_meruj = document.getElementById('data_returned_meruj').value;
         saveAllBatchesToLocal();
     }
 
@@ -1161,8 +878,6 @@
         let amountBroughtVal = rawMoney === '' ? 0 : Number(rawMoney);
         
         batchData.collected_money = rawMoney;
-        batchData.amount_brought = rawMoney;
-        batchData.returned_meruj = document.getElementById('data_returned_meruj').value;
 
         if (!batchData.driver) {
             let suffixArr = { 1: '', 2: ' دوو', 3: ' سێ', 4: ' چوار' };
@@ -1183,20 +898,17 @@
                 pieces_count: batchData.pieces_count || 0,
                 receipt_number: batchData.receipt_number || 0,
                 record_date: batchData.record_date,
-                collected_money: amountBroughtVal,
-                returned_meruj: batchData.returned_meruj === '' ? 0 : Number(batchData.returned_meruj),
-                amount_brought: amountBroughtVal,
-                is_second_load: batchData.is_second_load
+                record_time: batchData.record_time || '00:00',
+                in_zone_time: batchData.in_zone_time || null,
+                out_zone_time: batchData.out_zone_time || null,
+                arrival_time: batchData.arrival_time || null,
+                collected_money: amountBroughtVal
             };
 
             let recId = batchRecordIds[currentBatch];
 
             if (recId) {
-                const { error } = await supabaseClient
-                    .from('delivery_records')
-                    .update(dbData)
-                    .eq('id', recId);
-                
+                const { error } = await supabaseClient.from('delivery_records').update(dbData).eq('id', recId);
                 if (error) {
                     alert("هەڵە لە نوێکردنەوەی داتا: " + error.message);
                 } else {
@@ -1204,11 +916,7 @@
                     alert("داتای پارەی هێنراوە بە سەرکەوتوویی تۆمارکرا!");
                 }
             } else {
-                const { data, error } = await supabaseClient
-                    .from('delivery_records')
-                    .insert([dbData])
-                    .select();
-
+                const { data, error } = await supabaseClient.from('delivery_records').insert([dbData]).select();
                 if (error) {
                     alert("هەڵە لە ناردنی داتا بۆ داتابەیس: " + error.message);
                 } else if (data && data.length > 0) {
@@ -1235,11 +943,6 @@
         activeTimeField = null;
     }
 
-    function closeTimePickerModal() {
-        document.getElementById('timePickerModal').style.display = 'none';
-        activeTimeField = null;
-    }
-
     function openChangePasswordModal() {
         document.getElementById('current_password').value = '';
         document.getElementById('new_password').value = '';
@@ -1263,37 +966,20 @@
         }
 
         try {
-            const { data: users, error: fetchError } = await supabaseClient
-                .from('users')
-                .select('*');
-
-            if (fetchError) {
-                alert("هەڵە لە پەیوەندیکردن بە داتابەیس.");
-                return;
-            }
+            const { data: users, error: fetchError } = await supabaseClient.from('users').select('*');
+            if (fetchError) { alert("هەڵە لە پەیوەندیکردن بە داتابەیس."); return; }
 
             let userRecord = users.find(u => 
                 (u.username === baseDriverName || u.name === baseDriverName || u.driver_name === baseDriverName)
             );
 
-            if (!userRecord) {
-                alert("هەژماری سایەق نەدۆزراوەتەوە لە داتابەیس.");
-                return;
-            }
+            if (!userRecord) { alert("هەژماری سایەق نەدۆزراوەتەوە لە داتابەیس."); return; }
 
             let dbPassword = userRecord.password || userRecord.pass;
-
-            if (dbPassword && dbPassword !== currentPass) {
-                alert("تێپەڕەوشەی ئێستا هەڵەیە!");
-                return;
-            }
+            if (dbPassword && dbPassword !== currentPass) { alert("تێپەڕەوشەی ئێستا هەڵەیە!"); return; }
 
             let passwordColumnName = userRecord.password !== undefined ? 'password' : 'pass';
-
-            const { error: updateError } = await supabaseClient
-                .from('users')
-                .update({ [passwordColumnName]: newPass })
-                .eq('id', userRecord.id);
+            const { error: updateError } = await supabaseClient.from('users').update({ [passwordColumnName]: newPass }).eq('id', userRecord.id);
 
             if (updateError) {
                 alert("هەڵە لە گۆڕینی پاسۆڕد: " + updateError.message);
@@ -1301,7 +987,6 @@
                 alert("تێپەڕەوشە بە سەرکەوتوویی گۆڕدرا!");
                 closePasswordModal();
             }
-
         } catch (err) {
             console.log("هەڵە لە پرۆسەی گۆڕینی پاسۆڕد:", err);
             alert("هەڵەیەکی نەخوازراو ڕوویدا.");
@@ -1310,14 +995,13 @@
 
     function saveFormData(e) {
         e.preventDefault();
-        const customDepartureTime = document.getElementById('modal_departure_time').value;
-        const todayStr = new Date().toISOString().split('T')[0];
+        const now = new Date();
+        const timeStr = now.toTimeString().split(' ')[0].substring(0, 5);
+        const todayStr = now.toISOString().split('T')[0];
 
         let batchData = allBatchesData[currentBatch];
-
         let suffixArr = { 1: '', 2: ' دوو', 3: ' سێ', 4: ' چوار' };
         batchData.driver = baseDriverName + suffixArr[currentBatch];
-        batchData.is_second_load = (currentBatch > 1);
 
         batchData.distributor = document.getElementById('distributor').value.trim();
         batchData.delegate = document.getElementById('delegate').value.trim();
@@ -1328,70 +1012,50 @@
         batchData.receipt_number = Number(document.getElementById('receipt_number').value) || 0;
         batchData.record_date = todayStr;
 
-        if (customDepartureTime) {
-            if (batchData.departure_time) {
-                batchData.departure_time = customDepartureTime + ' E';
-                batchData.departure_time_edited = true;
+        if (activeTimeField) {
+            if (batchData[activeTimeField]) {
+                batchData[activeTimeField] = timeStr;
+                batchData[`${activeTimeField}_edited`] = true;
             } else {
-                batchData.departure_time = customDepartureTime;
+                batchData[activeTimeField] = timeStr;
             }
         }
 
-        if (!batchData.record_time && customDepartureTime) {
-            batchData.record_time = customDepartureTime;
-        }
+        if (!batchData.record_time) { batchData.record_time = timeStr; }
 
         updateUIForCurrentBatch();
         closeModal();
-
         syncWithSupabase(batchData);
     }
 
     async function syncWithSupabase(batchData) {
         try {
-            let dbData = { ...batchData };
-            delete dbData.departure_time_edited;
-            delete dbData.in_zone_time_edited;
-            delete dbData.out_zone_time_edited;
-            delete dbData.arrival_time_edited;
-            delete dbData.is_saved;
-            delete dbData.id;
-
-            if (typeof dbData.departure_time === 'string' && dbData.departure_time.includes(' E')) {
-                dbData.departure_time = dbData.departure_time.replace(' E', '');
-            }
-            if (typeof dbData.in_zone_time === 'string' && dbData.in_zone_time.includes(' E')) {
-                dbData.in_zone_time = dbData.in_zone_time.replace(' E', '');
-            }
-            if (typeof dbData.out_zone_time === 'string' && dbData.out_zone_time.includes(' E')) {
-                dbData.out_zone_time = dbData.out_zone_time.replace(' E', '');
-            }
-            if (typeof dbData.arrival_time === 'string' && dbData.arrival_time.includes(' E')) {
-                dbData.arrival_time = dbData.arrival_time.replace(' E', '');
-            }
-
-            dbData.collected_money = dbData.collected_money === '' ? 0 : Number(dbData.collected_money);
-            dbData.returned_meruj = dbData.returned_meruj === '' ? 0 : Number(dbData.returned_meruj);
-            dbData.amount_brought = dbData.amount_brought === '' ? 0 : Number(dbData.amount_brought);
+            let dbData = {
+                driver: batchData.driver,
+                distributor: batchData.distributor || '-',
+                delegate: batchData.delegate || '-',
+                zone: batchData.zone || '-',
+                vehicle: batchData.vehicle || '-',
+                cargo_weight: Number(batchData.cargo_weight) || 0,
+                pieces_count: Number(batchData.pieces_count) || 0,
+                receipt_number: Number(batchData.receipt_number) || 0,
+                record_date: batchData.record_date,
+                record_time: batchData.record_time || '00:00',
+                in_zone_time: batchData.in_zone_time || null,
+                out_zone_time: batchData.out_zone_time || null,
+                arrival_time: batchData.arrival_time || null,
+                collected_money: batchData.collected_money === '' ? 0 : Number(String(batchData.collected_money).replace(/,/g, ''))
+            };
 
             let recId = batchRecordIds[currentBatch];
 
             if (recId) {
-                delete dbData.id;
-                await supabaseClient
-                    .from('delivery_records')
-                    .update(dbData)
-                    .eq('id', recId);
+                await supabaseClient.from('delivery_records').update(dbData).eq('id', recId);
             } else {
-                const { data, error } = await supabaseClient
-                    .from('delivery_records')
-                    .insert([dbData])
-                    .select();
-
+                const { data, error } = await supabaseClient.from('delivery_records').insert([dbData]).select();
                 if (error) {
                     alert("هەڵە لە ناردنی داتا بۆ داتابەیس: " + error.message);
                 }
-
                 if (data && data.length > 0) {
                     batchRecordIds[currentBatch] = data[0].id;
                     batchData.id = data[0].id;
