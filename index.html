@@ -811,7 +811,7 @@
         <div class="confirm-card">
             <h3 id="modalTitleText">دەتەوێت گۆڕانکاری بکەیت؟</h3>
             <div id="modalTimeInputContainer" style="display:none;">
-                <input type="time" id="modalTimeField">
+                <input type="time" step="1" id="modalTimeField">
             </div>
             <div class="confirm-buttons">
                 <button class="btn-confirm-yes" id="modalYesBtn">بەڵێ</button>
@@ -822,7 +822,7 @@
 
     <div id="passwordPopupModal">
         <div class="password-popup-card">
-            <h3>گۆڕینی تێپەڕەوشە (پاسۆڕد)</h3>
+            <h3>گۆڕینی تێپەڕەوشە</h3>
             <div class="field" style="margin-bottom: 8px;">
                 <label style="font-size: 12px; color: var(--sub-text); display: block; margin-bottom: 4px;">پاسۆڕدی کۆن:</label>
                 <input type="password" id="popupOldPassword" placeholder="پاسۆڕدی کۆن بنووسە...">
@@ -919,6 +919,25 @@
         let zonesList = [];
         let vehiclesList = [];
         let currentUserData = null;
+        let liveTimeInterval = null; 
+        let listAutoRefreshInterval = null;
+
+        // هێنانی بەرواری ناوخۆیی ئامێرەکە بە شێوازی YYYY-MM-DD بێ جیاوازی ناوچەی کاتی
+        function getLocalTodayDate() {
+            const d = new Date();
+            const year = d.getFullYear();
+            const month = String(d.getMonth() + 1).padStart(2, '0');
+            const day = String(d.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+
+        // هێنانی کاتی ناوخۆیی ئامێرەکە بە شێوازی 24 کاتژمێری
+        function getLocalCurrentTime() {
+            const d = new Date();
+            return String(d.getHours()).padStart(2, '0') + ':' + 
+                   String(d.getMinutes()).padStart(2, '0') + ':' + 
+                   String(d.getSeconds()).padStart(2, '0');
+        }
 
         function showCustomNotification(isSuccess, message) {
             const notif = document.getElementById('customNotification');
@@ -952,7 +971,7 @@
 
             titleEl.textContent = "ئەم کاتە پێشتر تۆمار کراوە. دەتەوێت دەستکاری بکەیت؟";
             timeContainer.style.display = 'block';
-            timeField.value = defaultTime || new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false });
+            timeField.value = defaultTime || getLocalCurrentTime();
 
             modal.style.display = 'flex';
 
@@ -1165,13 +1184,19 @@
             }
         }
 
+        function clearAllIntervals() {
+            if (liveTimeInterval) clearInterval(liveTimeInterval);
+            if (listAutoRefreshInterval) clearInterval(listAutoRefreshInterval);
+        }
+
         async function renderDriverMainView(level = 1) {
+            clearAllIntervals();
             document.querySelectorAll('#driverNavBar .nav-item').forEach(btn => btn.classList.remove('active'));
             const truckBtn = document.getElementById('truckNavBtn');
             if(truckBtn) truckBtn.classList.add('active');
 
             const card = document.getElementById('formCardContent');
-            const today = new Date().toISOString().split('T')[0];
+            const today = getLocalTodayDate();
             const baseDriver = currentUserData ? currentUserData.username : '';
             
             let driverName = baseDriver;
@@ -1279,24 +1304,23 @@
         }
 
         function renderDriverListsView() {
+            clearAllIntervals();
             document.querySelectorAll('#driverNavBar .nav-item').forEach(btn => btn.classList.remove('active'));
-            event.currentTarget.classList.add('active');
+            if(event && event.currentTarget) event.currentTarget.classList.add('active');
 
             const card = document.getElementById('formCardContent');
             card.innerHTML = `
                 <div class="list-inner-wrapper">
                     <div class="header-section">
-                        <div class="form-title">لیستی دەرچوونەکان</div>
+                        <div class="form-title">لیستی دەرچوونەکان </div>
                         <input type="date" class="date-input" id="recordDate">
                     </div>
 
                     <div class="totals-grid">
                         <div class="total-card">
-                        
                             <div class="total-value" id="totalWeight">٠ کگم</div>
                         </div>
                         <div class="total-card">
-                            
                             <div class="total-value" id="totalPieces">٠</div>
                         </div>
                         <div class="total-card">
@@ -1314,28 +1338,29 @@
             `;
 
             const dateInput = document.getElementById('recordDate');
-            const today = new Date();
-            const year = today.getFullYear();
-            const month = String(today.getMonth() + 1).padStart(2, '0');
-            const defaultDate = `${year}-${month}-01`;
-            dateInput.value = defaultDate;
+            dateInput.value = getLocalTodayDate();
 
             fetchDeliveryRecords(dateInput.value);
 
             dateInput.addEventListener('change', (e) => {
                 fetchDeliveryRecords(e.target.value);
             });
+
+            listAutoRefreshInterval = setInterval(() => {
+                fetchDeliveryRecords(dateInput.value, true);
+            }, 5000);
         }
 
         function renderDefaultListsView() {
+            clearAllIntervals();
             document.querySelectorAll('#defaultNavBar .nav-item').forEach(btn => btn.classList.remove('active'));
-            event.currentTarget.classList.add('active');
+            if(event && event.currentTarget) event.currentTarget.classList.add('active');
 
             const card = document.getElementById('formCardContent');
             card.innerHTML = `
                 <div class="list-inner-wrapper">
                     <div class="header-section">
-                        <div class="form-title">لیستی دەرچوونەکان</div>
+                        <div class="form-title">لیستی دەرچوونەکان (خۆکار)</div>
                         <input type="date" class="date-input" id="recordDate">
                     </div>
 
@@ -1365,24 +1390,25 @@
             `;
 
             const dateInput = document.getElementById('recordDate');
-            const today = new Date();
-            const year = today.getFullYear();
-            const month = String(today.getMonth() + 1).padStart(2, '0');
-            const defaultDate = `${year}-${month}-01`;
-            dateInput.value = defaultDate;
+            dateInput.value = getLocalTodayDate();
 
             fetchDeliveryRecords(dateInput.value);
 
             dateInput.addEventListener('change', (e) => {
                 fetchDeliveryRecords(e.target.value);
             });
+
+            listAutoRefreshInterval = setInterval(() => {
+                fetchDeliveryRecords(dateInput.value, true);
+            }, 5000);
         }
 
-        // فەنکشنی ڕەسەن کە مەرجی دیاریکردنی شۆفێری تێدا جێگیر کراوە
-        async function fetchDeliveryRecords(selectedDate) {
+        async function fetchDeliveryRecords(selectedDate, isBackground = false) {
             const recordsContainer = document.getElementById('recordsList');
             if(!recordsContainer) return;
-            recordsContainer.innerHTML = '<div class="no-data">چاوەڕێبە...</div>';
+            if(!isBackground) {
+                recordsContainer.innerHTML = '<div class="no-data">چاوەڕێبە...</div>';
+            }
 
             const currentUsername = currentUserData ? currentUserData.username : '';
 
@@ -1463,7 +1489,9 @@
 
             } catch (err) {
                 console.error('هەڵە لە هێنانی داتاکان:', err.message);
-                recordsContainer.innerHTML = '<div class="no-data" style="color: red;">هەڵەیەک ڕویدا لە پەیوەندیکردن بە داتابەیس</div>';
+                if(!isBackground) {
+                    recordsContainer.innerHTML = '<div class="no-data" style="color: red;">هەڵەیەک ڕویدا لە پەیوەندیکردن بە داتابەیس</div>';
+                }
                 resetTotals();
             }
         }
@@ -1480,7 +1508,7 @@
         }
 
         async function handleSecondCargoClick() {
-            const today = new Date().toISOString().split('T')[0];
+            const today = getLocalTodayDate();
             const driverName = currentUserData ? currentUserData.username : '';
 
             try {
@@ -1520,7 +1548,7 @@
         }
 
         async function handleThirdCargoClick() {
-            const today = new Date().toISOString().split('T')[0];
+            const today = getLocalTodayDate();
             const baseDriver = currentUserData ? currentUserData.username : '';
             const driverName = `${baseDriver} دوو`;
 
@@ -1561,10 +1589,10 @@
         }
 
         async function checkAndExecuteZoneAction(actionType, isDouble) {
-            const today = new Date().toISOString().split('T')[0];
+            const today = getLocalTodayDate();
             const baseDriver = currentUserData ? currentUserData.username : '';
             const driverName = isDouble ? `${baseDriver} دوو` : baseDriver;
-            const now24Hour = new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false });
+            const now24Hour = getLocalCurrentTime();
 
             try {
                 const { data, error } = await supabaseClient
@@ -1650,10 +1678,10 @@
         }
 
         async function checkAndExecuteZoneActionTriple(actionType) {
-            const today = new Date().toISOString().split('T')[0];
+            const today = getLocalTodayDate();
             const baseDriver = currentUserData ? currentUserData.username : '';
             const driverName = `${baseDriver} سێ`;
-            const now24Hour = new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false });
+            const now24Hour = getLocalCurrentTime();
 
             try {
                 const { data, error } = await supabaseClient
@@ -1718,10 +1746,11 @@
         }
 
         async function checkAndRenderDriverDeliveryForm(isDouble) {
-            const today = new Date().toISOString().split('T')[0];
+            clearAllIntervals();
+            const today = getLocalTodayDate();
             const baseDriver = currentUserData ? currentUserData.username : '';
             const driverName = isDouble ? `${baseDriver} دوو` : baseDriver;
-            const nowTime = new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false });
+            const nowTime = getLocalCurrentTime();
 
             let existingRecord = null;
             try {
@@ -1778,7 +1807,7 @@
                         <input type="number" id="d_receiptNumber" value="${isEditMode ? (existingRecord.receipt_number || '') : ''}" placeholder="ژمارەی وەسڵ" ${readOnlyAttr} onchange="autoSaveRecord(${isDouble ? 2 : 1})" required>
                     </div>
                     <div class="field">
-                        <input type="time" id="d_recordTime" value="${recordTimeVal}" ${readOnlyAttr} onchange="autoSaveRecord(${isDouble ? 2 : 1})" required>
+                        <input type="time" step="1" id="d_recordTime" value="${recordTimeVal}" ${readOnlyAttr} onchange="autoSaveRecord(${isDouble ? 2 : 1})" required>
                     </div>
                     <div class="form-buttons-row" id="actionButtonContainer" style="margin-top: 8px;">
                         ${isEditMode ? `<button type="button" class="btn-submit" id="mainActionBtn" style="text-align: right; padding-right: 20px;" onclick="enableEditingForForm(${isDouble ? 2 : 1})">چاککردن</button>` : `<button type="button" class="btn-submit" id="mainActionBtn" style="text-align: right; padding-right: 20px;" onclick="submitDeliveryRecord(${isDouble ? 2 : 1})">تۆمارکردن</button>`}
@@ -1786,13 +1815,23 @@
                     </div>
                 </div>
             `;
+
+            if (!isEditMode) {
+                liveTimeInterval = setInterval(() => {
+                    const timeEl = document.getElementById('d_recordTime');
+                    if (timeEl && document.activeElement !== timeEl) {
+                        timeEl.value = getLocalCurrentTime();
+                    }
+                }, 1000);
+            }
         }
 
         async function checkAndRenderDriverDeliveryFormTriple() {
-            const today = new Date().toISOString().split('T')[0];
+            clearAllIntervals();
+            const today = getLocalTodayDate();
             const baseDriver = currentUserData ? currentUserData.username : '';
             const driverName = `${baseDriver} سێ`;
-            const nowTime = new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false });
+            const nowTime = getLocalCurrentTime();
 
             let existingRecord = null;
             try {
@@ -1849,7 +1888,7 @@
                         <input type="number" id="d_receiptNumber" value="${isEditMode ? (existingRecord.receipt_number || '') : ''}" placeholder="ژمارەی وەسڵ" ${readOnlyAttr} onchange="autoSaveRecord(3)" required>
                     </div>
                     <div class="field">
-                        <input type="time" id="d_recordTime" value="${recordTimeVal}" ${readOnlyAttr} onchange="autoSaveRecord(3)" required>
+                        <input type="time" step="1" id="d_recordTime" value="${recordTimeVal}" ${readOnlyAttr} onchange="autoSaveRecord(3)" required>
                     </div>
                     <div class="form-buttons-row" id="actionButtonContainer" style="margin-top: 8px;">
                         ${isEditMode ? `<button type="button" class="btn-submit" id="mainActionBtn" style="text-align: right; padding-right: 20px;" onclick="enableEditingForForm(3)">چاککردن</button>` : `<button type="button" class="btn-submit" id="mainActionBtn" style="text-align: right; padding-right: 20px;" onclick="submitDeliveryRecord(3)">تۆمارکردن</button>`}
@@ -1857,9 +1896,19 @@
                     </div>
                 </div>
             `;
+
+            if (!isEditMode) {
+                liveTimeInterval = setInterval(() => {
+                    const timeEl = document.getElementById('d_recordTime');
+                    if (timeEl && document.activeElement !== timeEl) {
+                        timeEl.value = getLocalCurrentTime();
+                    }
+                }, 1000);
+            }
         }
 
         function enableEditingForForm(level) {
+            clearAllIntervals();
             const inputs = document.querySelectorAll('.driver-form-stack input:not(#d_driver)');
             inputs.forEach(input => {
                 input.removeAttribute('readonly');
@@ -1871,7 +1920,7 @@
         }
 
         async function autoSaveRecord(level) {
-            const today = new Date().toISOString().split('T')[0];
+            const today = getLocalTodayDate();
             const driverName = document.getElementById('d_driver').value.trim();
 
             const updatedData = {
@@ -1960,8 +2009,9 @@
         }
 
         async function submitDeliveryRecord(level) {
-            const today = new Date().toISOString().split('T')[0];
-            const recordTimeVal = document.getElementById('d_recordTime').value.trim() || new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false });
+            clearAllIntervals();
+            const today = getLocalTodayDate();
+            const recordTimeVal = document.getElementById('d_recordTime').value.trim() || getLocalCurrentTime();
 
             const recordData = {
                 driver: document.getElementById('d_driver').value.trim(),
@@ -2010,16 +2060,17 @@
         }
 
         function renderSettingsForm() {
+            clearAllIntervals();
             const currentAvatar = (currentUserData && currentUserData.avatar_url) ? currentUserData.avatar_url : '';
             const currentUsername = (currentUserData && currentUserData.username) ? currentUserData.username : 'بەکارهێنەر';
             const imgTag = currentAvatar ? `<img id="previewAvatar" src="${currentAvatar}" alt="وێنە">` : `<img id="previewAvatar" src="" alt="وێنە" style="display:none;">`;
             
             const isLight = document.body.classList.contains('light-theme');
-            const themeText = isLight ? 'دۆخی تاریک (ڕەش)' : 'دۆخی ڕووناکی (سپی)';
+            const themeText = isLight ? 'ڕەش پؤش' : 'سپی پۆش';
             
             const card = document.getElementById('formCardContent');
             card.innerHTML = `
-                <h2>ڕێکخستنی پڕۆفایل و سیستەم</h2>
+                <h2>ڕێکخستنی پڕۆفایل  </h2>
                 <div class="settings-avatar-container">
                     <label class="avatar-upload-circle">
                         ${imgTag}
@@ -2033,7 +2084,7 @@
 
                 <div style="margin-top: 15px;">
                     <button type="button" class="settings-action-btn" onclick="openPasswordPopup()">
-                        <span>گۆڕینی تێپەڕەوشە (پاسۆڕد)</span>
+                        <span>گۆڕینی تێپەڕەوشە </span>
                         <svg viewBox="0 0 24 24"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg>
                     </button>
 
@@ -2162,6 +2213,7 @@
         }
 
         function switchDriverTab(buttonElement, titleText, descText, isSettings) {
+            clearAllIntervals();
             document.querySelectorAll('#driverNavBar .nav-item').forEach(btn => btn.classList.remove('active'));
             buttonElement.classList.add('active');
             
@@ -2174,6 +2226,7 @@
         }
 
         function switchDefaultTab(buttonElement, titleText, descText, isSettings) {
+            clearAllIntervals();
             document.querySelectorAll('#defaultNavBar .nav-item').forEach(btn => btn.classList.remove('active'));
             buttonElement.classList.add('active');
             
@@ -2186,6 +2239,7 @@
         }
 
         function logout() {
+            clearAllIntervals();
             localStorage.removeItem('currentUser');
             sessionStorage.removeItem('currentUser');
             currentUserData = null;
