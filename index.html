@@ -464,6 +464,28 @@
             margin-bottom: 2px;
         }
 
+        /* ستايلي دوگمەی سەوزی پارەی هێنراوە لە خوارەوەی ساربارەکە */
+        .btn-collected-money {
+            width: 100%;
+            padding: 12px 18px;
+            background: #10b981;
+            color: white;
+            border: none;
+            border-radius: 14px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+            transition: opacity 0.2s;
+            margin-top: 4px;
+        }
+        .btn-collected-money:hover {
+            opacity: 0.9;
+        }
+
         #formSection {
             display: none;
             flex: 1;
@@ -531,6 +553,156 @@
             padding-bottom: 10px;
         }
 
+        .floating-nav-bar {
+            position: fixed;
+            bottom: 15px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--card-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border-color);
+            display: none;
+            gap: 15px;
+            padding: 8px 18px;
+            border-radius: 50px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+            z-index: 1000;
+        }
+
+        .nav-item {
+            background: none;
+            border: none;
+            color: var(--sub-text);
+            cursor: pointer;
+            width: 38px;
+            height: 38px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: all 0.2s ease;
+        }
+
+        .nav-item:hover, .nav-item.active {
+            background: var(--primary-color);
+            color: #ffffff;
+            box-shadow: 0 0 12px rgba(168, 85, 247, 0.5);
+        }
+
+        .nav-item svg {
+            width: 18px;
+            height: 18px;
+            fill: currentColor;
+        }
+
+        .list-inner-wrapper {
+            width: 100%;
+            max-width: 480px;
+            margin: 0 auto;
+            text-align: right;
+        }
+        .list-inner-wrapper .header-section {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            gap: 6px;
+        }
+        .list-inner-wrapper .form-title {
+            font-size: 15px;
+            font-weight: bold;
+            color: var(--text-color);
+        }
+        .list-inner-wrapper .date-input {
+            background: var(--input-bg);
+            border: 1px solid var(--border-color);
+            padding: 6px 8px;
+            border-radius: 10px;
+            font-size: 12px;
+            color: var(--text-color);
+            outline: none;
+            width: 130px;
+        }
+        .list-inner-wrapper .totals-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+        .list-inner-wrapper .total-card {
+            background: var(--input-bg);
+            border: 1px solid var(--border-color);
+            padding: 10px;
+            border-radius: 12px;
+        }
+        .list-inner-wrapper .total-title {
+            font-size: 11px;
+            color: var(--sub-text);
+            margin-bottom: 3px;
+        }
+        .list-inner-wrapper .total-value {
+            font-size: 14px;
+            font-weight: bold;
+            color: var(--text-color);
+        }
+        .list-inner-wrapper .records-container {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .list-inner-wrapper .record-card {
+            background: var(--input-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .list-inner-wrapper .record-main-info {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .list-inner-wrapper .info-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 13px;
+        }
+        .list-inner-wrapper .label {
+            color: var(--sub-text);
+        }
+        .list-inner-wrapper .value {
+            font-weight: 600;
+            color: var(--text-color);
+        }
+        
+        .list-inner-wrapper .record-details {
+            max-height: 0;
+            overflow-y: auto;
+            transition: max-height 0.3s ease-out, margin-top 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .list-inner-wrapper .record-card.active .record-details {
+            max-height: 280px;
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .list-inner-wrapper .detail-item {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+        }
+        .list-inner-wrapper .no-data {
+            text-align: center;
+            color: var(--sub-text);
+            font-size: 13px;
+            padding: 15px;
+        }
+
         .settings-avatar-container {
             display: flex;
             flex-direction: column;
@@ -596,207 +768,38 @@
             text-align: center;
         }
 
-        .settings-action-btn {
-            width: 100%;
-            padding: 12px 16px;
-            background: var(--input-bg);
-            color: var(--text-color);
-            border: 1px solid var(--border-color);
-            border-radius: 12px;
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: 600;
-            text-align: right;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-top: 10px;
-            transition: all 0.2s ease;
-        }
-
-        .settings-action-btn:hover {
-            background: rgba(168, 85, 247, 0.15);
-            border-color: var(--primary-color);
-        }
-
-        .settings-action-btn svg {
-            width: 18px;
-            height: 18px;
-            fill: var(--primary-color);
-        }
-
-        .settings-logout-btn {
-            width: 100%;
-            padding: 12px 16px;
-            background: rgba(239, 68, 68, 0.12);
-            color: #ef4444;
-            border: 1px solid rgba(239, 68, 68, 0.3);
-            border-radius: 12px;
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: 600;
-            text-align: right;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-top: 10px;
-            transition: all 0.2s ease;
-        }
-
-        .settings-logout-btn:hover {
-            background: rgba(239, 68, 68, 0.22);
-        }
-
-        .settings-logout-btn svg {
-            width: 18px;
-            height: 18px;
-            fill: #ef4444;
-        }
-
-        .floating-nav-bar {
+        /* ستايلي مۆداڵی پارەی هێنراوە (لە ناوەڕاستی شاشە کەمێک سەرەوەتر) */
+        #collectedMoneyModal {
             position: fixed;
-            bottom: 15px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: var(--card-bg);
-            backdrop-filter: blur(20px);
-            border: 1px solid var(--border-color);
-            display: none;
-            gap: 15px;
-            padding: 8px 18px;
-            border-radius: 50px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
-            z-index: 1000;
-        }
-
-        .nav-item {
-            background: none;
-            border: none;
-            color: var(--sub-text);
-            cursor: pointer;
-            width: 38px;
-            height: 38px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 50%;
-            transition: all 0.2s ease;
-        }
-
-        .nav-item:hover, .nav-item.active {
-            background: var(--primary-color);
-            color: #ffffff;
-            box-shadow: 0 0 12px rgba(168, 85, 247, 0.5);
-        }
-
-        .nav-item svg {
-            width: 18px;
-            height: 18px;
-            fill: currentColor;
-        }
-
-        .list-inner-wrapper {
+            top: 0;
+            left: 0;
             width: 100%;
-            max-width: 480px;
-            margin: 0 auto;
-            text-align: right;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(8px);
+            display: none;
+            justify-content: center;
+            align-items: flex-start;
+            padding-top: 25vh; /* کەمێک سەرەوەتر لە ناوەڕاست */
+            z-index: 9999999;
         }
-        .list-inner-wrapper .header-section {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 15px;
-        }
-        .list-inner-wrapper .form-title {
-            font-size: 16px;
-            font-weight: bold;
-            color: var(--text-color);
-        }
-        .list-inner-wrapper .date-input {
-            background: var(--input-bg);
+
+        .collected-money-card {
+            background: var(--card-bg);
             border: 1px solid var(--border-color);
-            padding: 6px 10px;
-            border-radius: 10px;
-            font-size: 13px;
-            color: var(--text-color);
-            outline: none;
-        }
-        .list-inner-wrapper .totals-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 8px;
-            margin-bottom: 15px;
-        }
-        .list-inner-wrapper .total-card {
-            background: var(--input-bg);
-            border: 1px solid var(--border-color);
-            padding: 10px;
-            border-radius: 12px;
-        }
-        .list-inner-wrapper .total-title {
-            font-size: 11px;
-            color: var(--sub-text);
-            margin-bottom: 3px;
-        }
-        .list-inner-wrapper .total-value {
-            font-size: 14px;
-            font-weight: bold;
-            color: var(--text-color);
-        }
-        .list-inner-wrapper .records-container {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-        .list-inner-wrapper .record-card {
-            background: var(--input-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 12px;
-            padding: 12px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-        .list-inner-wrapper .record-main-info {
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-        }
-        .list-inner-wrapper .info-row {
-            display: flex;
-            justify-content: space-between;
-            font-size: 13px;
-        }
-        .list-inner-wrapper .label {
-            color: var(--sub-text);
-        }
-        .list-inner-wrapper .value {
-            font-weight: 600;
-            color: var(--text-color);
-        }
-        .list-inner-wrapper .record-details {
-            max-height: 0;
-            overflow: hidden;
-            transition: max-height 0.3s ease-out, margin-top 0.3s ease;
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-        }
-        .list-inner-wrapper .record-card.active .record-details {
-            max-height: 400px;
-            margin-top: 10px;
-            padding-top: 10px;
-            border-top: 1px solid var(--border-color);
-        }
-        .list-inner-wrapper .detail-item {
-            display: flex;
-            justify-content: space-between;
-            font-size: 12px;
-        }
-        .list-inner-wrapper .no-data {
+            padding: 25px;
+            border-radius: 20px;
+            width: 90%;
+            max-width: 340px;
             text-align: center;
-            color: var(--sub-text);
-            font-size: 13px;
-            padding: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.8);
+        }
+
+        .collected-money-card h3 {
+            font-size: 16px;
+            margin-bottom: 15px;
+            color: var(--text-color);
+            text-align: center;
         }
     </style>
 </head>
@@ -811,11 +814,24 @@
         <div class="confirm-card">
             <h3 id="modalTitleText">دەتەوێت گۆڕانکاری بکەیت؟</h3>
             <div id="modalTimeInputContainer" style="display:none;">
-                <input type="time" step="1" id="modalTimeField">
+                <input type="time" id="modalTimeField">
             </div>
             <div class="confirm-buttons">
                 <button class="btn-confirm-yes" id="modalYesBtn">بەڵێ</button>
                 <button class="btn-confirm-no" id="modalNoBtn">نەخێر</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ویندۆی (پارەی هێنراوە) کە لە ناوەڕاستی شاشە کەمێک سەرەوەتر دەردەکەوێت -->
+    <div id="collectedMoneyModal">
+        <div class="collected-money-card">
+            <div class="field" style="margin-bottom: 15px;">
+                <input type="text" id="collectedMoneyInput" placeholder="چەندت هیناوە؟" autocomplete="off" style="text-align: center; font-size: 16px; padding: 12px;" inputmode="numeric">
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 8px;">
+                <button type="button" class="btn-submit" id="saveCollectedMoneyBtn" onclick="submitCollectedMoney()" style="background: #10b981; text-align: center; padding-right: 0;">تۆمار</button>
+                <button type="button" class="btn-back" onclick="closeCollectedMoneyModal()" style="text-align: center; padding-right: 0;">پەشیمانبوونەوە</button>
             </div>
         </div>
     </div>
@@ -825,11 +841,11 @@
             <h3>گۆڕینی تێپەڕەوشە</h3>
             <div class="field" style="margin-bottom: 8px;">
                 <label style="font-size: 12px; color: var(--sub-text); display: block; margin-bottom: 4px;">پاسۆڕدی کۆن:</label>
-                <input type="password" id="popupOldPassword" placeholder="پاسۆڕدی کۆن بنووسە...">
+                <input type="password" id="popupOldPassword" placeholder="پاسۆڕدی کۆن (٤ ژمارە)..." maxlength="4" inputmode="numeric" oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 4);">
             </div>
             <div class="field" style="margin-bottom: 12px;">
                 <label style="font-size: 12px; color: var(--sub-text); display: block; margin-bottom: 4px;">پاسۆڕدی نوێ:</label>
-                <input type="password" id="popupNewPassword" placeholder="پاسۆڕدی نوێ بنووسە...">
+                <input type="password" id="popupNewPassword" placeholder="پاسۆڕدی نوێ (٤ ژمارە)..." maxlength="4" inputmode="numeric" oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 4);">
             </div>
             <div class="confirm-buttons">
                 <button class="btn-confirm-yes" onclick="updateUserPassword()">تۆمارکردن</button>
@@ -850,7 +866,7 @@
                 </div>
 
                 <div class="field password-field">
-                    <input type="password" id="password" placeholder="تێپەڕەوشە (٤ ژمارە)" maxlength="4" inputmode="numeric" required>
+                    <input type="password" id="password" placeholder="تێپەڕەوشە (٤ ژمارە)" maxlength="4" inputmode="numeric" oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 4);" required>
                     <button type="button" class="toggle-password" onclick="togglePasswordVisibility()">
                         <svg id="eyeIcon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
                     </button>
@@ -922,7 +938,6 @@
         let liveTimeInterval = null; 
         let listAutoRefreshInterval = null;
 
-        // هێنانی بەرواری ناوخۆیی ئامێرەکە بە شێوازی YYYY-MM-DD بێ جیاوازی ناوچەی کاتی
         function getLocalTodayDate() {
             const d = new Date();
             const year = d.getFullYear();
@@ -931,12 +946,17 @@
             return `${year}-${month}-${day}`;
         }
 
-        // هێنانی کاتی ناوخۆیی ئامێرەکە بە شێوازی 24 کاتژمێری
+        function getFirstDayOfCurrentMonth() {
+            const d = new Date();
+            const year = d.getFullYear();
+            const month = String(d.getMonth() + 1).padStart(2, '0');
+            return `${year}-${month}-01`;
+        }
+
         function getLocalCurrentTime() {
             const d = new Date();
             return String(d.getHours()).padStart(2, '0') + ':' + 
-                   String(d.getMinutes()).padStart(2, '0') + ':' + 
-                   String(d.getSeconds()).padStart(2, '0');
+                   String(d.getMinutes()).padStart(2, '0');
         }
 
         function showCustomNotification(isSuccess, message) {
@@ -971,7 +991,11 @@
 
             titleEl.textContent = "ئەم کاتە پێشتر تۆمار کراوە. دەتەوێت دەستکاری بکەیت؟";
             timeContainer.style.display = 'block';
-            timeField.value = defaultTime || getLocalCurrentTime();
+            let cleanDefaultTime = defaultTime;
+            if (cleanDefaultTime && cleanDefaultTime.split(':').length > 2) {
+                cleanDefaultTime = cleanDefaultTime.split(':').slice(0, 2).join(':');
+            }
+            timeField.value = cleanDefaultTime || getLocalCurrentTime();
 
             modal.style.display = 'flex';
 
@@ -992,6 +1016,7 @@
             try {
                 const cachedUsers = localStorage.getItem('cache_users');
                 if (cachedUsers) allUsers = JSON.parse(cachedUsers);
+                allUsers.sort((a, b) => a.localeCompare(b));
 
                 const cachedDist = localStorage.getItem('cache_distributors');
                 if (cachedDist) distributorsList = JSON.parse(cachedDist);
@@ -1023,6 +1048,20 @@
                 currentUserData = JSON.parse(savedUser);
                 showForm(currentUserData);
             }
+
+            // چالاککردنی تەنها ژمارە و دابەشکردنی ڤاریزە بۆ خانەی پارەی هێنراوە
+            const collectedInput = document.getElementById('collectedMoneyInput');
+            if (collectedInput) {
+                collectedInput.addEventListener('input', function(e) {
+                    // تەنها ژمارە قبوڵ دەکات و پیت یان هێمای تر لاببەرە
+                    let value = this.value.replace(/[^0-9]/g, '');
+                    if (value) {
+                        // ڕێکخستنی ڤاریزە دوای هەمیشە ٣ ژمارە (Formatting Numbers with Commas)
+                        value = Number(value).toLocaleString('en-US');
+                    }
+                    this.value = value;
+                });
+            }
         });
 
         async function fetchUsersList() {
@@ -1030,6 +1069,7 @@
                 const { data } = await supabaseClient.from('users').select('username');
                 if (data) {
                     allUsers = data.map(u => u.username).filter(Boolean);
+                    allUsers.sort((a, b) => a.localeCompare(b));
                     localStorage.setItem('cache_users', JSON.stringify(allUsers));
                 }
             } catch (err) {
@@ -1039,11 +1079,20 @@
 
         async function fetchDynamicData() {
             try {
-                const { data: distData } = await supabaseClient.from('distributors').select('name');
-                if (distData) {
-                    distributorsList = distData.map(d => d.name).filter(Boolean);
-                    localStorage.setItem('cache_distributors', JSON.stringify(distributorsList));
+                const { data: distData } = await supabaseClient
+                    .from('users')
+                    .select('username')
+                    .ilike('profession', '%دابەشکار%');
+                
+                if (distData && distData.length > 0) {
+                    distributorsList = distData.map(d => d.username).filter(Boolean);
+                } else {
+                    const { data: fallbackDist } = await supabaseClient.from('distributors').select('name');
+                    if (fallbackDist) {
+                        distributorsList = fallbackDist.map(d => d.name).filter(Boolean);
+                    }
                 }
+                localStorage.setItem('cache_distributors', JSON.stringify(distributorsList));
 
                 const { data: delData } = await supabaseClient.from('delegates').select('name');
                 if (delData) {
@@ -1090,6 +1139,8 @@
                 listContainer.style.display = 'none';
                 return;
             }
+            usersArray.sort((a, b) => a.localeCompare(b));
+
             listContainer.style.display = 'block';
             listContainer.innerHTML = '';
             usersArray.forEach(user => {
@@ -1189,6 +1240,15 @@
             if (listAutoRefreshInterval) clearInterval(listAutoRefreshInterval);
         }
 
+        function formatTimeDisplay(timeStr) {
+            if (!timeStr) return '';
+            const parts = timeStr.split(':');
+            if (parts.length >= 2) {
+                return `${parts[0]}:${parts[1]}`;
+            }
+            return timeStr;
+        }
+
         async function renderDriverMainView(level = 1) {
             clearAllIntervals();
             document.querySelectorAll('#driverNavBar .nav-item').forEach(btn => btn.classList.remove('active'));
@@ -1214,25 +1274,36 @@
                 if (data && data.length > 0) {
                     record = data[0];
                 }
-            } catch (err) {
+            } catch (err)  {
                 console.error(err);
             }
 
             const suffixTxt = level === 3 ? ' سێ' : (level === 2 ? ' دوو' : '');
             
             let exitText = `دەرچوون${suffixTxt}`;
-            let exitTimeSpan = (record && record.record_time) ? `<span>${record.record_time}</span>` : `<span></span>`;
+            let exitTimeSpan = (record && record.record_time) ? `<span>${formatTimeDisplay(record.record_time)}</span>` : `<span></span>`;
 
             let inZoneText = `ناو زۆن${suffixTxt}`;
-            let inZoneTimeSpan = (record && record.in_zone_time) ? `<span>${record.in_zone_time}</span>` : `<span></span>`;
+            let inZoneTimeSpan = (record && record.in_zone_time) ? `<span>${formatTimeDisplay(record.in_zone_time)}</span>` : `<span></span>`;
 
             let outZoneText = `دەرێی زۆن${suffixTxt}`;
-            let outZoneTimeSpan = (record && record.out_zone_time) ? `<span>${record.out_zone_time}</span>` : `<span></span>`;
+            let outZoneTimeSpan = (record && record.out_zone_time) ? `<span>${formatTimeDisplay(record.out_zone_time)}</span>` : `<span></span>`;
 
             let arrivalText = `گەشتنەوە${suffixTxt}`;
-            let arrivalTimeSpan = (record && record.arrival_time) ? `<span>${record.arrival_time}</span>` : `<span></span>`;
+            let arrivalTimeSpan = (record && record.arrival_time) ? `<span>${formatTimeDisplay(record.arrival_time)}</span>` : `<span></span>`;
 
             if (level === 1) {
+                let showSecondCargoBtn = false;
+                if (record && record.arrival_time) {
+                    const [arrHour, arrMin] = record.arrival_time.split(':').map(Number);
+                    const arrDate = new Date();
+                    arrDate.setHours(arrHour, arrMin + 5, 0, 0); 
+                    const now = new Date();
+                    if (now >= arrDate) {
+                        showSecondCargoBtn = true;
+                    }
+                }
+
                 card.innerHTML = `
                     <h2>بەشی شۆفێر</h2>
                     <div style="margin-top: 10px;">
@@ -1249,13 +1320,32 @@
                             <button type="button" class="btn-sub" onclick="checkAndExecuteZoneAction('arrival', false)">
                                 <span>${arrivalText}</span> ${arrivalTimeSpan}
                             </button>
+                            ${showSecondCargoBtn ? `
                             <button type="button" class="btn-sub" onclick="handleSecondCargoClick()">
                                 <span>باری دووەم</span> <span></span>
+                            </button>` : ''}
+                        </div>
+                        <!-- سەر باڕەکەی خوارەوە کە دووگمەی (پارەی هێنراوە) تێدایە -->
+                        <div style="margin-top: 12px; border-top: 1px solid var(--border-color); padding-top: 10px;">
+                            <button type="button" class="btn-collected-money" onclick="openCollectedMoneyModal(1)">
+                                <span>پارەی هێنراە</span>
+                                <span>${record && record.collected_money ? record.collected_money.toLocaleString() + ' د.ع' : ''}</span>
                             </button>
                         </div>
                     </div>
                 `;
             } else if (level === 2) {
+                let showThirdCargoBtn = false;
+                if (record && record.arrival_time) {
+                    const [arrHour, arrMin] = record.arrival_time.split(':').map(Number);
+                    const arrDate = new Date();
+                    arrDate.setHours(arrHour, arrMin + 5, 0, 0);
+                    const now = new Date();
+                    if (now >= arrDate) {
+                        showThirdCargoBtn = true;
+                    }
+                }
+
                 card.innerHTML = `
                     <h2>بەشی شۆفێر (باری دووەم)</h2>
                     <div style="margin-top: 10px;">
@@ -1272,10 +1362,17 @@
                             <button type="button" class="btn-sub" onclick="checkAndExecuteZoneAction('arrival', true)">
                                 <span>${arrivalText}</span> ${arrivalTimeSpan}
                             </button>
+                            ${showThirdCargoBtn ? `
                             <button type="button" class="btn-sub" onclick="handleThirdCargoClick()">
                                 <span>باری سێیەم</span> <span></span>
-                            </button>
+                            </button>` : ''}
                             <button type="button" class="btn-back" style="text-align: right; padding-right: 20px; margin-top: 5px;" onclick="renderDriverMainView(1)">گەڕانەوە</button>
+                        </div>
+                        <div style="margin-top: 12px; border-top: 1px solid var(--border-color); padding-top: 10px;">
+                            <button type="button" class="btn-collected-money" onclick="openCollectedMoneyModal(2)">
+                                <span>پارەی هێنراە</span>
+                                <span>${record && record.collected_money ? record.collected_money.toLocaleString() + ' د.ع' : ''}</span>
+                            </button>
                         </div>
                     </div>
                 `;
@@ -1298,8 +1395,86 @@
                             </button>
                             <button type="button" class="btn-back" style="text-align: right; padding-right: 20px; margin-top: 5px;" onclick="renderDriverMainView(2)">گەڕانەوە</button>
                         </div>
+                        <div style="margin-top: 12px; border-top: 1px solid var(--border-color); padding-top: 10px;">
+                            <button type="button" class="btn-collected-money" onclick="openCollectedMoneyModal(3)">
+                                <span>پارەی هێنراە</span>
+                                <span>${record && record.collected_money ? record.collected_money.toLocaleString() + ' د.ع' : ''}</span>
+                            </button>
+                        </div>
                     </div>
                 `;
+            }
+        }
+
+        // کۆدەکانی پەیوەست بە کردنەوە و داخستن و تۆمارکردنی (پارەی هێنراوە)
+        let currentCollectedMoneyLevel = 1;
+
+        async function openCollectedMoneyModal(level) {
+            currentCollectedMoneyLevel = level;
+            const today = getLocalTodayDate();
+            const baseDriver = currentUserData ? currentUserData.username : '';
+            let driverName = baseDriver;
+            if (level === 2) driverName = `${baseDriver} دوو`;
+            if (level === 3) driverName = `${baseDriver} سێ`;
+
+            try {
+                // پشکنین بۆ ئەوەی دڵنیابین کە دووگمەی دەرچوون لەزۆن تۆمار کرابێت یان نا
+                const { data, error } = await supabaseClient
+                    .from('delivery_records')
+                    .select('*')
+                    .eq('driver', driverName)
+                    .eq('record_date', today);
+
+                if (error || !data || data.length === 0 || !data[0].record_time) {
+                    // ئەگەر دەرچوون تۆمار نەکرابێت، ئەم ویندۆیە دەبێتەوە کە داوای دەکەیت
+                    showCustomNotification(false, 'ئەوتوو جارێ بەسەلامەتی وەرەوە، دواتر دەتوانی پارەکەت تۆمار بکەی');
+                    return;
+                }
+
+                // ئەگەر تۆمارکرابوو، ویندۆی پارەی هێنراوە دەکرێتەوە
+                const record = data[0];
+                const inputField = document.getElementById('collectedMoneyInput');
+                inputField.value = record.collected_money ? Number(record.collected_money).toLocaleString('en-US') : '';
+                
+                document.getElementById('collectedMoneyModal').style.display = 'flex';
+                inputField.focus();
+            } catch (err) {
+                showCustomNotification(false, 'هەڵە روویدا لە پشکنینی داتاکان');
+            }
+        }
+
+        function closeCollectedMoneyModal() {
+            document.getElementById('collectedMoneyModal').style.display = 'none';
+            document.getElementById('collectedMoneyInput').value = '';
+        }
+
+        async function submitCollectedMoney() {
+            const today = getLocalTodayDate();
+            const baseDriver = currentUserData ? currentUserData.username : '';
+            let driverName = baseDriver;
+            if (currentCollectedMoneyLevel === 2) driverName = `${baseDriver} دوو`;
+            if (currentCollectedMoneyLevel === 3) driverName = `${baseDriver} سێ`;
+
+            const rawVal = document.getElementById('collectedMoneyInput').value.replace(/,/g, '').trim();
+            const moneyValue = parseFloat(rawVal) || 0;
+
+            try {
+                // داتاکە دەچێتە تەبڵی delivery_records بۆ ڕیزی collected_money
+                const { error } = await supabaseClient
+                    .from('delivery_records')
+                    .update({ collected_money: moneyValue })
+                    .eq('driver', driverName)
+                    .eq('record_date', today);
+
+                if (error) {
+                    showCustomNotification(false, 'هەڵە لە تۆمارکردنی پارە');
+                } else {
+                    showCustomNotification(true, 'پارەی هێنراوە بە سەرکەوتوویی تۆمار کرا');
+                    closeCollectedMoneyModal();
+                    renderDriverMainView(currentCollectedMoneyLevel);
+                }
+            } catch (err) {
+                showCustomNotification(false, 'هەڵە روویدا');
             }
         }
 
@@ -1312,8 +1487,11 @@
             card.innerHTML = `
                 <div class="list-inner-wrapper">
                     <div class="header-section">
-                        <div class="form-title">لیستی دەرچوونەکان </div>
-                        <input type="date" class="date-input" id="recordDate">
+                        <div class="form-title">لیستی دەرچوونەکان</div>
+                        <div style="display: flex; gap: 4px;">
+                            <input type="date" class="date-input" id="fromDate" title="لە بەرواری">
+                            <input type="date" class="date-input" id="toDate" title="بۆ بەرواری">
+                        </div>
                     </div>
 
                     <div class="totals-grid">
@@ -1337,18 +1515,24 @@
                 </div>
             `;
 
-            const dateInput = document.getElementById('recordDate');
-            dateInput.value = getLocalTodayDate();
+            const fromDateInput = document.getElementById('fromDate');
+            const toDateInput = document.getElementById('toDate');
 
-            fetchDeliveryRecords(dateInput.value);
+            fromDateInput.value = getFirstDayOfCurrentMonth();
+            toDateInput.value = getLocalTodayDate();
 
-            dateInput.addEventListener('change', (e) => {
-                fetchDeliveryRecords(e.target.value);
+            fetchDeliveryRecordsRange(fromDateInput.value, toDateInput.value);
+
+            fromDateInput.addEventListener('change', () => {
+                fetchDeliveryRecordsRange(fromDateInput.value, toDateInput.value);
+            });
+            toDateInput.addEventListener('change', () => {
+                fetchDeliveryRecordsRange(fromDateInput.value, toDateInput.value);
             });
 
             listAutoRefreshInterval = setInterval(() => {
-                fetchDeliveryRecords(dateInput.value, true);
-            }, 5000);
+                fetchDeliveryRecordsRange(fromDateInput.value, toDateInput.value, true);
+            }, 300000);
         }
 
         function renderDefaultListsView() {
@@ -1361,7 +1545,10 @@
                 <div class="list-inner-wrapper">
                     <div class="header-section">
                         <div class="form-title">لیستی دەرچوونەکان (خۆکار)</div>
-                        <input type="date" class="date-input" id="recordDate">
+                        <div style="display: flex; gap: 4px;">
+                            <input type="date" class="date-input" id="fromDate" title="لە بەرواری">
+                            <input type="date" class="date-input" id="toDate" title="بۆ بەرواری">
+                        </div>
                     </div>
 
                     <div class="totals-grid">
@@ -1389,21 +1576,27 @@
                 </div>
             `;
 
-            const dateInput = document.getElementById('recordDate');
-            dateInput.value = getLocalTodayDate();
+            const fromDateInput = document.getElementById('fromDate');
+            const toDateInput = document.getElementById('toDate');
 
-            fetchDeliveryRecords(dateInput.value);
+            fromDateInput.value = getFirstDayOfCurrentMonth();
+            toDateInput.value = getLocalTodayDate();
 
-            dateInput.addEventListener('change', (e) => {
-                fetchDeliveryRecords(e.target.value);
+            fetchDeliveryRecordsRange(fromDateInput.value, toDateInput.value);
+
+            fromDateInput.addEventListener('change', () => {
+                fetchDeliveryRecordsRange(fromDateInput.value, toDateInput.value);
+            });
+            toDateInput.addEventListener('change', () => {
+                fetchDeliveryRecordsRange(fromDateInput.value, toDateInput.value);
             });
 
             listAutoRefreshInterval = setInterval(() => {
-                fetchDeliveryRecords(dateInput.value, true);
-            }, 5000);
+                fetchDeliveryRecordsRange(fromDateInput.value, toDateInput.value, true);
+            }, 300000);
         }
 
-        async function fetchDeliveryRecords(selectedDate, isBackground = false) {
+        async function fetchDeliveryRecordsRange(fromDate, toDate, isBackground = false) {
             const recordsContainer = document.getElementById('recordsList');
             if(!recordsContainer) return;
             if(!isBackground) {
@@ -1415,22 +1608,30 @@
             try {
                 let query = supabaseClient
                     .from('delivery_records')
-                    .select('*')
-                    .eq('record_date', selectedDate);
+                    .select('*');
+
+                if (fromDate) {
+                    query = query.gte('record_date', fromDate);
+                }
+                if (toDate) {
+                    query = query.lte('record_date', toDate);
+                }
 
                 const profession = currentUserData ? (currentUserData.profession || currentUserData.role || '') : '';
                 const profLower = profession.toLowerCase();
                 
                 if (profLower.includes('شۆفێر') || profLower.includes('سایەق') || profLower.includes('driver')) {
-                    query = query.ilike('driver', `${currentUsername}%`);
+                    query = query.or(`driver.eq.${currentUsername},driver.like.${currentUsername} دوو%,driver.like.${currentUsername} سێ%`);
                 }
+
+                query = query.order('record_date', { ascending: false }).order('record_time', { ascending: false });
 
                 const { data, error } = await query;
 
                 if (error) throw error;
 
                 if (!data || data.length === 0) {
-                    recordsContainer.innerHTML = '<div class="no-data">هیچ تۆمارێک نییە لەم بەروارەدا</div>';
+                    recordsContainer.innerHTML = '<div class="no-data">هیچ تۆمارێک نییە لەم مەودا بەروارەدا</div>';
                     resetTotals();
                     return;
                 }
@@ -1449,10 +1650,24 @@
 
                     const card = document.createElement('div');
                     card.className = 'record-card';
-                    card.onclick = () => card.classList.toggle('active');
+                    
+                    card.onclick = () => {
+                        const isActive = card.classList.contains('active');
+                        card.classList.toggle('active', !isActive);
+                        
+                        if (!isActive) {
+                            setTimeout(() => {
+                                card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                            }, 150);
+                        }
+                    };
 
                     card.innerHTML = `
                         <div class="record-main-info">
+                            <div class="info-row">
+                                <span class="label">بەروار:</span>
+                                <span class="value">${record.record_date}</span>
+                            </div>
                             <div class="info-row">
                                 <span class="label">ناوی دابەشکار:</span>
                                 <span class="value">${record.distributor}</span>
@@ -1471,11 +1686,11 @@
                             <div class="detail-item"><span class="label">کێشی بار:</span> <span class="value">${record.cargo_weight} کگم</span></div>
                             <div class="detail-item"><span class="label">ژمارەی پارچە:</span> <span class="value">${record.pieces_count}</span></div>
                             <div class="detail-item"><span class="label">ژمارەی وەسڵ:</span> <span class="value">${record.receipt_number}</span></div>
-                            <div class="detail-item"><span class="label">پارەی هێنراوە:</span> <span class="value">${record.collected_money || 0} د.ع</span></div>
-                            <div class="detail-item"><span class="label">کاتی تۆمار:</span> <span class="value">${record.record_time}</span></div>
-                            <div class="detail-item"><span class="label">کاتی ناو زۆن:</span> <span class="value">${record.in_zone_time || 'ناتۆمارکراو'}</span></div>
-                            <div class="detail-item"><span class="label">کاتی دەرچوون لە زۆن:</span> <span class="value">${record.out_zone_time || 'ناتۆمارکراو'}</span></div>
-                            <div class="detail-item"><span class="label">کاتی گەیشتنەوە:</span> <span class="value">${record.arrival_time || 'ناتۆمارکراو'}</span></div>
+                            <div class="detail-item"><span class="label">پارەی هێنراوە:</span> <span class="value">${record.collected_money ? Number(record.collected_money).toLocaleString() : 0} د.ع</span></div>
+                            <div class="detail-item"><span class="label">کاتی تۆمار:</span> <span class="value">${formatTimeDisplay(record.record_time)}</span></div>
+                            <div class="detail-item"><span class="label">کاتی ناو زۆن:</span> <span class="value">${record.in_zone_time ? formatTimeDisplay(record.in_zone_time) : 'ناتۆمارکراو'}</span></div>
+                            <div class="detail-item"><span class="label">کاتی دەرچوون لە زۆن:</span> <span class="value">${record.out_zone_time ? formatTimeDisplay(record.out_zone_time) : 'ناتۆمارکراو'}</span></div>
+                            <div class="detail-item"><span class="label">کاتی گەیشتنەوە:</span> <span class="value">${record.arrival_time ? formatTimeDisplay(record.arrival_time) : 'ناتۆمارکراو'}</span></div>
                         </div>
                     `;
 
@@ -1531,7 +1746,7 @@
 
                 const [arrHour, arrMin] = record.arrival_time.split(':').map(Number);
                 const arrDate = new Date();
-                arrDate.setHours(arrHour, arrMin + 2, 0, 0);
+                arrDate.setHours(arrHour, arrMin + 5, 0, 0);
 
                 const now = new Date();
                 if (now < arrDate) {
@@ -1572,7 +1787,7 @@
 
                 const [arrHour, arrMin] = record.arrival_time.split(':').map(Number);
                 const arrDate = new Date();
-                arrDate.setHours(arrHour, arrMin + 2, 0, 0);
+                arrDate.setHours(arrHour, arrMin + 5, 0, 0);
 
                 const now = new Date();
                 if (now < arrDate) {
@@ -1769,7 +1984,10 @@
 
             const isEditMode = existingRecord !== null;
             const readOnlyAttr = isEditMode ? 'readonly' : '';
-            const recordTimeVal = isEditMode && existingRecord.record_time ? existingRecord.record_time : nowTime;
+            let rawRecordTime = isEditMode && existingRecord.record_time ? existingRecord.record_time : nowTime;
+            if (rawRecordTime && rawRecordTime.split(':').length > 2) {
+                rawRecordTime = rawRecordTime.split(':').slice(0, 2).join(':');
+            }
 
             const card = document.getElementById('formCardContent');
             card.innerHTML = `
@@ -1807,7 +2025,7 @@
                         <input type="number" id="d_receiptNumber" value="${isEditMode ? (existingRecord.receipt_number || '') : ''}" placeholder="ژمارەی وەسڵ" ${readOnlyAttr} onchange="autoSaveRecord(${isDouble ? 2 : 1})" required>
                     </div>
                     <div class="field">
-                        <input type="time" step="1" id="d_recordTime" value="${recordTimeVal}" ${readOnlyAttr} onchange="autoSaveRecord(${isDouble ? 2 : 1})" required>
+                        <input type="time" id="d_recordTime" value="${rawRecordTime}" ${readOnlyAttr} onchange="autoSaveRecord(${isDouble ? 2 : 1})" required>
                     </div>
                     <div class="form-buttons-row" id="actionButtonContainer" style="margin-top: 8px;">
                         ${isEditMode ? `<button type="button" class="btn-submit" id="mainActionBtn" style="text-align: right; padding-right: 20px;" onclick="enableEditingForForm(${isDouble ? 2 : 1})">چاککردن</button>` : `<button type="button" class="btn-submit" id="mainActionBtn" style="text-align: right; padding-right: 20px;" onclick="submitDeliveryRecord(${isDouble ? 2 : 1})">تۆمارکردن</button>`}
@@ -1850,7 +2068,10 @@
 
             const isEditMode = existingRecord !== null;
             const readOnlyAttr = isEditMode ? 'readonly' : '';
-            const recordTimeVal = isEditMode && existingRecord.record_time ? existingRecord.record_time : nowTime;
+            let rawRecordTime = isEditMode && existingRecord.record_time ? existingRecord.record_time : nowTime;
+            if (rawRecordTime && rawRecordTime.split(':').length > 2) {
+                rawRecordTime = rawRecordTime.split(':').slice(0, 2).join(':');
+            }
 
             const card = document.getElementById('formCardContent');
             card.innerHTML = `
@@ -1888,7 +2109,7 @@
                         <input type="number" id="d_receiptNumber" value="${isEditMode ? (existingRecord.receipt_number || '') : ''}" placeholder="ژمارەی وەسڵ" ${readOnlyAttr} onchange="autoSaveRecord(3)" required>
                     </div>
                     <div class="field">
-                        <input type="time" step="1" id="d_recordTime" value="${recordTimeVal}" ${readOnlyAttr} onchange="autoSaveRecord(3)" required>
+                        <input type="time" id="d_recordTime" value="${rawRecordTime}" ${readOnlyAttr} onchange="autoSaveRecord(3)" required>
                     </div>
                     <div class="form-buttons-row" id="actionButtonContainer" style="margin-top: 8px;">
                         ${isEditMode ? `<button type="button" class="btn-submit" id="mainActionBtn" style="text-align: right; padding-right: 20px;" onclick="enableEditingForForm(3)">چاککردن</button>` : `<button type="button" class="btn-submit" id="mainActionBtn" style="text-align: right; padding-right: 20px;" onclick="submitDeliveryRecord(3)">تۆمارکردن</button>`}
@@ -2011,11 +2232,20 @@
         async function submitDeliveryRecord(level) {
             clearAllIntervals();
             const today = getLocalTodayDate();
+            
+            const distributorInputVal = document.getElementById('d_distributor').value.trim();
+            const isValidDistributor = distributorsList.some(d => d.toLowerCase() === distributorInputVal.toLowerCase());
+            
+            if (!isValidDistributor) {
+                showCustomNotification(false, 'هەڵە: ناوی دابەشکار نەدۆزرایەوە یان هەڵەیە!');
+                return;
+            }
+
             const recordTimeVal = document.getElementById('d_recordTime').value.trim() || getLocalCurrentTime();
 
             const recordData = {
                 driver: document.getElementById('d_driver').value.trim(),
-                distributor: document.getElementById('d_distributor').value.trim(),
+                distributor: distributorInputVal,
                 delegate: document.getElementById('d_delegate').value.trim(),
                 zone: document.getElementById('d_zone').value.trim(),
                 vehicle: document.getElementById('d_vehicle').value.trim(),
@@ -2059,195 +2289,216 @@
             }
         }
 
-        function renderSettingsForm() {
+        function switchDriverTab(btn, tabName, titleText, isSettings = false) {
             clearAllIntervals();
-            const currentAvatar = (currentUserData && currentUserData.avatar_url) ? currentUserData.avatar_url : '';
-            const currentUsername = (currentUserData && currentUserData.username) ? currentUserData.username : 'بەکارهێنەر';
-            const imgTag = currentAvatar ? `<img id="previewAvatar" src="${currentAvatar}" alt="وێنە">` : `<img id="previewAvatar" src="" alt="وێنە" style="display:none;">`;
-            
-            const isLight = document.body.classList.contains('light-theme');
-            const themeText = isLight ? 'ڕەش پؤش' : 'سپی پۆش';
-            
+            document.querySelectorAll('#driverNavBar .nav-item').forEach(b => b.classList.remove('active'));
+            if(btn) btn.classList.add('active');
+
             const card = document.getElementById('formCardContent');
-            card.innerHTML = `
-                <h2>ڕێکخستنی پڕۆفایل  </h2>
-                <div class="settings-avatar-container">
-                    <label class="avatar-upload-circle">
-                        ${imgTag}
-                        <div class="camera-overlay">
-                            <svg viewBox="0 0 24 24"><path d="M4 4h3l2-2h6l2 2h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2zm8 3a5 5 0 1 0 0 10 5 5 0 0 0 0-10zm0 2a3 3 0 1 1 0 6 3 3 0 0 1 0-6z"/></svg>
-                        </div>
-                        <input type="file" accept="image/*" onchange="uploadAvatarImage(event)">
-                    </label>
-                    <div class="settings-username-display">${currentUsername}</div>
-                </div>
 
-                <div style="margin-top: 15px;">
-                    <button type="button" class="settings-action-btn" onclick="openPasswordPopup()">
-                        <span>گۆڕینی تێپەڕەوشە </span>
-                        <svg viewBox="0 0 24 24"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg>
-                    </button>
+            if (isSettings) {
+                const userAvatar = currentUserData && currentUserData.avatar_url ? currentUserData.avatar_url : 'https://via.placeholder.com/240';
+                const userName = currentUserData ? currentUserData.username : '';
+                const userProfession = currentUserData ? (currentUserData.profession || currentUserData.role || '') : '';
 
-                    <button type="button" class="settings-action-btn" id="themeToggleButton" onclick="toggleThemeGlobal()">
-                        <span id="themeToggleText">${themeText}</span>
-                        <svg id="themeToggleIcon" viewBox="0 0 24 24"><path d="${isLight ? 'M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9 9-4.03 9-9c0-.46-.04-.92-.1-1.36-.98 1.37-2.58 2.26-4.4 2.26-3.03 0-5.5-2.47-5.5-5.5 0-1.82.89-3.42 2.26-4.4-.44-.06-.9-.1-1.36-.1z' : 'M12 7c-2.76 0-5 2.24-5 5s2.24 5 5 5 5-2.24 5-5-2.24-5-5-5zM2 13h2c.55 0 1-.45 1-1s-.45-1-1-1H2c-.55 0-1 .45-1 1s.45 1 1 1zm18 0h2c.55 0 1-.45 1-1s-.45-1-1-1h-2c-.55 0-1 .45-1 1s.45 1 1 1zM11 2v2c0 .55.45 1 1 1s1-.45 1-1V2c0-.55-.45-1-1-1s-1 .45-1 1zm0 18v2c0 .55.45 1 1 1s1-.45 1-1v-2c0-.55-.45-1-1-1s-1 .45-1 1zM5.99 4.58c-.39-.39-1.03-.39-1.41 0-.39.39-.39 1.03 0 1.41l1.06 1.06c.39.39 1.03.39 1.41 0s.39-1.03 0-1.41L5.99 4.58zm12.37 12.37c-.39-.39-1.03-.39-1.41 0-.39.39-.39 1.03 0 1.41l1.06 1.06c.39.39 1.03.39 1.41 0 .39-.39.39-1.03 0-1.41l-1.06-1.06zm1.06-10.96c.39-.39.39-1.03 0-1.41-.39-.39-1.03-.39-1.41 0l-1.06 1.06c-.39.39-.39 1.03 0 1.41s1.03.39 1.41 0l1.06-1.06zM7.05 18.36l-1.06 1.06c-.39.39-.39 1.03 0 1.41.39.39 1.03.39 1.41 0l1.06-1.06c.39-.39.39-1.03 0-1.41s-1.03-.39-1.41 0z'}"></path></svg>
-                    </button>
+                card.innerHTML = `
+                    <div class="form-header-flex" style="margin-bottom: 4px;">
+                        <h2>ڕێکخستنەکانی هەژمار</h2>
+                        <button type="button" class="btn-back" style="width: auto; padding: 4px 10px; font-size: 11px;" onclick="handleLogout()">چوونەدەرەوە</button>
+                    </div>
+                    <div class="settings-avatar-container">
+                        <label class="avatar-upload-circle" title="گۆڕینی وێنەی پروفایل">
+                            <img id="profileImagePreview" src="${userAvatar}" alt="پروفایل">
+                            <div class="camera-overlay">
+                                <svg viewBox="0 0 24 24"><path d="M12 15.2c1.77 0 3.2-1.43 3.2-3.2s-1.43-3.2-3.2-3.2-3.2 1.43-3.2 3.2 1.43 3.2 3.2 3.2zm0-5.4c1.1 0 2 .9 2 2s-.9 2-2 2-2-.9-2-2 .9-2 2-2zm9-3h-3.17L15 4H9L7.17 6.8H4c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8.8c0-1.1-.9-2-2-2zm0 12H4V8.8h4.05l1.83-2.8h4.24l1.83 2.8H20v10z"/></svg>
+                            </div>
+                            <input type="file" accept="image/*" onchange="uploadUserAvatar(event)">
+                        </label>
+                        <div class="settings-username-display">${userName} (${userProfession})</div>
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 15px;">
+                        <button type="button" class="btn-sub" onclick="openPasswordPopup()">
+                            <span>گۆڕینی تێپەڕەوشە</span>
+                            <svg style="width:16px;height:16px;fill:currentColor;" viewBox="0 0 24 24"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg>
+                        </button>
+                        <button type="button" class="btn-sub" onclick="toggleAppTheme()">
+                            <span id="themeToggleText">  تاریك وڕۆناك</span>
+                            <svg style="width:16px;height:16px;fill:currentColor;" viewBox="0 0 24 24"><path d="M20 8.69V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12 20 8.69zM12 18c-3.31 0-6-2.69-6-6s2.69-6 6-6 6 2.69 6 6-2.69 6-6 6z"/></svg>
+                        </button>
+                    </div>
+                `;
+            } else if (tabName === 'زانیاری') {
+                card.innerHTML = `
+                    <h2>${titleText}</h2>
+                    <p style="margin-top: 10px; color: var(--sub-text);">زانیاری تەواوی شۆفێر لێرە نمایش دەکرێت.</p>
+                `;
+            } else {
+                card.innerHTML = `
+                    <h2>${titleText}</h2>
+                    <p style="margin-top: 10px; color: var(--sub-text);">ئەم فۆڕمە بەتاڵە.</p>
+                `;
+            }
+        }
 
-                    <button type="button" class="settings-logout-btn" onclick="logout()">
-                        <span>چوونە دەرەوە لە ژوورەوە</span>
-                        <svg viewBox="0 0 24 24"><path d="M10.09 15.59L11.5 17l5-5-5-5-1.41 1.41L12.67 11H3v2h9.67l-2.58 2.59zM19 3H5c-1.11 0-2 .9-2 2v4h2V5h14v14H5v-4H3v4c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2z"/></svg>
-                    </button>
-                </div>
-            `;
+        function switchDefaultTab(btn, tabName, titleText, isSettings = false) {
+            clearAllIntervals();
+            document.querySelectorAll('#defaultNavBar .nav-item').forEach(b => b.classList.remove('active'));
+            if(btn) btn.classList.add('active');
+
+            const card = document.getElementById('formCardContent');
+
+            if (isSettings) {
+                const userAvatar = currentUserData && currentUserData.avatar_url ? currentUserData.avatar_url : 'https://via.placeholder.com/240';
+                const userName = currentUserData ? currentUserData.username : '';
+                const userProfession = currentUserData ? (currentUserData.profession || currentUserData.role || '') : '';
+
+                card.innerHTML = `
+                    <div class="form-header-flex" style="margin-bottom: 4px;">
+                        <h2>ڕێکخستنەکانی هەژمار</h2>
+                        <button type="button" class="btn-back" style="width: auto; padding: 4px 10px; font-size: 11px;" onclick="handleLogout()">چوونەدەرەوە</button>
+                    </div>
+                    <div class="settings-avatar-container">
+                        <label class="avatar-upload-circle" title="گۆڕینی وێنەی پروفایل">
+                            <img id="profileImagePreview" src="${userAvatar}" alt="پروفایل">
+                            <div class="camera-overlay">
+                                <svg viewBox="0 0 24 24"><path d="M12 15.2c1.77 0 3.2-1.43 3.2-3.2s-1.43-3.2-3.2-3.2-3.2 1.43-3.2 3.2 1.43 3.2 3.2 3.2zm0-5.4c1.1 0 2 .9 2 2s-.9 2-2 2-2-.9-2-2 .9-2 2-2zm9-3h-3.17L15 4H9L7.17 6.8H4c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8.8c0-1.1-.9-2-2-2zm0 12H4V8.8h4.05l1.83-2.8h4.24l1.83 2.8H20v10z"/></svg>
+                            </div>
+                            <input type="file" accept="image/*" onchange="uploadUserAvatar(event)">
+                        </label>
+                        <div class="settings-username-display">${userName} (${userProfession})</div>
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 15px;">
+                        <button type="button" class="btn-sub" onclick="openPasswordPopup()">
+                            <span>گۆڕینی تێپەڕەوشە</span>
+                            <svg style="width:16px;height:16px;fill:currentColor;" viewBox="0 0 24 24"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg>
+                        </button>
+                        <button type="button" class="btn-sub" onclick="toggleAppTheme()">
+                            <span id="themeToggleText">گۆڕینی ڕەنگ )</span>
+                            <svg style="width:16px;height:16px;fill:currentColor;" viewBox="0 0 24 24"><path d="M20 8.69V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12 20 8.69zM12 18c-3.31 0-6-2.69-6-6s2.69-6 6-6 6 2.69 6 6-2.69 6-6 6z"/></svg>
+                        </button>
+                    </div>
+                `;
+            } else if (tabName === 'زانیاری') {
+                card.innerHTML = `
+                    <h2>${titleText}</h2>
+                    <p style="margin-top: 10px; color: var(--sub-text);">زانیاری تەواوی بەکارهێنەر لێرە نمایش دەکرێت.</p>
+                `;
+            } else {
+                card.innerHTML = `
+                    <h2>${titleText}</h2>
+                    <p style="margin-top: 10px; color: var(--sub-text);">ئەم فۆڕمە بەتاڵە.</p>
+                `;
+            }
+        }
+
+        function toggleAppTheme() {
+            document.body.classList.toggle('light-theme');
+            if (document.body.classList.contains('light-theme')) {
+                localStorage.setItem('theme', 'light');
+            } else {
+                localStorage.setItem('theme', 'dark');
+            }
+        }
+
+        function handleLogout() {
+            clearAllIntervals();
+            localStorage.removeItem('currentUser');
+            sessionStorage.removeItem('currentUser');
+            location.reload();
         }
 
         function openPasswordPopup() {
-            document.getElementById('popupOldPassword').value = '';
-            document.getElementById('popupNewPassword').value = '';
             document.getElementById('passwordPopupModal').style.display = 'flex';
         }
 
         function closePasswordPopup() {
             document.getElementById('passwordPopupModal').style.display = 'none';
+            document.getElementById('popupOldPassword').value = '';
+            document.getElementById('popupNewPassword').value = '';
         }
 
         async function updateUserPassword() {
-            const oldPasswordInput = document.getElementById('popupOldPassword').value.trim();
-            const newPassword = document.getElementById('popupNewPassword').value.trim();
+            const oldPass = document.getElementById('popupOldPassword').value.trim();
+            const newPass = document.getElementById('popupNewPassword').value.trim();
 
-            if (!oldPasswordInput || !newPassword) {
-                showCustomNotification(false, 'تکایە هەردوو خانەی پاسۆڕدی کۆن و نوێ پڕبکەرەوە');
+            if (oldPass.length !== 4 || newPass.length !== 4) {
+                showCustomNotification(false, 'تکایە تێپەڕەوشە دەبێت ٤ ژمارە بێت');
                 return;
             }
 
-            if (newPassword.length < 4) {
-                showCustomNotification(false, 'تکایە تێپەڕەوشەی نوێ لانیکەم ٤ ژمارە بێت');
-                return;
-            }
-
-            if (!currentUserData || !currentUserData.id) {
-                showCustomNotification(false, 'هەڵە: بەکارهێنەر دیاری نەکراوە');
-                return;
-            }
-
-            if (String(currentUserData.password).trim() !== oldPasswordInput) {
-                showCustomNotification(false, 'هەڵە: پاسۆڕدی کۆن هەڵەیە');
+            if (String(currentUserData.password).trim() !== oldPass) {
+                showCustomNotification(false, 'پاسۆڕدی کۆن هەڵەیە');
                 return;
             }
 
             try {
                 const { error } = await supabaseClient
                     .from('users')
-                    .update({ password: newPassword })
+                    .update({ password: newPass })
                     .eq('id', currentUserData.id);
 
                 if (error) {
-                    showCustomNotification(false, 'هەڵە لە نوێکردنەوەی تێپەڕەوشە');
+                    showCustomNotification(false, 'هەڵە لە گۆڕینی پاسۆڕد');
                 } else {
-                    currentUserData.password = newPassword;
+                    currentUserData.password = newPass;
                     if (localStorage.getItem('currentUser')) {
                         localStorage.setItem('currentUser', JSON.stringify(currentUserData));
-                    } else if (sessionStorage.getItem('currentUser')) {
+                    } else {
                         sessionStorage.setItem('currentUser', JSON.stringify(currentUserData));
                     }
-                    showCustomNotification(true, 'تێپەڕەوشە بە سەرکەوتوویی گۆڕدرا');
+                    showCustomNotification(true, 'پاسۆڕد بە سەرکەوتوویی گۆڕدرا');
                     closePasswordPopup();
                 }
             } catch (err) {
-                showCustomNotification(false, 'هەڵە لە پەیوەندی کردن بە داتابەیس');
+                showCustomNotification(false, 'هەڵە ڕوویدا');
             }
         }
 
-        function toggleThemeGlobal() {
-            if (document.body.classList.contains('light-theme')) {
-                document.body.classList.remove('light-theme');
-                localStorage.setItem('theme', 'dark');
-            } else {
-                document.body.classList.add('light-theme');
-                localStorage.setItem('theme', 'light');
-            }
-            renderSettingsForm();
-        }
-
-        async function uploadAvatarImage(event) {
+        async function uploadUserAvatar(event) {
             const file = event.target.files[0];
             if (!file) return;
 
-            const reader = new FileReader();
-            reader.onload = async function(e) {
-                const base64Image = e.target.result;
-                
-                const previewImg = document.getElementById('previewAvatar');
-                if (previewImg) {
-                    previewImg.src = base64Image;
-                    previewImg.style.display = 'block';
+            showCustomNotification(true, 'خەریکی بارکردنی وێنەیەک...');
+
+            try {
+                const fileExt = file.name.split('.').pop();
+                const fileName = `${currentUserData.id}_${Math.random()}.${fileExt}`;
+                const filePath = `${fileName}`;
+
+                const { error: uploadError } = await supabaseClient.storage
+                    .from('avatars')
+                    .upload(filePath, file);
+
+                if (uploadError) {
+                    throw uploadError;
                 }
 
-                if (!currentUserData || !currentUserData.id) {
-                    showCustomNotification(false, 'هەڵە: بەکارهێنەر دیاری نەکراوە');
-                    return;
+                const { data: { publicUrl } } = supabaseClient.storage
+                    .from('avatars')
+                    .getPublicUrl(filePath);
+
+                const { error: updateError } = await supabaseClient
+                    .from('users')
+                    .update({ avatar_url: publicUrl })
+                    .eq('id', currentUserData.id);
+
+                if (updateError) throw updateError;
+
+                currentUserData.avatar_url = publicUrl;
+                if (localStorage.getItem('currentUser')) {
+                    localStorage.setItem('currentUser', JSON.stringify(currentUserData));
+                } else {
+                    sessionStorage.setItem('currentUser', JSON.stringify(currentUserData));
                 }
 
-                try {
-                    const { error } = await supabaseClient
-                        .from('users')
-                        .update({ avatar_url: base64Image })
-                        .eq('id', currentUserData.id);
+                const imgPrev = document.getElementById('profileImagePreview');
+                if(imgPrev) imgPrev.src = publicUrl;
 
-                    if (error) {
-                        showCustomNotification(false, 'هەڵە لە پاشەکەوتکردنی وێنە');
-                    } else {
-                        currentUserData.avatar_url = base64Image;
-                        if (localStorage.getItem('currentUser')) {
-                            localStorage.setItem('currentUser', JSON.stringify(currentUserData));
-                        } else if (sessionStorage.getItem('currentUser')) {
-                            sessionStorage.setItem('currentUser', JSON.stringify(currentUserData));
-                        }
-                        showCustomNotification(true, 'وێنەی پرۆفایل نوێکرایەوە');
-                    }
-                } catch (err) {
-                    showCustomNotification(false, 'هەڵە لە پەیوەندی کردن');
-                }
-            };
-            reader.readAsDataURL(file);
-        }
-
-        function switchDriverTab(buttonElement, titleText, descText, isSettings) {
-            clearAllIntervals();
-            document.querySelectorAll('#driverNavBar .nav-item').forEach(btn => btn.classList.remove('active'));
-            buttonElement.classList.add('active');
-            
-            if (isSettings) {
-                renderSettingsForm();
-            } else {
-                const card = document.getElementById('formCardContent');
-                card.innerHTML = `<h2>${titleText}</h2><p>${descText}</p>`;
+                showCustomNotification(true, 'وێنەی پروفایل گۆڕدرا');
+            } catch (err) {
+                console.error(err);
+                showCustomNotification(false, 'هەڵە لە بارکردنی وێنەدا');
             }
-        }
-
-        function switchDefaultTab(buttonElement, titleText, descText, isSettings) {
-            clearAllIntervals();
-            document.querySelectorAll('#defaultNavBar .nav-item').forEach(btn => btn.classList.remove('active'));
-            buttonElement.classList.add('active');
-            
-            if (isSettings) {
-                renderSettingsForm();
-            } else {
-                const card = document.getElementById('formCardContent');
-                card.innerHTML = `<h2>${titleText}</h2><p>${descText}</p>`;
-            }
-        }
-
-        function logout() {
-            clearAllIntervals();
-            localStorage.removeItem('currentUser');
-            sessionStorage.removeItem('currentUser');
-            currentUserData = null;
-            document.getElementById('formSection').style.display = 'none';
-            document.getElementById('driverNavBar').style.display = 'none';
-            document.getElementById('defaultNavBar').style.display = 'none';
-            document.getElementById('loginSection').style.display = 'flex';
-            document.getElementById('loginForm').reset();
         }
     </script>
 </body>
