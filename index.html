@@ -1,1 +1,2505 @@
+<!DOCTYPE html>
+<html lang="ckb" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>سیستەمی بەڕێوەبردنی گەیاندن - تەواو و یەکگرتوو</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        :root {
+            --bg-color: #121212;
+            --card-bg: rgba(20, 20, 30, 0.85);
+            --text-color: #ffffff;
+            --border-color: rgba(255, 255, 255, 0.15);
+            --primary-color: #a855f7;
+            --primary-hover: #9333ea;
+            --input-bg: rgba(0, 0, 0, 0.3);
+            --sub-text: rgba(255, 255, 255, 0.7);
+        }
 
+        body.light-theme {
+            --bg-color: #f4f6f9;
+            --card-bg: #ffffff;
+            --text-color: #333333;
+            --border-color: #e0e0e0;
+            --primary-color: #007bff;
+            --primary-hover: #0056b3;
+            --input-bg: #f9f9f9;
+            --sub-text: #666666;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: var(--bg-color);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            color: var(--text-color);
+            overflow: hidden;
+            position: relative;
+            direction: rtl;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        #customNotification {
+            position: fixed;
+            top: -100px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 90%;
+            max-width: 380px;
+            padding: 12px 18px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: white;
+            font-size: 14px;
+            font-weight: 600;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            z-index: 999999;
+            transition: top 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(255,255,255,0.2);
+            text-align: right;
+        }
+
+        #customNotification.show {
+            top: 20px;
+        }
+
+        #customNotification.success {
+            background: rgba(16, 185, 129, 0.9);
+            border-color: rgba(52, 211, 153, 0.4);
+        }
+
+        #customNotification.error {
+            background: rgba(239, 68, 68, 0.9);
+            border-color: rgba(248, 113, 113, 0.4);
+        }
+
+        #customNotification svg {
+            width: 22px;
+            height: 22px;
+            flex-shrink: 0;
+            fill: currentColor;
+        }
+
+        #customConfirmModal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(8px);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999999;
+        }
+
+        .confirm-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            padding: 25px;
+            border-radius: 20px;
+            width: 90%;
+            max-width: 320px;
+            text-align: center;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.8);
+        }
+
+        .confirm-card h3 {
+            font-size: 16px;
+            margin-bottom: 15px;
+            color: var(--text-color);
+            text-align: right;
+        }
+
+        .confirm-card input[type="time"] {
+            width: 100%;
+            padding: 10px;
+            background: var(--input-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            color: var(--text-color);
+            font-size: 16px;
+            text-align: center;
+            margin-bottom: 20px;
+            outline: none;
+        }
+
+        .confirm-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-confirm-yes {
+            flex: 1;
+            padding: 10px;
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .btn-confirm-no {
+            flex: 1;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        #passwordPopupModal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(8px);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999999;
+        }
+
+        .password-popup-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            padding: 25px;
+            border-radius: 20px;
+            width: 90%;
+            max-width: 350px;
+            text-align: right;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.8);
+        }
+
+        .password-popup-card h3 {
+            font-size: 16px;
+            margin-bottom: 15px;
+            color: var(--text-color);
+        }
+
+        #loginSection {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .login-card {
+            background: var(--card-bg);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid var(--border-color);
+            padding: 35px 25px;
+            border-radius: 26px;
+            width: 100%;
+            max-width: 400px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+            text-align: right;
+            position: relative;
+        }
+
+        .login-card h1 {
+            font-size: 26px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            text-align: right;
+            color: var(--text-color);
+        }
+
+        .login-card p {
+            font-size: 13px;
+            color: var(--sub-text);
+            margin-bottom: 25px;
+            text-align: right;
+        }
+
+        .field {
+            position: relative;
+            margin-bottom: 12px;
+            text-align: right;
+        }
+
+        .field input[type="text"], 
+        .field input[type="password"], 
+        .field input[type="tel"], 
+        .field input[type="date"], 
+        .field input[type="time"],
+        .field input[type="number"] {
+            width: 100%;
+            padding: 10px 12px;
+            background: var(--input-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            font-size: 13px;
+            color: var(--text-color);
+            outline: none;
+            text-align: right;
+            transition: all 0.3s ease;
+        }
+
+        .field input:read-only {
+            background: rgba(0, 0, 0, 0.2);
+            color: var(--primary-color);
+            cursor: not-allowed;
+            border-color: var(--border-color);
+        }
+
+        .password-field input {
+            padding-left: 45px !important;
+            direction: ltr;
+            text-align: right;
+        }
+
+        .field input::placeholder {
+            color: var(--sub-text);
+            direction: rtl;
+            text-align: right;
+        }
+
+        .field input:focus:not(:read-only) {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.2);
+        }
+
+        .autocomplete-items {
+            position: absolute;
+            border: 1px solid var(--border-color);
+            z-index: 999999;
+            top: calc(100% + 4px);
+            left: 0;
+            right: 0;
+            background: var(--card-bg);
+            backdrop-filter: blur(16px);
+            border-radius: 12px;
+            max-height: 150px;
+            overflow-y: auto;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+            display: none;
+            padding: 4px;
+        }
+
+        .autocomplete-items div {
+            padding: 10px 12px;
+            cursor: pointer;
+            color: var(--text-color);
+            font-size: 13px;
+            text-align: right;
+            border-radius: 8px;
+            margin-bottom: 2px;
+            transition: all 0.2s ease;
+        }
+
+        .autocomplete-items div:hover {
+            background: rgba(168, 85, 247, 0.2);
+        }
+
+        .toggle-password {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: var(--sub-text);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 4px;
+            z-index: 5;
+        }
+
+        .remember-container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: var(--input-bg);
+            border: 1px solid var(--border-color);
+            padding: 10px 14px;
+            border-radius: 14px;
+            margin-bottom: 15px;
+            cursor: pointer;
+        }
+
+        .remember-container label {
+            font-size: 13px;
+            color: var(--text-color);
+            cursor: pointer;
+            text-align: right;
+        }
+
+        .remember-container input[type="checkbox"] {
+            appearance: none;
+            -webkit-appearance: none;
+            width: 18px;
+            height: 18px;
+            background: var(--input-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 5px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .remember-container input[type="checkbox"]:checked {
+            background: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+
+        .remember-container input[type="checkbox"]:checked::after {
+            content: '✔';
+            color: white;
+            font-size: 10px;
+            font-weight: bold;
+        }
+
+        .btn-submit {
+            width: 100%;
+            padding: 10px;
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            text-align: right;
+            padding-right: 20px;
+            box-shadow: 0 4px 15px rgba(147, 51, 234, 0.2);
+            transition: opacity 0.2s;
+        }
+
+        .btn-submit:hover {
+            opacity: 0.9;
+        }
+
+        .btn-back {
+            width: 100%;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            text-align: right;
+            padding-right: 20px;
+            transition: background 0.2s;
+        }
+
+        .btn-back:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .form-buttons-row {
+            display: flex;
+            gap: 10px;
+            margin-top: 8px;
+        }
+
+        .buttons-container {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .btn-sub {
+            width: 100%;
+            padding: 12px 18px;
+            background: var(--input-bg);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            border-radius: 14px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.2s;
+        }
+
+        .btn-sub:hover {
+            background: rgba(168, 85, 247, 0.2);
+            border-color: var(--primary-color);
+        }
+
+        .btn-driver-action {
+            width: 100%;
+            padding: 12px 18px;
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 14px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 15px rgba(147, 51, 234, 0.3);
+            transition: opacity 0.2s;
+            margin-bottom: 2px;
+        }
+
+        /* ستايلي دوگمەی سەوزی پارەی هێنراوە لە خوارەوەی ساربارەکە */
+        .btn-collected-money {
+            width: 100%;
+            padding: 12px 18px;
+            background: #10b981;
+            color: white;
+            border: none;
+            border-radius: 14px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+            transition: opacity 0.2s;
+            margin-top: 4px;
+        }
+        .btn-collected-money:hover {
+            opacity: 0.9;
+        }
+
+        #formSection {
+            display: none;
+            flex: 1;
+            flex-direction: column;
+            overflow: hidden;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+        }
+
+        .main-container {
+            width: 100%;
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 10px 15px 75px 15px;
+            overflow: hidden;
+        }
+
+        .empty-form-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 14px 18px 25px 18px;
+            width: 100%;
+            max-width: 420px;
+            text-align: right;
+            backdrop-filter: blur(16px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+            max-height: 80vh;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        .form-header-flex {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .empty-form-card h2 {
+            font-size: 17px;
+            color: var(--text-color);
+            margin: 0;
+            text-align: right;
+        }
+
+        .form-date-display {
+            font-size: 12px;
+            color: var(--primary-color);
+            font-weight: 600;
+            background: rgba(168, 85, 247, 0.15);
+            padding: 3px 8px;
+            border-radius: 8px;
+            border: 1px solid rgba(168, 85, 247, 0.3);
+        }
+
+        .driver-form-stack {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            text-align: right;
+            padding-bottom: 10px;
+        }
+
+        .floating-nav-bar {
+            position: fixed;
+            bottom: 15px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--card-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border-color);
+            display: none;
+            gap: 15px;
+            padding: 8px 18px;
+            border-radius: 50px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+            z-index: 1000;
+        }
+
+        .nav-item {
+            background: none;
+            border: none;
+            color: var(--sub-text);
+            cursor: pointer;
+            width: 38px;
+            height: 38px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: all 0.2s ease;
+        }
+
+        .nav-item:hover, .nav-item.active {
+            background: var(--primary-color);
+            color: #ffffff;
+            box-shadow: 0 0 12px rgba(168, 85, 247, 0.5);
+        }
+
+        .nav-item svg {
+            width: 18px;
+            height: 18px;
+            fill: currentColor;
+        }
+
+        .list-inner-wrapper {
+            width: 100%;
+            max-width: 480px;
+            margin: 0 auto;
+            text-align: right;
+        }
+        .list-inner-wrapper .header-section {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            gap: 6px;
+        }
+        .list-inner-wrapper .form-title {
+            font-size: 15px;
+            font-weight: bold;
+            color: var(--text-color);
+        }
+        .list-inner-wrapper .date-input {
+            background: var(--input-bg);
+            border: 1px solid var(--border-color);
+            padding: 6px 8px;
+            border-radius: 10px;
+            font-size: 12px;
+            color: var(--text-color);
+            outline: none;
+            width: 130px;
+        }
+        .list-inner-wrapper .totals-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+        .list-inner-wrapper .total-card {
+            background: var(--input-bg);
+            border: 1px solid var(--border-color);
+            padding: 10px;
+            border-radius: 12px;
+        }
+        .list-inner-wrapper .total-title {
+            font-size: 11px;
+            color: var(--sub-text);
+            margin-bottom: 3px;
+        }
+        .list-inner-wrapper .total-value {
+            font-size: 14px;
+            font-weight: bold;
+            color: var(--text-color);
+        }
+        .list-inner-wrapper .records-container {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .list-inner-wrapper .record-card {
+            background: var(--input-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .list-inner-wrapper .record-main-info {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .list-inner-wrapper .info-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 13px;
+        }
+        .list-inner-wrapper .label {
+            color: var(--sub-text);
+        }
+        .list-inner-wrapper .value {
+            font-weight: 600;
+            color: var(--text-color);
+        }
+        
+        .list-inner-wrapper .record-details {
+            max-height: 0;
+            overflow-y: auto;
+            transition: max-height 0.3s ease-out, margin-top 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .list-inner-wrapper .record-card.active .record-details {
+            max-height: 280px;
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .list-inner-wrapper .detail-item {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+        }
+        .list-inner-wrapper .no-data {
+            text-align: center;
+            color: var(--sub-text);
+            font-size: 13px;
+            padding: 15px;
+        }
+
+        .settings-avatar-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            margin-top: 5px;
+        }
+
+        .avatar-upload-circle {
+            width: 240px;
+            height: 240px;
+            border-radius: 50%;
+            border: 4px solid var(--primary-color);
+            overflow: hidden;
+            cursor: pointer;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--input-bg);
+            box-shadow: 0 0 25px rgba(168, 85, 247, 0.4);
+        }
+
+        .avatar-upload-circle img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 1;
+        }
+
+        .camera-overlay {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(0, 0, 0, 0.65);
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2;
+        }
+
+        .camera-overlay svg {
+            width: 18px;
+            height: 18px;
+            fill: #ffffff;
+        }
+
+        .avatar-upload-circle input[type="file"] {
+            display: none;
+        }
+
+        .settings-username-display {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--text-color);
+            margin-top: 4px;
+            text-align: center;
+        }
+
+        /* ستايلي مۆداڵی پارەی هێنراوە (لە ناوەڕاستی شاشە کەمێک سەرەوەتر) */
+        #collectedMoneyModal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(8px);
+            display: none;
+            justify-content: center;
+            align-items: flex-start;
+            padding-top: 25vh; /* کەمێک سەرەوەتر لە ناوەڕاست */
+            z-index: 9999999;
+        }
+
+        .collected-money-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            padding: 25px;
+            border-radius: 20px;
+            width: 90%;
+            max-width: 340px;
+            text-align: center;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.8);
+        }
+
+        .collected-money-card h3 {
+            font-size: 16px;
+            margin-bottom: 15px;
+            color: var(--text-color);
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="customNotification">
+        <span id="notifIcon"></span>
+        <span id="notifText"></span>
+    </div>
+
+    <div id="customConfirmModal">
+        <div class="confirm-card">
+            <h3 id="modalTitleText">دەتەوێت گۆڕانکاری بکەیت؟</h3>
+            <div id="modalTimeInputContainer" style="display:none;">
+                <input type="time" id="modalTimeField">
+            </div>
+            <div class="confirm-buttons">
+                <button class="btn-confirm-yes" id="modalYesBtn">بەڵێ</button>
+                <button class="btn-confirm-no" id="modalNoBtn">نەخێر</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ویندۆی (پارەی هێنراوە) کە لە ناوەڕاستی شاشە کەمێک سەرەوەتر دەردەکەوێت -->
+    <div id="collectedMoneyModal">
+        <div class="collected-money-card">
+            <div class="field" style="margin-bottom: 15px;">
+                <input type="text" id="collectedMoneyInput" placeholder="چەندت هیناوە؟" autocomplete="off" style="text-align: center; font-size: 16px; padding: 12px;" inputmode="numeric">
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 8px;">
+                <button type="button" class="btn-submit" id="saveCollectedMoneyBtn" onclick="submitCollectedMoney()" style="background: #10b981; text-align: center; padding-right: 0;">تۆمار</button>
+                <button type="button" class="btn-back" onclick="closeCollectedMoneyModal()" style="text-align: center; padding-right: 0;">پەشیمانبوونەوە</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="passwordPopupModal">
+        <div class="password-popup-card">
+            <h3>گۆڕینی تێپەڕەوشە</h3>
+            <div class="field" style="margin-bottom: 8px;">
+                <label style="font-size: 12px; color: var(--sub-text); display: block; margin-bottom: 4px;">پاسۆڕدی کۆن:</label>
+                <input type="password" id="popupOldPassword" placeholder="پاسۆڕدی کۆن (٤ ژمارە)..." maxlength="4" inputmode="numeric" oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 4);">
+            </div>
+            <div class="field" style="margin-bottom: 12px;">
+                <label style="font-size: 12px; color: var(--sub-text); display: block; margin-bottom: 4px;">پاسۆڕدی نوێ:</label>
+                <input type="password" id="popupNewPassword" placeholder="پاسۆڕدی نوێ (٤ ژمارە)..." maxlength="4" inputmode="numeric" oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 4);">
+            </div>
+            <div class="confirm-buttons">
+                <button class="btn-confirm-yes" onclick="updateUserPassword()">تۆمارکردن</button>
+                <button class="btn-confirm-no" onclick="closePasswordPopup()">پەشیمانبوونەوە</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="loginSection">
+        <div class="login-card">
+            <h1>بەخێر هاتیتەوە</h1>
+            <p>تکایە ناوی بەکارهێنەر و تێپەڕەوشە بنووسە</p>
+
+            <form id="loginForm" onsubmit="handleLogin(event)">
+                <div class="field" autocomplete="off">
+                    <input type="text" id="username" placeholder="ناوی بەکارهێنەر..." autocomplete="off" required>
+                    <div id="autocompleteList" class="autocomplete-items"></div>
+                </div>
+
+                <div class="field password-field">
+                    <input type="password" id="password" placeholder="تێپەڕەوشە (٤ ژمارە)" maxlength="4" inputmode="numeric" oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 4);" required>
+                    <button type="button" class="toggle-password" onclick="togglePasswordVisibility()">
+                        <svg id="eyeIcon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                    </button>
+                </div>
+
+                <div class="remember-container" onclick="document.getElementById('rememberMe').click(); event.stopPropagation();">
+                    <label for="rememberMe">منی بیربکە (لۆگین بمێنەوە)</label>
+                    <input type="checkbox" id="rememberMe" onclick="event.stopPropagation();">
+                </div>
+
+                <button type="submit" class="btn-submit">چوونە ژوورەوە</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="formSection">
+        <div class="main-container">
+            <div class="empty-form-card" id="formCardContent">
+                <h2 id="formTitle">فۆڕمی کار</h2>
+                <p id="formDescription">ئەم فۆڕمە بەتاڵە.</p>
+            </div>
+        </div>
+    </div>
+
+    <div id="driverNavBar" class="floating-nav-bar">
+        <button class="nav-item" onclick="switchDriverTab(this, 'سەرەکی', 'فۆڕمی سەرەکی شۆفێر', false)">
+            <svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+        </button>
+        <button class="nav-item" onclick="renderDriverListsView()">
+            <svg viewBox="0 0 24 24"><path d="M4 6h16v2H4zm0 5h16v2H4zm0 5h16v2H4z"/></svg>
+        </button>
+        <button class="nav-item active" id="truckNavBtn" onclick="renderDriverMainView(1)">
+            <svg viewBox="0 0 24 24"><path d="M20 8h-3V4H3c-1.1 0-2 .9-2 2v11h2c0 1.66 1.34 3 3 3s3-1.34 3-3h6c0 1.66 1.34 3 3 3s3-1.34 3-3h2v-5l-3-4zM6 18.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm13.5-9l1.96 2.5H17V9.5h2.5zm-1.5 9c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/></svg>
+        </button>
+        <button class="nav-item" onclick="switchDriverTab(this, 'زانیاری', 'زانیاری شۆفێر', false)">
+            <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
+        </button>
+        <button class="nav-item" onclick="switchDriverTab(this, 'ڕێکخستن', '', true)">
+            <svg viewBox="0 0 24 24"><path d="M19.43 12.98c.04-.32.07-.64.07-.98s-.03-.66-.07-.98l2.11-1.65c.19-.15.24-.42.12-.64l-2-3.46c-.12-.22-.39-.3-.61-.22l-2.49 1c-.52-.4-1.08-.73-1.69-.98l-.38-2.65C14.46 2.18 14.25 2 14 2h-4c-.25 0-.46.18-.49.42l-.38 2.65c-.61.25-1.17.59-1.69.98l-2.49-1c-.23-.09-.49 0-.61.22l-2 3.46c-.13.22-.07.49.12.64l2.11 1.65c-.04.32-.07.65-.07.98s.03.66.07.98l-2.11 1.65c-.19.15-.24.42-.12.64l2 3.46c.12.22.39.3.61.22l2.49-1c.52.4 1.08.73 1.69.98l.38 2.65c.03.24.24.42.49.42h4c.25 0 .46-.18.49-.42l.38-2.65c.61-.25 1.17-.59 1.69-.98l2.49 1c.23.09.49 0 .61-.22l2-3.46c.12-.22.07-.49-.12-.64l-2.11-1.65zM12 15.5c-1.93 0-3.5-1.57-3.5-3.5s1.57-3.5 3.5-3.5 3.5 1.57 3.5 3.5-1.57 3.5-3.5 3.5z"/></svg>
+        </button>
+    </div>
+
+    <div id="defaultNavBar" class="floating-nav-bar">
+        <button class="nav-item active" onclick="switchDefaultTab(this, 'سەرەکی', 'سەرەکی کار', false)">
+            <svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+        </button>
+        <button class="nav-item" onclick="renderDefaultListsView()">
+            <svg viewBox="0 0 24 24"><path d="M4 6h16v2H4zm0 5h16v2H4zm0 5h16v2H4z"/></svg>
+        </button>
+        <button class="nav-item" onclick="switchDefaultTab(this, 'زانیاری', 'زانیاری', false)">
+            <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
+        </button>
+        <button class="nav-item" onclick="switchDefaultTab(this, 'ڕێکخستن', '', true)">
+            <svg viewBox="0 0 24 24"><path d="M19.43 12.98c.04-.32.07-.64.07-.98s-.03-.66-.07-.98l2.11-1.65c.19-.15.24-.42.12-.64l-2-3.46c-.12-.22-.39-.3-.61-.22l-2.49 1c-.52-.4-1.08-.73-1.69-.98l-.38-2.65C14.46 2.18 14.25 2 14 2h-4c-.25 0-.46.18-.49.42l-.38 2.65c-.61.25-1.17.59-1.69.98l-2.49-1c-.23-.09-.49 0-.61.22l-2 3.46c-.13.22-.07.49.12.64l2.11 1.65c-.04.32-.07.65-.07.98s.03.66.07.98l-2.11 1.65c-.19.15-.24.42-.12.64l2 3.46c.12.22.39.3.61.22l2.49-1c.52.4 1.08.73 1.69.98l.38 2.65c.03.24.24.42.49.42h4c.25 0 .46-.18.49-.42l.38-2.65c.61-.25 1.17-.59 1.69-.98l2.49 1c.23.09.49 0 .61-.22l2-3.46c.12-.22.07-.49-.12-.64l-2.11-1.65zM12 15.5c-1.93 0-3.5-1.57-3.5-3.5s1.57-3.5 3.5-3.5 3.5 1.57 3.5 3.5-1.57 3.5-3.5 3.5z"/></svg>
+        </button>
+    </div>
+
+    <script>
+        const SUPABASE_URL = 'https://rivwvzdjfotkjhpuwuaf.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJpdnd2emRqZm90a2pocHV3dWFmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ5MzgzNDAsImV4cCI6MjEwMDUxNDM0MH0.kYBINRIMeKZaTyg46gM7qBRct0H5kktd2ZJiSyIp2ag';
+        
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        let allUsers = [];
+        let distributorsList = [];
+        let delegatesList = [];
+        let zonesList = [];
+        let vehiclesList = [];
+        let currentUserData = null;
+        let liveTimeInterval = null; 
+        let listAutoRefreshInterval = null;
+
+        function getLocalTodayDate() {
+            const d = new Date();
+            const year = d.getFullYear();
+            const month = String(d.getMonth() + 1).padStart(2, '0');
+            const day = String(d.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+
+        function getFirstDayOfCurrentMonth() {
+            const d = new Date();
+            const year = d.getFullYear();
+            const month = String(d.getMonth() + 1).padStart(2, '0');
+            return `${year}-${month}-01`;
+        }
+
+        function getLocalCurrentTime() {
+            const d = new Date();
+            return String(d.getHours()).padStart(2, '0') + ':' + 
+                   String(d.getMinutes()).padStart(2, '0');
+        }
+
+        function showCustomNotification(isSuccess, message) {
+            const notif = document.getElementById('customNotification');
+            const iconEl = document.getElementById('notifIcon');
+            const textEl = document.getElementById('notifText');
+
+            notif.className = '';
+            if (isSuccess) {
+                notif.classList.add('success');
+                iconEl.innerHTML = '<svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>';
+                textEl.textContent = message || 'سەرکەوتوو بوو';
+            } else {
+                notif.classList.add('error');
+                iconEl.innerHTML = '<svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>';
+                textEl.textContent = message || 'هەڵە روویدا';
+            }
+
+            notif.classList.add('show');
+            setTimeout(() => {
+                notif.classList.remove('show');
+            }, 3000);
+        }
+
+        function showConfirmModalWithTime(defaultTime, callback) {
+            const modal = document.getElementById('customConfirmModal');
+            const yesBtn = document.getElementById('modalYesBtn');
+            const noBtn = document.getElementById('modalNoBtn');
+            const titleEl = document.getElementById('modalTitleText');
+            const timeContainer = document.getElementById('modalTimeInputContainer');
+            const timeField = document.getElementById('modalTimeField');
+
+            titleEl.textContent = "    . دەتەوێت دەستکاری کات بکەیت؟";
+            timeContainer.style.display = 'block';
+            let cleanDefaultTime = defaultTime;
+            if (cleanDefaultTime && cleanDefaultTime.split(':').length > 2) {
+                cleanDefaultTime = cleanDefaultTime.split(':').slice(0, 2).join(':');
+            }
+            timeField.value = cleanDefaultTime || getLocalCurrentTime();
+
+            modal.style.display = 'flex';
+
+            yesBtn.onclick = function() {
+                modal.style.display = 'none';
+                timeContainer.style.display = 'none';
+                callback(true, timeField.value);
+            };
+
+            noBtn.onclick = function() {
+                modal.style.display = 'none';
+                timeContainer.style.display = 'none';
+                callback(false, null);
+            };
+        }
+
+        function loadLocalCache() {
+            try {
+                const cachedUsers = localStorage.getItem('cache_users');
+                if (cachedUsers) allUsers = JSON.parse(cachedUsers);
+                allUsers.sort((a, b) => a.localeCompare(b));
+
+                const cachedDist = localStorage.getItem('cache_distributors');
+                if (cachedDist) distributorsList = JSON.parse(cachedDist);
+
+                const cachedDel = localStorage.getItem('cache_delegates');
+                if (cachedDel) delegatesList = JSON.parse(cachedDel);
+
+                const cachedZones = localStorage.getItem('cache_zones');
+                if (cachedZones) zonesList = JSON.parse(cachedZones);
+
+                const cachedVeh = localStorage.getItem('cache_vehicles');
+                if (cachedVeh) vehiclesList = JSON.parse(cachedVeh);
+            } catch (err) {
+                console.error('Error loading local cache:', err);
+            }
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            loadLocalCache(); 
+            fetchUsersList();
+            fetchDynamicData(); 
+            
+            if (localStorage.getItem('theme') === 'light') {
+                document.body.classList.add('light-theme');
+            }
+
+            const savedUser = localStorage.getItem('currentUser') || sessionStorage.getItem('currentUser');
+            if (savedUser) {
+                currentUserData = JSON.parse(savedUser);
+                showForm(currentUserData);
+            }
+
+            // چالاککردنی تەنها ژمارە و دابەشکردنی ڤاریزە بۆ خانەی پارەی هێنراوە
+            const collectedInput = document.getElementById('collectedMoneyInput');
+            if (collectedInput) {
+                collectedInput.addEventListener('input', function(e) {
+                    // تەنها ژمارە قبوڵ دەکات و پیت یان هێمای تر لاببەرە
+                    let value = this.value.replace(/[^0-9]/g, '');
+                    if (value) {
+                        // ڕێکخستنی ڤاریزە دوای هەمیشە ٣ ژمارە (Formatting Numbers with Commas)
+                        value = Number(value).toLocaleString('en-US');
+                    }
+                    this.value = value;
+                });
+            }
+        });
+
+        async function fetchUsersList() {
+            try {
+                const { data } = await supabaseClient.from('users').select('username');
+                if (data) {
+                    allUsers = data.map(u => u.username).filter(Boolean);
+                    allUsers.sort((a, b) => a.localeCompare(b));
+                    localStorage.setItem('cache_users', JSON.stringify(allUsers));
+                }
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        async function fetchDynamicData() {
+            try {
+                const { data: distData } = await supabaseClient
+                    .from('users')
+                    .select('username')
+                    .ilike('profession', '%دابەشکار%');
+                
+                if (distData && distData.length > 0) {
+                    distributorsList = distData.map(d => d.username).filter(Boolean);
+                } else {
+                    const { data: fallbackDist } = await supabaseClient.from('distributors').select('name');
+                    if (fallbackDist) {
+                        distributorsList = fallbackDist.map(d => d.name).filter(Boolean);
+                    }
+                }
+                localStorage.setItem('cache_distributors', JSON.stringify(distributorsList));
+
+                const { data: delData } = await supabaseClient.from('delegates').select('name');
+                if (delData) {
+                    delegatesList = delData.map(d => d.name).filter(Boolean);
+                    localStorage.setItem('cache_delegates', JSON.stringify(delegatesList));
+                }
+
+                const { data: zoneData } = await supabaseClient.from('zones').select('name');
+                if (zoneData) {
+                    zonesList = zoneData.map(z => z.name).filter(Boolean);
+                    localStorage.setItem('cache_zones', JSON.stringify(zonesList));
+                }
+
+                const { data: vehData } = await supabaseClient.from('vehicles').select('*');
+                if (vehData) {
+                    vehiclesList = vehData.map(v => v.plate_number || v.car_number || v.name || v.vehicle_name).filter(Boolean);
+                    localStorage.setItem('cache_vehicles', JSON.stringify(vehiclesList));
+                }
+            } catch (err) {
+                console.error('Background sync failed, using local cache:', err);
+            }
+        }
+
+        const inputField = document.getElementById('username');
+        const listContainer = document.getElementById('autocompleteList');
+
+        inputField.addEventListener('input', function() {
+            const val = this.value;
+            closeAllDropdowns();
+            if (!val) {
+                showFilteredUsers(allUsers);
+                return;
+            }
+            const filtered = allUsers.filter(item => item.toLowerCase().includes(val.toLowerCase()));
+            showFilteredUsers(filtered);
+        });
+
+        inputField.addEventListener('focus', function() {
+            showFilteredUsers(allUsers);
+        });
+
+        function showFilteredUsers(usersArray) {
+            if (usersArray.length === 0) {
+                listContainer.style.display = 'none';
+                return;
+            }
+            usersArray.sort((a, b) => a.localeCompare(b));
+
+            listContainer.style.display = 'block';
+            listContainer.innerHTML = '';
+            usersArray.forEach(user => {
+                const itemDiv = document.createElement('div');
+                itemDiv.textContent = user;
+                itemDiv.addEventListener('click', function() {
+                    inputField.value = user;
+                    closeAllDropdowns();
+                });
+                itemDiv.addEventListener('mousedown', function(e) {
+                    e.preventDefault();
+                });
+                listContainer.appendChild(itemDiv);
+            });
+        }
+
+        document.addEventListener('click', function (e) {
+            if (!e.target.closest('.field')) {
+                closeAllDropdowns();
+            }
+        });
+
+        function closeAllDropdowns() {
+            document.querySelectorAll('.autocomplete-items').forEach(el => {
+                el.style.display = 'none';
+                el.innerHTML = '';
+            });
+        }
+
+        function togglePasswordVisibility() {
+            const passwordInput = document.getElementById('password');
+            const eyeIcon = document.getElementById('eyeIcon');
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                eyeIcon.innerHTML = '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"></path><line x1="1" y1="1" x2="23" y2="23"></line>';
+            } else {
+                passwordInput.type = 'password';
+                eyeIcon.innerHTML = '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle>';
+            }
+        }
+
+        async function handleLogin(event) {
+            event.preventDefault();
+            const usernameInput = document.getElementById('username').value.trim();
+            const passwordInput = document.getElementById('password').value.trim();
+            const rememberMeChecked = document.getElementById('rememberMe').checked;
+            
+            try {
+                const { data, error } = await supabaseClient
+                    .from('users')
+                    .select('*')
+                    .eq('username', usernameInput)
+                    .single();
+
+                if (error || !data) {
+                    showCustomNotification(false, 'هەڵە روویدا: ناوی بەکارهێنەر هەڵەیە');
+                    return;
+                }
+
+                if (String(data.password).trim() === passwordInput) {
+                    currentUserData = data;
+                    if (rememberMeChecked) {
+                        localStorage.setItem('currentUser', JSON.stringify(data));
+                    } else {
+                        sessionStorage.setItem('currentUser', JSON.stringify(data));
+                    }
+                    showForm(data);
+                } else {
+                    showCustomNotification(false, 'هەڵە روویدا: تێپەڕەوشە هەڵەیە');
+                }
+            } catch (err) {
+                showCustomNotification(false, 'هەڵە روویدا لە سیستەم');
+            }
+        }
+
+        function showForm(user) {
+            document.getElementById('loginSection').style.display = 'none';
+            document.getElementById('formSection').style.display = 'flex';
+            
+            const profession = user.profession || user.role || '';
+            const profLower = profession.toLowerCase();
+            
+            if (profLower.includes('شۆفێر') || profLower.includes('سایەق') || profLower.includes('driver')) {
+                document.getElementById('driverNavBar').style.display = 'flex';
+                document.getElementById('defaultNavBar').style.display = 'none';
+                renderDriverMainView(1);
+            } else {
+                document.getElementById('driverNavBar').style.display = 'none';
+                document.getElementById('defaultNavBar').style.display = 'flex';
+                document.getElementById('formTitle').textContent = `فۆڕمی سەرەکی (${profession})`;
+                document.getElementById('formDescription').textContent = 'ئەم فۆڕمە بەتاڵە.';
+            }
+        }
+
+        function clearAllIntervals() {
+            if (liveTimeInterval) clearInterval(liveTimeInterval);
+            if (listAutoRefreshInterval) clearInterval(listAutoRefreshInterval);
+        }
+
+        function formatTimeDisplay(timeStr) {
+            if (!timeStr) return '';
+            const parts = timeStr.split(':');
+            if (parts.length >= 2) {
+                return `${parts[0]}:${parts[1]}`;
+            }
+            return timeStr;
+        }
+
+        async function renderDriverMainView(level = 1) {
+            clearAllIntervals();
+            document.querySelectorAll('#driverNavBar .nav-item').forEach(btn => btn.classList.remove('active'));
+            const truckBtn = document.getElementById('truckNavBtn');
+            if(truckBtn) truckBtn.classList.add('active');
+
+            const card = document.getElementById('formCardContent');
+            const today = getLocalTodayDate();
+            const baseDriver = currentUserData ? currentUserData.username : '';
+            
+            let driverName = baseDriver;
+            if (level === 2) driverName = `${baseDriver} دوو`;
+            if (level === 3) driverName = `${baseDriver} سێ`;
+
+            let record = null;
+            try {
+                const { data } = await supabaseClient
+                    .from('delivery_records')
+                    .select('*')
+                    .eq('driver', driverName)
+                    .eq('record_date', today);
+
+                if (data && data.length > 0) {
+                    record = data[0];
+                }
+            } catch (err)  {
+                console.error(err);
+            }
+
+            const suffixTxt = level === 3 ? ' سێ' : (level === 2 ? ' دوو' : '');
+            
+            let exitText = `دەرچوون${suffixTxt}`;
+            let exitTimeSpan = (record && record.record_time) ? `<span>${formatTimeDisplay(record.record_time)}</span>` : `<span></span>`;
+
+            let inZoneText = `ناو زۆن${suffixTxt}`;
+            let inZoneTimeSpan = (record && record.in_zone_time) ? `<span>${formatTimeDisplay(record.in_zone_time)}</span>` : `<span></span>`;
+
+            let outZoneText = `دەرێی زۆن${suffixTxt}`;
+            let outZoneTimeSpan = (record && record.out_zone_time) ? `<span>${formatTimeDisplay(record.out_zone_time)}</span>` : `<span></span>`;
+
+            let arrivalText = `گەشتنەوە${suffixTxt}`;
+            let arrivalTimeSpan = (record && record.arrival_time) ? `<span>${formatTimeDisplay(record.arrival_time)}</span>` : `<span></span>`;
+
+            if (level === 1) {
+                let showSecondCargoBtn = false;
+                if (record && record.arrival_time) {
+                    const [arrHour, arrMin] = record.arrival_time.split(':').map(Number);
+                    const arrDate = new Date();
+                    arrDate.setHours(arrHour, arrMin + 5, 0, 0); 
+                    const now = new Date();
+                    if (now >= arrDate) {
+                        showSecondCargoBtn = true;
+                    }
+                }
+
+                card.innerHTML = `
+                    <h2>بەشی شۆفێر</h2>
+                    <div style="margin-top: 10px;">
+                        <div class="buttons-container">
+                            <button type="button" class="btn-driver-action" onclick="checkAndRenderDriverDeliveryForm(false)">
+                                <span>${exitText}</span> ${exitTimeSpan}
+                            </button>
+                            <button type="button" class="btn-sub" onclick="checkAndExecuteZoneAction('in', false)">
+                                <span>${inZoneText}</span> ${inZoneTimeSpan}
+                            </button>
+                            <button type="button" class="btn-sub" onclick="checkAndExecuteZoneAction('out', false)">
+                                <span>${outZoneText}</span> ${outZoneTimeSpan}
+                            </button>
+                            <button type="button" class="btn-sub" onclick="checkAndExecuteZoneAction('arrival', false)">
+                                <span>${arrivalText}</span> ${arrivalTimeSpan}
+                            </button>
+                            ${showSecondCargoBtn ? `
+                            <button type="button" class="btn-sub" onclick="handleSecondCargoClick()">
+                                <span>باری دووەم</span> <span></span>
+                            </button>` : ''}
+                        </div>
+                        <!-- سەر باڕەکەی خوارەوە کە دووگمەی (پارەی هێنراوە) تێدایە -->
+                        <div style="margin-top: 12px; border-top: 1px solid var(--border-color); padding-top: 10px;">
+                            <button type="button" class="btn-collected-money" onclick="openCollectedMoneyModal(1)">
+                                <span>پارەی هێنراە</span>
+                                <span>${record && record.collected_money ? record.collected_money.toLocaleString() + ' د.ع' : ''}</span>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            } else if (level === 2) {
+                let showThirdCargoBtn = false;
+                if (record && record.arrival_time) {
+                    const [arrHour, arrMin] = record.arrival_time.split(':').map(Number);
+                    const arrDate = new Date();
+                    arrDate.setHours(arrHour, arrMin + 5, 0, 0);
+                    const now = new Date();
+                    if (now >= arrDate) {
+                        showThirdCargoBtn = true;
+                    }
+                }
+
+                card.innerHTML = `
+                    <h2>بەشی شۆفێر (باری دووەم)</h2>
+                    <div style="margin-top: 10px;">
+                        <div class="buttons-container">
+                            <button type="button" class="btn-driver-action" onclick="checkAndRenderDriverDeliveryForm(true)">
+                                <span>${exitText}</span> ${exitTimeSpan}
+                            </button>
+                            <button type="button" class="btn-sub" onclick="checkAndExecuteZoneAction('in', true)">
+                                <span>${inZoneText}</span> ${inZoneTimeSpan}
+                            </button>
+                            <button type="button" class="btn-sub" onclick="checkAndExecuteZoneAction('out', true)">
+                                <span>${outZoneText}</span> ${outZoneTimeSpan}
+                            </button>
+                            <button type="button" class="btn-sub" onclick="checkAndExecuteZoneAction('arrival', true)">
+                                <span>${arrivalText}</span> ${arrivalTimeSpan}
+                            </button>
+                            ${showThirdCargoBtn ? `
+                            <button type="button" class="btn-sub" onclick="handleThirdCargoClick()">
+                                <span>باری سێیەم</span> <span></span>
+                            </button>` : ''}
+                            <button type="button" class="btn-back" style="text-align: right; padding-right: 20px; margin-top: 5px;" onclick="renderDriverMainView(1)">گەڕانەوە</button>
+                        </div>
+                        <div style="margin-top: 12px; border-top: 1px solid var(--border-color); padding-top: 10px;">
+                            <button type="button" class="btn-collected-money" onclick="openCollectedMoneyModal(2)">
+                                <span>پارەی هێنراە</span>
+                                <span>${record && record.collected_money ? record.collected_money.toLocaleString() + ' د.ع' : ''}</span>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            } else if (level === 3) {
+                card.innerHTML = `
+                    <h2>بەشی شۆفێر (باری سێیەم)</h2>
+                    <div style="margin-top: 10px;">
+                        <div class="buttons-container">
+                            <button type="button" class="btn-driver-action" onclick="checkAndRenderDriverDeliveryFormTriple()">
+                                <span>${exitText}</span> ${exitTimeSpan}
+                            </button>
+                            <button type="button" class="btn-sub" onclick="checkAndExecuteZoneActionTriple('in')">
+                                <span>${inZoneText}</span> ${inZoneTimeSpan}
+                            </button>
+                            <button type="button" class="btn-sub" onclick="checkAndExecuteZoneActionTriple('out')">
+                                <span>${outZoneText}</span> ${outZoneTimeSpan}
+                            </button>
+                            <button type="button" class="btn-sub" onclick="checkAndExecuteZoneActionTriple('arrival')">
+                                <span>${arrivalText}</span> ${arrivalTimeSpan}
+                            </button>
+                            <button type="button" class="btn-back" style="text-align: right; padding-right: 20px; margin-top: 5px;" onclick="renderDriverMainView(2)">گەڕانەوە</button>
+                        </div>
+                        <div style="margin-top: 12px; border-top: 1px solid var(--border-color); padding-top: 10px;">
+                            <button type="button" class="btn-collected-money" onclick="openCollectedMoneyModal(3)">
+                                <span>پارەی هێنراە</span>
+                                <span>${record && record.collected_money ? record.collected_money.toLocaleString() + ' د.ع' : ''}</span>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        // کۆدەکانی پەیوەست بە کردنەوە و داخستن و تۆمارکردنی (پارەی هێنراوە)
+        let currentCollectedMoneyLevel = 1;
+
+        async function openCollectedMoneyModal(level) {
+            currentCollectedMoneyLevel = level;
+            const today = getLocalTodayDate();
+            const baseDriver = currentUserData ? currentUserData.username : '';
+            let driverName = baseDriver;
+            if (level === 2) driverName = `${baseDriver} دوو`;
+            if (level === 3) driverName = `${baseDriver} سێ`;
+
+            try {
+                // پشکنین بۆ ئەوەی دڵنیابین کە دووگمەی دەرچوون لەزۆن تۆمار کرابێت یان نا
+                const { data, error } = await supabaseClient
+                    .from('delivery_records')
+                    .select('*')
+                    .eq('driver', driverName)
+                    .eq('record_date', today);
+
+                if (error || !data || data.length === 0 || !data[0].record_time) {
+                    // ئەگەر دەرچوون تۆمار نەکرابێت، ئەم ویندۆیە دەبێتەوە کە داوای دەکەیت
+                    showCustomNotification(false, 'ئەوتوو جارێ بەسەلامەتی وەرەوە دابەشت بڕیارە پارەکەت تۆمار بکە');
+                    return;
+                }
+
+                // ئەگەر تۆمارکرابوو، ویندۆی پارەی هێنراوە دەکرێتەوە
+                const record = data[0];
+                const inputField = document.getElementById('collectedMoneyInput');
+                inputField.value = record.collected_money ? Number(record.collected_money).toLocaleString('en-US') : '';
+                
+                document.getElementById('collectedMoneyModal').style.display = 'flex';
+                inputField.focus();
+            } catch (err) {
+                showCustomNotification(false, 'هەڵە روویدا لە پشکنینی داتاکان');
+            }
+        }
+
+        function closeCollectedMoneyModal() {
+            document.getElementById('collectedMoneyModal').style.display = 'none';
+            document.getElementById('collectedMoneyInput').value = '';
+        }
+
+        async function submitCollectedMoney() {
+            const today = getLocalTodayDate();
+            const baseDriver = currentUserData ? currentUserData.username : '';
+            let driverName = baseDriver;
+            if (currentCollectedMoneyLevel === 2) driverName = `${baseDriver} دوو`;
+            if (currentCollectedMoneyLevel === 3) driverName = `${baseDriver} سێ`;
+
+            const rawVal = document.getElementById('collectedMoneyInput').value.replace(/,/g, '').trim();
+            const moneyValue = parseFloat(rawVal) || 0;
+
+            try {
+                // داتاکە دەچێتە تەبڵی delivery_records بۆ ڕیزی collected_money
+                const { error } = await supabaseClient
+                    .from('delivery_records')
+                    .update({ collected_money: moneyValue })
+                    .eq('driver', driverName)
+                    .eq('record_date', today);
+
+                if (error) {
+                    showCustomNotification(false, 'هەڵە لە تۆمارکردنی پارە');
+                } else {
+                    showCustomNotification(true, 'پارەی هێنراوە بە سەرکەوتوویی تۆمار کرا');
+                    closeCollectedMoneyModal();
+                    renderDriverMainView(currentCollectedMoneyLevel);
+                }
+            } catch (err) {
+                showCustomNotification(false, 'هەڵە روویدا');
+            }
+        }
+
+        function renderDriverListsView() {
+            clearAllIntervals();
+            document.querySelectorAll('#driverNavBar .nav-item').forEach(btn => btn.classList.remove('active'));
+            if(event && event.currentTarget) event.currentTarget.classList.add('active');
+
+            const card = document.getElementById('formCardContent');
+            card.innerHTML = `
+                <div class="list-inner-wrapper">
+                    <div class="header-section">
+                        <div class="form-title"> </div>
+                        <div style="display: flex; gap: 4px;">
+                            <input type="date" class="date-input" id="fromDate" title="لە بەرواری">
+                            <input type="date" class="date-input" id="toDate" title="بۆ بەرواری">
+                        </div>
+                    </div>
+
+                    <div class="totals-grid">
+                        <div class="total-card">
+                            <div class="total-value" id="totalWeight">٠ کگم</div>
+                        </div>
+                        <div class="total-card">
+                            <div class="total-value" id="totalPieces">٠</div>
+                        </div>
+                        <div class="total-card">
+                            <div class="total-value" id="totalReceipts">٠</div>
+                        </div>
+                        <div class="total-card">
+                            <div class="total-value" id="totalMoney">٠ د.ع</div>
+                        </div>
+                    </div>
+
+                    <div class="records-container" id="recordsList">
+                        <div class="no-data">چاوەڕێی هێنانی داتاکان...</div>
+                    </div>
+                </div>
+            `;
+
+            const fromDateInput = document.getElementById('fromDate');
+            const toDateInput = document.getElementById('toDate');
+
+            fromDateInput.value = getFirstDayOfCurrentMonth();
+            toDateInput.value = getLocalTodayDate();
+
+            fetchDeliveryRecordsRange(fromDateInput.value, toDateInput.value);
+
+            fromDateInput.addEventListener('change', () => {
+                fetchDeliveryRecordsRange(fromDateInput.value, toDateInput.value);
+            });
+            toDateInput.addEventListener('change', () => {
+                fetchDeliveryRecordsRange(fromDateInput.value, toDateInput.value);
+            });
+
+            listAutoRefreshInterval = setInterval(() => {
+                fetchDeliveryRecordsRange(fromDateInput.value, toDateInput.value, true);
+            }, 300000);
+        }
+
+        function renderDefaultListsView() {
+            clearAllIntervals();
+            document.querySelectorAll('#defaultNavBar .nav-item').forEach(btn => btn.classList.remove('active'));
+            if(event && event.currentTarget) event.currentTarget.classList.add('active');
+
+            const card = document.getElementById('formCardContent');
+            card.innerHTML = `
+                <div class="list-inner-wrapper">
+                    <div class="header-section">
+                        <div class="form-title">لیستی دەرچوونەکان (خۆکار)</div>
+                        <div style="display: flex; gap: 4px;">
+                            <input type="date" class="date-input" id="fromDate" title="لە بەرواری">
+                            <input type="date" class="date-input" id="toDate" title="بۆ بەرواری">
+                        </div>
+                    </div>
+
+                    <div class="totals-grid">
+                        <div class="total-card">
+                            <div class="total-title">کێشی پارچە (بار)</div>
+                            <div class="total-value" id="totalWeight">٠ کگم</div>
+                        </div>
+                        <div class="total-card">
+                            <div class="total-title">ژمارەی پارچە</div>
+                            <div class="total-value" id="totalPieces">٠</div>
+                        </div>
+                        <div class="total-card">
+                            <div class="total-title">ژمارەی وەسڵ</div>
+                            <div class="total-value" id="totalReceipts">٠</div>
+                        </div>
+                        <div class="total-card">
+                            <div class="total-title">پارەی هێنراوە</div>
+                            <div class="total-value" id="totalMoney">٠ د.ع</div>
+                        </div>
+                    </div>
+
+                    <div class="records-container" id="recordsList">
+                        <div class="no-data">چاوەڕێی هێنانی داتاکان...</div>
+                    </div>
+                </div>
+            `;
+
+            const fromDateInput = document.getElementById('fromDate');
+            const toDateInput = document.getElementById('toDate');
+
+            fromDateInput.value = getFirstDayOfCurrentMonth();
+            toDateInput.value = getLocalTodayDate();
+
+            fetchDeliveryRecordsRange(fromDateInput.value, toDateInput.value);
+
+            fromDateInput.addEventListener('change', () => {
+                fetchDeliveryRecordsRange(fromDateInput.value, toDateInput.value);
+            });
+            toDateInput.addEventListener('change', () => {
+                fetchDeliveryRecordsRange(fromDateInput.value, toDateInput.value);
+            });
+
+            listAutoRefreshInterval = setInterval(() => {
+                fetchDeliveryRecordsRange(fromDateInput.value, toDateInput.value, true);
+            }, 300000);
+        }
+
+        async function fetchDeliveryRecordsRange(fromDate, toDate, isBackground = false) {
+            const recordsContainer = document.getElementById('recordsList');
+            if(!recordsContainer) return;
+            if(!isBackground) {
+                recordsContainer.innerHTML = '<div class="no-data">چاوەڕێبە...</div>';
+            }
+
+            const currentUsername = currentUserData ? currentUserData.username : '';
+
+            try {
+                let query = supabaseClient
+                    .from('delivery_records')
+                    .select('*');
+
+                if (fromDate) {
+                    query = query.gte('record_date', fromDate);
+                }
+                if (toDate) {
+                    query = query.lte('record_date', toDate);
+                }
+
+                const profession = currentUserData ? (currentUserData.profession || currentUserData.role || '') : '';
+                const profLower = profession.toLowerCase();
+                
+                if (profLower.includes('شۆفێر') || profLower.includes('سایەق') || profLower.includes('driver')) {
+                    query = query.or(`driver.eq.${currentUsername},driver.like.${currentUsername} دوو%,driver.like.${currentUsername} سێ%`);
+                }
+
+                query = query.order('record_date', { ascending: false }).order('record_time', { ascending: false });
+
+                const { data, error } = await query;
+
+                if (error) throw error;
+
+                if (!data || data.length === 0) {
+                    recordsContainer.innerHTML = '<div class="no-data">هیچ تۆمارێک نییە لەم مەودا بەروارەدا</div>';
+                    resetTotals();
+                    return;
+                }
+
+                let sumWeight = 0;
+                let sumPieces = 0;
+                let totalReceiptsCount = data.length;
+                let sumMoney = 0;
+
+                recordsContainer.innerHTML = '';
+
+                data.forEach(record => {
+                    sumWeight += Number(record.cargo_weight || 0);
+                    sumPieces += Number(record.pieces_count || 0);
+                    sumMoney += Number(record.collected_money || 0);
+
+                    const card = document.createElement('div');
+                    card.className = 'record-card';
+                    
+                    card.onclick = () => {
+                        const isActive = card.classList.contains('active');
+                        card.classList.toggle('active', !isActive);
+                        
+                        if (!isActive) {
+                            setTimeout(() => {
+                                card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                            }, 150);
+                        }
+                    };
+
+                    card.innerHTML = `
+                        <div class="record-main-info">
+                            <div class="info-row">
+                                <span class="label">بەروار:</span>
+                                <span class="value">${record.record_date}</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="label">ناوی دابەشکار:</span>
+                                <span class="value">${record.distributor}</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="label">ناوی مەندوب:</span>
+                                <span class="value">${record.delegate}</span>
+                            </div>
+                            <div class="info-row">
+                                <div><span class="label">زۆن:</span> <span class="value">${record.zone}</span></div>
+                                <div><span class="label">سەیارە:</span> <span class="value">${record.vehicle}</span></div>
+                            </div>
+                        </div>
+                        <div class="record-details">
+                            <div class="detail-item"><span class="label">شۆفێر:</span> <span class="value">${record.driver}</span></div>
+                            <div class="detail-item"><span class="label">کێشی بار:</span> <span class="value">${record.cargo_weight} کگم</span></div>
+                            <div class="detail-item"><span class="label">ژمارەی پارچە:</span> <span class="value">${record.pieces_count}</span></div>
+                            <div class="detail-item"><span class="label">ژمارەی وەسڵ:</span> <span class="value">${record.receipt_number}</span></div>
+                            <div class="detail-item"><span class="label">پارەی هێنراوە:</span> <span class="value">${record.collected_money ? Number(record.collected_money).toLocaleString() : 0} د.ع</span></div>
+                            <div class="detail-item"><span class="label">کاتی تۆمار:</span> <span class="value">${formatTimeDisplay(record.record_time)}</span></div>
+                            <div class="detail-item"><span class="label">کاتی ناو زۆن:</span> <span class="value">${record.in_zone_time ? formatTimeDisplay(record.in_zone_time) : 'ناتۆمارکراو'}</span></div>
+                            <div class="detail-item"><span class="label">کاتی دەرچوون لە زۆن:</span> <span class="value">${record.out_zone_time ? formatTimeDisplay(record.out_zone_time) : 'ناتۆمارکراو'}</span></div>
+                            <div class="detail-item"><span class="label">کاتی گەیشتنەوە:</span> <span class="value">${record.arrival_time ? formatTimeDisplay(record.arrival_time) : 'ناتۆمارکراو'}</span></div>
+                        </div>
+                    `;
+
+                    recordsContainer.appendChild(card);
+                });
+
+                document.getElementById('totalWeight').innerText = sumWeight.toLocaleString() + ' کگم';
+                document.getElementById('totalPieces').innerText = sumPieces.toLocaleString();
+                document.getElementById('totalReceipts').innerText = totalReceiptsCount.toLocaleString();
+                document.getElementById('totalMoney').innerText = sumMoney.toLocaleString() + ' د.ع';
+
+            } catch (err) {
+                console.error('هەڵە لە هێنانی داتاکان:', err.message);
+                if(!isBackground) {
+                    recordsContainer.innerHTML = '<div class="no-data" style="color: red;">هەڵەیەک ڕویدا لە پەیوەندیکردن بە داتابەیس</div>';
+                }
+                resetTotals();
+            }
+        }
+
+        function resetTotals() {
+            const tw = document.getElementById('totalWeight');
+            const tp = document.getElementById('totalPieces');
+            const tr = document.getElementById('totalReceipts');
+            const tm = document.getElementById('totalMoney');
+            if(tw) tw.innerText = '٠ کگم';
+            if(tp) tp.innerText = '٠';
+            if(tr) tr.innerText = '٠';
+            if(tm) tm.innerText = '٠ د.ع';
+        }
+
+        async function handleSecondCargoClick() {
+            const today = getLocalTodayDate();
+            const driverName = currentUserData ? currentUserData.username : '';
+
+            try {
+                const { data, error } = await supabaseClient
+                    .from('delivery_records')
+                    .select('*')
+                    .eq('driver', driverName)
+                    .eq('record_date', today);
+
+                if (error || !data || data.length === 0) {
+                    showCustomNotification(false, 'تکایە سەرەتا دەبێت فۆڕمی دەرچوون و گەشتنەوە تۆمار بکەیت');
+                    return;
+                }
+
+                const record = data[0];
+                if (!record.arrival_time) {
+                    showCustomNotification(false, 'تکایە سەرەتا دەبێت (گەشتنەوە) تۆمار بکەیت');
+                    return;
+                }
+
+                const [arrHour, arrMin] = record.arrival_time.split(':').map(Number);
+                const arrDate = new Date();
+                arrDate.setHours(arrHour, arrMin + 5, 0, 0);
+
+                const now = new Date();
+                if (now < arrDate) {
+                    const diffMins = Math.ceil((arrDate - now) / 60000);
+                    showCustomNotification(false, `بۆ ئەم دووگمەیە دەبێت ${diffMins} دەقەی تر چاوەڕێ بکەیت`);
+                    return;
+                }
+
+                renderDriverMainView(2);
+                showCustomNotification(true, 'باری دووەم چالاک بوو');
+            } catch (err) {
+                showCustomNotification(false, 'هەڵە روویدا لە پشکنینی کات');
+            }
+        }
+
+        async function handleThirdCargoClick() {
+            const today = getLocalTodayDate();
+            const baseDriver = currentUserData ? currentUserData.username : '';
+            const driverName = `${baseDriver} دوو`;
+
+            try {
+                const { data, error } = await supabaseClient
+                    .from('delivery_records')
+                    .select('*')
+                    .eq('driver', driverName)
+                    .eq('record_date', today);
+
+                if (error || !data || data.length === 0) {
+                    showCustomNotification(false, 'تکایە سەرەتا دەبێت گەشتنەوە دوو تۆمار بکەیت');
+                    return;
+                }
+
+                const record = data[0];
+                if (!record.arrival_time) {
+                    showCustomNotification(false, 'تکایە سەرەتا دەبێت (گەشتنەوە دوو) تۆمار بکەیت');
+                    return;
+                }
+
+                const [arrHour, arrMin] = record.arrival_time.split(':').map(Number);
+                const arrDate = new Date();
+                arrDate.setHours(arrHour, arrMin + 5, 0, 0);
+
+                const now = new Date();
+                if (now < arrDate) {
+                    const diffMins = Math.ceil((arrDate - now) / 60000);
+                    showCustomNotification(false, `بۆ باری سێیەم دەبێت ${diffMins} دەقەی تر چاوەڕێ بکەیت`);
+                    return;
+                }
+
+                renderDriverMainView(3);
+                showCustomNotification(true, 'باری سێیەم چالاک بوو');
+            } catch (err) {
+                showCustomNotification(false, 'هەڵە روویدا لە پشکنینی کات');
+            }
+        }
+
+        async function checkAndExecuteZoneAction(actionType, isDouble) {
+            const today = getLocalTodayDate();
+            const baseDriver = currentUserData ? currentUserData.username : '';
+            const driverName = isDouble ? `${baseDriver} دوو` : baseDriver;
+            const now24Hour = getLocalCurrentTime();
+
+            try {
+                const { data, error } = await supabaseClient
+                    .from('delivery_records')
+                    .select('*')
+                    .eq('driver', driverName)
+                    .eq('record_date', today);
+
+                if (error || !data || data.length === 0) {
+                    showCustomNotification(false, isDouble ? 'سەرەتا دەبێت دەرچوون دوو تۆمار بکەیت' : 'سەرەتا دەبێت فۆڕمی دەرچوون تۆمار بکەیت');
+                    return;
+                }
+
+                const record = data[0];
+
+                if (actionType === 'in') {
+                    if (record.in_zone_time) {
+                        showConfirmModalWithTime(record.in_zone_time, (confirmed, manualTime) => {
+                            if (confirmed && manualTime) {
+                                executeZoneUpdate(record.id, 'in_zone_time', manualTime, isDouble ? 2 : 1);
+                            }
+                        });
+                        return;
+                    }
+                    executeZoneUpdate(record.id, 'in_zone_time', now24Hour, isDouble ? 2 : 1);
+
+                } else if (actionType === 'out') {
+                    if (!record.in_zone_time) {
+                        showCustomNotification(false, 'تکایە سەرەتا دووگمەی (ناو زۆن) تۆمار بکە');
+                        return;
+                    }
+
+                    if (record.out_zone_time) {
+                        showConfirmModalWithTime(record.out_zone_time, (confirmed, manualTime) => {
+                            if (confirmed && manualTime) {
+                                executeZoneUpdate(record.id, 'out_zone_time', manualTime, isDouble ? 2 : 1);
+                            }
+                        });
+                        return;
+                    }
+                    executeZoneUpdate(record.id, 'out_zone_time', now24Hour, isDouble ? 2 : 1);
+
+                } else if (actionType === 'arrival') {
+                    if (!record.out_zone_time) {
+                        showCustomNotification(false, 'تکایە سەرەتا دووگمەی (دەرێی زۆن) تۆمار بکە');
+                        return;
+                    }
+
+                    if (record.arrival_time) {
+                        showConfirmModalWithTime(record.arrival_time, (confirmed, manualTime) => {
+                            if (confirmed && manualTime) {
+                                executeZoneUpdate(record.id, 'arrival_time', manualTime, isDouble ? 2 : 1);
+                            }
+                        });
+                        return;
+                    }
+                    executeZoneUpdate(record.id, 'arrival_time', now24Hour, isDouble ? 2 : 1);
+                }
+            } catch (err) {
+                showCustomNotification(false, 'هەڵە روویدا لە پەیوەندی بە سیستەمەوە');
+            }
+        }
+
+        async function executeZoneUpdate(recordId, columnName, timeVal, level) {
+            try {
+                const updateObj = {};
+                updateObj[columnName] = timeVal;
+
+                const { error: updateError } = await supabaseClient
+                    .from('delivery_records')
+                    .update(updateObj)
+                    .eq('id', recordId);
+
+                if (updateError) {
+                    showCustomNotification(false, 'هەڵە روویدا لە تۆمارکردنی کات');
+                } else {
+                    showCustomNotification(true, `کاتەکە بە سەرکەوتوویی نوێکرایەوە: ${timeVal}`);
+                    renderDriverMainView(level);
+                }
+            } catch (err) {
+                showCustomNotification(false, 'هەڵە روویدا');
+            }
+        }
+
+        async function checkAndExecuteZoneActionTriple(actionType) {
+            const today = getLocalTodayDate();
+            const baseDriver = currentUserData ? currentUserData.username : '';
+            const driverName = `${baseDriver} سێ`;
+            const now24Hour = getLocalCurrentTime();
+
+            try {
+                const { data, error } = await supabaseClient
+                    .from('delivery_records')
+                    .select('*')
+                    .eq('driver', driverName)
+                    .eq('record_date', today);
+
+                if (error || !data || data.length === 0) {
+                    showCustomNotification(false, 'سەرەتا دەبێت دەرچوون سێ تۆمار بکەیت');
+                    return;
+                }
+
+                const record = data[0];
+
+                if (actionType === 'in') {
+                    if (record.in_zone_time) {
+                        showConfirmModalWithTime(record.in_zone_time, (confirmed, manualTime) => {
+                            if (confirmed && manualTime) {
+                                executeZoneUpdate(record.id, 'in_zone_time', manualTime, 3);
+                            }
+                        });
+                        return;
+                    }
+                    executeZoneUpdate(record.id, 'in_zone_time', now24Hour, 3);
+
+                } else if (actionType === 'out') {
+                    if (!record.in_zone_time) {
+                        showCustomNotification(false, 'تکایە سەرەتا دووگمەی (ناو زۆن سێ) تۆمار بکە');
+                        return;
+                    }
+
+                    if (record.out_zone_time) {
+                        showConfirmModalWithTime(record.out_zone_time, (confirmed, manualTime) => {
+                            if (confirmed && manualTime) {
+                                executeZoneUpdate(record.id, 'out_zone_time', manualTime, 3);
+                            }
+                        });
+                        return;
+                    }
+                    executeZoneUpdate(record.id, 'out_zone_time', now24Hour, 3);
+
+                } else if (actionType === 'arrival') {
+                    if (!record.out_zone_time) {
+                        showCustomNotification(false, 'تکایە سەرەتا دووگمەی (دەرێی زۆن سێ) تۆمار بکە');
+                        return;
+                    }
+
+                    if (record.arrival_time) {
+                        showConfirmModalWithTime(record.arrival_time, (confirmed, manualTime) => {
+                            if (confirmed && manualTime) {
+                                executeZoneUpdate(record.id, 'arrival_time', manualTime, 3);
+                            }
+                        });
+                        return;
+                    }
+                    executeZoneUpdate(record.id, 'arrival_time', now24Hour, 3);
+                }
+            } catch (err) {
+                showCustomNotification(false, 'هەڵە روویدا لە پەیوەندی بە سیستەمەوە');
+            }
+        }
+
+        async function checkAndRenderDriverDeliveryForm(isDouble) {
+            clearAllIntervals();
+            const today = getLocalTodayDate();
+            const baseDriver = currentUserData ? currentUserData.username : '';
+            const driverName = isDouble ? `${baseDriver} دوو` : baseDriver;
+            const nowTime = getLocalCurrentTime();
+
+            let existingRecord = null;
+            try {
+                const { data } = await supabaseClient
+                    .from('delivery_records')
+                    .select('*')
+                    .eq('driver', driverName)
+                    .eq('record_date', today);
+
+                if (data && data.length > 0) {
+                    existingRecord = data[0];
+                }
+            } catch (err) {
+                console.error(err);
+            }
+
+            const isEditMode = existingRecord !== null;
+            const readOnlyAttr = isEditMode ? 'readonly' : '';
+            let rawRecordTime = isEditMode && existingRecord.record_time ? existingRecord.record_time : nowTime;
+            if (rawRecordTime && rawRecordTime.split(':').length > 2) {
+                rawRecordTime = rawRecordTime.split(':').slice(0, 2).join(':');
+            }
+
+            const card = document.getElementById('formCardContent');
+            card.innerHTML = `
+                <div class="form-header-flex">
+                    <h2>فۆڕمی دەرچوون ${isDouble ? 'دوو' : 'یەک'}</h2>
+                    <span class="form-date-display">${today}</span>
+                </div>
+                <div class="driver-form-stack">
+                    <div class="field">
+                        <input type="text" id="d_driver" value="${driverName}" placeholder="شۆفێر" readonly required>
+                    </div>
+                    <div class="field">
+                        <input type="text" id="d_distributor" value="${isEditMode ? (existingRecord.distributor || '') : ''}" placeholder="دابەشکار" ${readOnlyAttr} autocomplete="off" onfocus="if(!this.readOnly) showDropdown('distributor', distributorsList)" oninput="filterDropdown('distributor', distributorsList)" onchange="autoSaveRecord(${isDouble ? 2 : 1})" required>
+                        <div id="dropdown_d_distributor" class="autocomplete-items"></div>
+                    </div>
+                    <div class="field">
+                        <input type="text" id="d_delegate" value="${isEditMode ? (existingRecord.delegate || '') : ''}" placeholder="مەندوب" ${readOnlyAttr} autocomplete="off" onfocus="if(!this.readOnly) showDropdown('delegate', delegatesList)" oninput="filterDropdown('delegate', delegatesList)" onchange="autoSaveRecord(${isDouble ? 2 : 1})" required>
+                        <div id="dropdown_d_delegate" class="autocomplete-items"></div>
+                    </div>
+                    <div class="field">
+                        <input type="text" id="d_zone" value="${isEditMode ? (existingRecord.zone || '') : ''}" placeholder="ناوچە / زۆن" ${readOnlyAttr} autocomplete="off" onfocus="if(!this.readOnly) showDropdown('zone', zonesList)" oninput="filterDropdown('zone', zonesList)" onchange="autoSaveRecord(${isDouble ? 2 : 1})" required>
+                        <div id="dropdown_d_zone" class="autocomplete-items"></div>
+                    </div>
+                    <div class="field">
+                        <input type="text" id="d_vehicle" value="${isEditMode ? (existingRecord.vehicle || '') : ''}" placeholder="ژمارەی سەیارە" ${readOnlyAttr} autocomplete="off" onfocus="if(!this.readOnly) showDropdown('vehicle', vehiclesList)" oninput="filterDropdown('vehicle', vehiclesList)" onchange="autoSaveRecord(${isDouble ? 2 : 1})" required>
+                        <div id="dropdown_d_vehicle" class="autocomplete-items"></div>
+                    </div>
+                    <div class="field">
+                        <input type="number" step="any" id="d_cargoWeight" value="${isEditMode ? (existingRecord.cargo_weight || '') : ''}" placeholder="کێشی بار" ${readOnlyAttr} onchange="autoSaveRecord(${isDouble ? 2 : 1})" required>
+                    </div>
+                    <div class="field">
+                        <input type="number" id="d_piecesCount" value="${isEditMode ? (existingRecord.pieces_count || '') : ''}" placeholder="ژمارەی پارچەکان" ${readOnlyAttr} onchange="autoSaveRecord(${isDouble ? 2 : 1})" required>
+                    </div>
+                    <div class="field">
+                        <input type="number" id="d_receiptNumber" value="${isEditMode ? (existingRecord.receipt_number || '') : ''}" placeholder="ژمارەی وەسڵ" ${readOnlyAttr} onchange="autoSaveRecord(${isDouble ? 2 : 1})" required>
+                    </div>
+                    <div class="field">
+                        <input type="time" id="d_recordTime" value="${rawRecordTime}" ${readOnlyAttr} onchange="autoSaveRecord(${isDouble ? 2 : 1})" required>
+                    </div>
+                    <div class="form-buttons-row" id="actionButtonContainer" style="margin-top: 8px;">
+                        ${isEditMode ? `<button type="button" class="btn-submit" id="mainActionBtn" style="text-align: right; padding-right: 20px;" onclick="enableEditingForForm(${isDouble ? 2 : 1})">چاککردن</button>` : `<button type="button" class="btn-submit" id="mainActionBtn" style="text-align: right; padding-right: 20px;" onclick="submitDeliveryRecord(${isDouble ? 2 : 1})">تۆمارکردن</button>`}
+                        <button type="button" class="btn-back" style="text-align: right; padding-right: 20px;" onclick="renderDriverMainView(${isDouble ? 2 : 1})">گەڕانەوە</button>
+                    </div>
+                </div>
+            `;
+
+            if (!isEditMode) {
+                liveTimeInterval = setInterval(() => {
+                    const timeEl = document.getElementById('d_recordTime');
+                    if (timeEl && document.activeElement !== timeEl) {
+                        timeEl.value = getLocalCurrentTime();
+                    }
+                }, 1000);
+            }
+        }
+
+        async function checkAndRenderDriverDeliveryFormTriple() {
+            clearAllIntervals();
+            const today = getLocalTodayDate();
+            const baseDriver = currentUserData ? currentUserData.username : '';
+            const driverName = `${baseDriver} سێ`;
+            const nowTime = getLocalCurrentTime();
+
+            let existingRecord = null;
+            try {
+                const { data } = await supabaseClient
+                    .from('delivery_records')
+                    .select('*')
+                    .eq('driver', driverName)
+                    .eq('record_date', today);
+
+                if (data && data.length > 0) {
+                    existingRecord = data[0];
+                }
+            } catch (err) {
+                console.error(err);
+            }
+
+            const isEditMode = existingRecord !== null;
+            const readOnlyAttr = isEditMode ? 'readonly' : '';
+            let rawRecordTime = isEditMode && existingRecord.record_time ? existingRecord.record_time : nowTime;
+            if (rawRecordTime && rawRecordTime.split(':').length > 2) {
+                rawRecordTime = rawRecordTime.split(':').slice(0, 2).join(':');
+            }
+
+            const card = document.getElementById('formCardContent');
+            card.innerHTML = `
+                <div class="form-header-flex">
+                    <h2>فۆڕمی دەرچوون سێ</h2>
+                    <span class="form-date-display">${today}</span>
+                </div>
+                <div class="driver-form-stack">
+                    <div class="field">
+                        <input type="text" id="d_driver" value="${driverName}" placeholder="شۆفێر" readonly required>
+                    </div>
+                    <div class="field">
+                        <input type="text" id="d_distributor" value="${isEditMode ? (existingRecord.distributor || '') : ''}" placeholder="دابەشکار" ${readOnlyAttr} autocomplete="off" onfocus="if(!this.readOnly) showDropdown('distributor', distributorsList)" oninput="filterDropdown('distributor', distributorsList)" onchange="autoSaveRecord(3)" required>
+                        <div id="dropdown_d_distributor" class="autocomplete-items"></div>
+                    </div>
+                    <div class="field">
+                        <input type="text" id="d_delegate" value="${isEditMode ? (existingRecord.delegate || '') : ''}" placeholder="مەندوب" ${readOnlyAttr} autocomplete="off" onfocus="if(!this.readOnly) showDropdown('delegate', delegatesList)" oninput="filterDropdown('delegate', delegatesList)" onchange="autoSaveRecord(3)" required>
+                        <div id="dropdown_d_delegate" class="autocomplete-items"></div>
+                    </div>
+                    <div class="field">
+                        <input type="text" id="d_zone" value="${isEditMode ? (existingRecord.zone || '') : ''}" placeholder="ناوچە / زۆن" ${readOnlyAttr} autocomplete="off" onfocus="if(!this.readOnly) showDropdown('zone', zonesList)" oninput="filterDropdown('zone', zonesList)" onchange="autoSaveRecord(3)" required>
+                        <div id="dropdown_d_zone" class="autocomplete-items"></div>
+                    </div>
+                    <div class="field">
+                        <input type="text" id="d_vehicle" value="${isEditMode ? (existingRecord.vehicle || '') : ''}" placeholder="ژمارەی سەیارە" ${readOnlyAttr} autocomplete="off" onfocus="if(!this.readOnly) showDropdown('vehicle', vehiclesList)" oninput="filterDropdown('vehicle', vehiclesList)" onchange="autoSaveRecord(3)" required>
+                        <div id="dropdown_d_vehicle" class="autocomplete-items"></div>
+                    </div>
+                    <div class="field">
+                        <input type="number" step="any" id="d_cargoWeight" value="${isEditMode ? (existingRecord.cargo_weight || '') : ''}" placeholder="کێشی بار" ${readOnlyAttr} onchange="autoSaveRecord(3)" required>
+                    </div>
+                    <div class="field">
+                        <input type="number" id="d_piecesCount" value="${isEditMode ? (existingRecord.pieces_count || '') : ''}" placeholder="ژمارەی پارچەکان" ${readOnlyAttr} onchange="autoSaveRecord(3)" required>
+                    </div>
+                    <div class="field">
+                        <input type="number" id="d_receiptNumber" value="${isEditMode ? (existingRecord.receipt_number || '') : ''}" placeholder="ژمارەی وەسڵ" ${readOnlyAttr} onchange="autoSaveRecord(3)" required>
+                    </div>
+                    <div class="field">
+                        <input type="time" id="d_recordTime" value="${rawRecordTime}" ${readOnlyAttr} onchange="autoSaveRecord(3)" required>
+                    </div>
+                    <div class="form-buttons-row" id="actionButtonContainer" style="margin-top: 8px;">
+                        ${isEditMode ? `<button type="button" class="btn-submit" id="mainActionBtn" style="text-align: right; padding-right: 20px;" onclick="enableEditingForForm(3)">چاککردن</button>` : `<button type="button" class="btn-submit" id="mainActionBtn" style="text-align: right; padding-right: 20px;" onclick="submitDeliveryRecord(3)">تۆمارکردن</button>`}
+                        <button type="button" class="btn-back" style="text-align: right; padding-right: 20px;" onclick="renderDriverMainView(3)">گەڕانەوە</button>
+                    </div>
+                </div>
+            `;
+
+            if (!isEditMode) {
+                liveTimeInterval = setInterval(() => {
+                    const timeEl = document.getElementById('d_recordTime');
+                    if (timeEl && document.activeElement !== timeEl) {
+                        timeEl.value = getLocalCurrentTime();
+                    }
+                }, 1000);
+            }
+        }
+
+        function enableEditingForForm(level) {
+            clearAllIntervals();
+            const inputs = document.querySelectorAll('.driver-form-stack input:not(#d_driver)');
+            inputs.forEach(input => {
+                input.removeAttribute('readonly');
+            });
+            const btn = document.getElementById('mainActionBtn');
+            btn.textContent = 'تۆمار';
+            btn.style.background = '#10b981';
+            btn.setAttribute('onclick', `submitDeliveryRecord(${level})`);
+        }
+
+        async function autoSaveRecord(level) {
+            const today = getLocalTodayDate();
+            const driverName = document.getElementById('d_driver').value.trim();
+
+            const updatedData = {
+                distributor: document.getElementById('d_distributor').value.trim(),
+                delegate: document.getElementById('d_delegate').value.trim(),
+                zone: document.getElementById('d_zone').value.trim(),
+                vehicle: document.getElementById('d_vehicle').value.trim(),
+                cargo_weight: parseFloat(document.getElementById('d_cargoWeight').value) || 0,
+                pieces_count: parseInt(document.getElementById('d_piecesCount').value) || 0,
+                receipt_number: parseInt(document.getElementById('d_receiptNumber').value) || 0,
+                record_time: document.getElementById('d_recordTime').value.trim()
+            };
+
+            try {
+                const { data: existingCheck } = await supabaseClient
+                    .from('delivery_records')
+                    .select('id')
+                    .eq('driver', driverName)
+                    .eq('record_date', today);
+
+                if (existingCheck && existingCheck.length > 0) {
+                    await supabaseClient
+                        .from('delivery_records')
+                        .update(updatedData)
+                        .eq('driver', driverName)
+                        .eq('record_date', today);
+                }
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        function showDropdown(type, itemsArray) {
+            closeAllDropdowns();
+            const inputMap = {
+                'distributor': 'd_distributor',
+                'delegate': 'd_delegate',
+                'zone': 'd_zone',
+                'vehicle': 'd_vehicle'
+            };
+            const inputId = inputMap[type];
+            const inputEl = document.getElementById(inputId);
+            if (inputEl && inputEl.readOnly) return;
+
+            const dropContainer = document.getElementById(`dropdown_${inputId}`);
+            if (!dropContainer) return;
+
+            dropContainer.innerHTML = '';
+            if (itemsArray.length === 0) {
+                dropContainer.style.display = 'none';
+                return;
+            }
+
+            dropContainer.style.display = 'block';
+            itemsArray.forEach(item => {
+                const div = document.createElement('div');
+                div.textContent = item;
+                div.onmousedown = (e) => { e.preventDefault(); };
+                div.onclick = () => {
+                    document.getElementById(inputId).value = item;
+                    closeAllDropdowns();
+                    const dName = document.getElementById('d_driver').value;
+                    let lvl = 1;
+                    if(dName.includes('دوو')) lvl = 2;
+                    if(dName.includes('سێ')) lvl = 3;
+                    autoSaveRecord(lvl);
+                };
+                dropContainer.appendChild(div);
+            });
+        }
+
+        function filterDropdown(type, itemsArray) {
+            const inputMap = {
+                'distributor': 'd_distributor',
+                'delegate': 'd_delegate',
+                'zone': 'd_zone',
+                'vehicle': 'd_vehicle'
+            };
+            const inputId = inputMap[type];
+            const inputEl = document.getElementById(inputId);
+            if (inputEl && inputEl.readOnly) return;
+
+            const val = inputEl.value.toLowerCase();
+            const filtered = itemsArray.filter(i => i.toLowerCase().includes(val));
+            showDropdown(type, filtered);
+        }
+
+        async function submitDeliveryRecord(level) {
+            clearAllIntervals();
+            const today = getLocalTodayDate();
+            
+            const distributorInputVal = document.getElementById('d_distributor').value.trim();
+            const isValidDistributor = distributorsList.some(d => d.toLowerCase() === distributorInputVal.toLowerCase());
+            
+            if (!isValidDistributor) {
+                showCustomNotification(false, 'هەڵە: ناوی دابەشکار نەدۆزرایەوە یان هەڵەیە!');
+                return;
+            }
+
+            const recordTimeVal = document.getElementById('d_recordTime').value.trim() || getLocalCurrentTime();
+
+            const recordData = {
+                driver: document.getElementById('d_driver').value.trim(),
+                distributor: distributorInputVal,
+                delegate: document.getElementById('d_delegate').value.trim(),
+                zone: document.getElementById('d_zone').value.trim(),
+                vehicle: document.getElementById('d_vehicle').value.trim(),
+                cargo_weight: parseFloat(document.getElementById('d_cargoWeight').value) || 0,
+                pieces_count: parseInt(document.getElementById('d_piecesCount').value) || 0,
+                receipt_number: parseInt(document.getElementById('d_receiptNumber').value) || 0,
+                record_date: today,
+                record_time: recordTimeVal
+            };
+
+            try {
+                const { data: existing } = await supabaseClient
+                    .from('delivery_records')
+                    .select('id')
+                    .eq('driver', recordData.driver)
+                    .eq('record_date', today);
+
+                let error = null;
+                if (existing && existing.length > 0) {
+                    const { error: updateErr } = await supabaseClient
+                        .from('delivery_records')
+                        .update(recordData)
+                        .eq('driver', recordData.driver)
+                        .eq('record_date', today);
+                    error = updateErr;
+                } else {
+                    const { error: insertErr } = await supabaseClient
+                        .from('delivery_records')
+                        .insert([recordData]);
+                    error = insertErr;
+                }
+
+                if (error) {
+                    showCustomNotification(false, 'هەڵە روویدا');
+                } else {
+                    showCustomNotification(true, 'سەرکەوتوو بوو');
+                    renderDriverMainView(level);
+                }
+            } catch (err) {
+                showCustomNotification(false, 'هەڵە روویدا');
+            }
+        }
+
+        function switchDriverTab(btn, tabName, titleText, isSettings = false) {
+            clearAllIntervals();
+            document.querySelectorAll('#driverNavBar .nav-item').forEach(b => b.classList.remove('active'));
+            if(btn) btn.classList.add('active');
+
+            const card = document.getElementById('formCardContent');
+
+            if (isSettings) {
+                const userAvatar = currentUserData && currentUserData.avatar_url ? currentUserData.avatar_url : 'https://via.placeholder.com/240';
+                const userName = currentUserData ? currentUserData.username : '';
+                const userProfession = currentUserData ? (currentUserData.profession || currentUserData.role || '') : '';
+
+                card.innerHTML = `
+                    <div class="form-header-flex" style="margin-bottom: 4px;">
+                        <h2>ڕێکخستنەکانی هەژمار</h2>
+                        <button type="button" class="btn-back" style="width: auto; padding: 4px 10px; font-size: 11px;" onclick="handleLogout()">چوونەدەرەوە</button>
+                    </div>
+                    <div class="settings-avatar-container">
+                        <label class="avatar-upload-circle" title="گۆڕینی وێنەی پروفایل">
+                            <img id="profileImagePreview" src="${userAvatar}" alt="پروفایل">
+                            <div class="camera-overlay">
+                                <svg viewBox="0 0 24 24"><path d="M12 15.2c1.77 0 3.2-1.43 3.2-3.2s-1.43-3.2-3.2-3.2-3.2 1.43-3.2 3.2 1.43 3.2 3.2 3.2zm0-5.4c1.1 0 2 .9 2 2s-.9 2-2 2-2-.9-2-2 .9-2 2-2zm9-3h-3.17L15 4H9L7.17 6.8H4c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8.8c0-1.1-.9-2-2-2zm0 12H4V8.8h4.05l1.83-2.8h4.24l1.83 2.8H20v10z"/></svg>
+                            </div>
+                            <input type="file" accept="image/*" onchange="uploadUserAvatar(event)">
+                        </label>
+                        <div class="settings-username-display">${userName} (${userProfession})</div>
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 15px;">
+                        <button type="button" class="btn-sub" onclick="openPasswordPopup()">
+                            <span>گۆڕینی تێپەڕەوشە</span>
+                            <svg style="width:16px;height:16px;fill:currentColor;" viewBox="0 0 24 24"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg>
+                        </button>
+                        <button type="button" class="btn-sub" onclick="toggleAppTheme()">
+                            <span id="themeToggleText">گۆڕینی ڕەنگ (تاریک/ڕووناک)</span>
+                            <svg style="width:16px;height:16px;fill:currentColor;" viewBox="0 0 24 24"><path d="M20 8.69V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12 20 8.69zM12 18c-3.31 0-6-2.69-6-6s2.69-6 6-6 6 2.69 6 6-2.69 6-6 6z"/></svg>
+                        </button>
+                    </div>
+                `;
+            } else if (tabName === 'زانیاری') {
+                card.innerHTML = `
+                    <h2>${titleText}</h2>
+                    <p style="margin-top: 10px; color: var(--sub-text);">زانیاری تەواوی شۆفێر لێرە نمایش دەکرێت.</p>
+                `;
+            } else {
+                card.innerHTML = `
+                    <h2>${titleText}</h2>
+                    <p style="margin-top: 10px; color: var(--sub-text);">ئەم فۆڕمە بەتاڵە.</p>
+                `;
+            }
+        }
+
+        function switchDefaultTab(btn, tabName, titleText, isSettings = false) {
+            clearAllIntervals();
+            document.querySelectorAll('#defaultNavBar .nav-item').forEach(b => b.classList.remove('active'));
+            if(btn) btn.classList.add('active');
+
+            const card = document.getElementById('formCardContent');
+
+            if (isSettings) {
+                const userAvatar = currentUserData && currentUserData.avatar_url ? currentUserData.avatar_url : 'https://via.placeholder.com/240';
+                const userName = currentUserData ? currentUserData.username : '';
+                const userProfession = currentUserData ? (currentUserData.profession || currentUserData.role || '') : '';
+
+                card.innerHTML = `
+                    <div class="form-header-flex" style="margin-bottom: 4px;">
+                        <h2>ڕێکخستنەکانی هەژمار</h2>
+                        <button type="button" class="btn-back" style="width: auto; padding: 4px 10px; font-size: 11px;" onclick="handleLogout()">چوونەدەرەوە</button>
+                    </div>
+                    <div class="settings-avatar-container">
+                        <label class="avatar-upload-circle" title="گۆڕینی وێنەی پروفایل">
+                            <img id="profileImagePreview" src="${userAvatar}" alt="پروفایل">
+                            <div class="camera-overlay">
+                                <svg viewBox="0 0 24 24"><path d="M12 15.2c1.77 0 3.2-1.43 3.2-3.2s-1.43-3.2-3.2-3.2-3.2 1.43-3.2 3.2 1.43 3.2 3.2 3.2zm0-5.4c1.1 0 2 .9 2 2s-.9 2-2 2-2-.9-2-2 .9-2 2-2zm9-3h-3.17L15 4H9L7.17 6.8H4c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8.8c0-1.1-.9-2-2-2zm0 12H4V8.8h4.05l1.83-2.8h4.24l1.83 2.8H20v10z"/></svg>
+                            </div>
+                            <input type="file" accept="image/*" onchange="uploadUserAvatar(event)">
+                        </label>
+                        <div class="settings-username-display">${userName} (${userProfession})</div>
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 15px;">
+                        <button type="button" class="btn-sub" onclick="openPasswordPopup()">
+                            <span>گۆڕینی تێپەڕەوشە</span>
+                            <svg style="width:16px;height:16px;fill:currentColor;" viewBox="0 0 24 24"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg>
+                        </button>
+                        <button type="button" class="btn-sub" onclick="toggleAppTheme()">
+                            <span id="themeToggleText">گۆڕینی ڕەنگ (تاریک/ڕووناک)</span>
+                            <svg style="width:16px;height:16px;fill:currentColor;" viewBox="0 0 24 24"><path d="M20 8.69V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12 20 8.69zM12 18c-3.31 0-6-2.69-6-6s2.69-6 6-6 6 2.69 6 6-2.69 6-6 6z"/></svg>
+                        </button>
+                    </div>
+                `;
+            } else if (tabName === 'زانیاری') {
+                card.innerHTML = `
+                    <h2>${titleText}</h2>
+                    <p style="margin-top: 10px; color: var(--sub-text);">زانیاری تەواوی بەکارهێنەر لێرە نمایش دەکرێت.</p>
+                `;
+            } else {
+                card.innerHTML = `
+                    <h2>${titleText}</h2>
+                    <p style="margin-top: 10px; color: var(--sub-text);">ئەم فۆڕمە بەتاڵە.</p>
+                `;
+            }
+        }
+
+        function toggleAppTheme() {
+            document.body.classList.toggle('light-theme');
+            if (document.body.classList.contains('light-theme')) {
+                localStorage.setItem('theme', 'light');
+            } else {
+                localStorage.setItem('theme', 'dark');
+            }
+        }
+
+        function handleLogout() {
+            clearAllIntervals();
+            localStorage.removeItem('currentUser');
+            sessionStorage.removeItem('currentUser');
+            location.reload();
+        }
+
+        function openPasswordPopup() {
+            document.getElementById('passwordPopupModal').style.display = 'flex';
+        }
+
+        function closePasswordPopup() {
+            document.getElementById('passwordPopupModal').style.display = 'none';
+            document.getElementById('popupOldPassword').value = '';
+            document.getElementById('popupNewPassword').value = '';
+        }
+
+        async function updateUserPassword() {
+            const oldPass = document.getElementById('popupOldPassword').value.trim();
+            const newPass = document.getElementById('popupNewPassword').value.trim();
+
+            if (oldPass.length !== 4 || newPass.length !== 4) {
+                showCustomNotification(false, 'تکایە تێپەڕەوشە دەبێت ٤ ژمارە بێت');
+                return;
+            }
+
+            if (String(currentUserData.password).trim() !== oldPass) {
+                showCustomNotification(false, 'پاسۆڕدی کۆن هەڵەیە');
+                return;
+            }
+
+            try {
+                const { error } = await supabaseClient
+                    .from('users')
+                    .update({ password: newPass })
+                    .eq('id', currentUserData.id);
+
+                if (error) {
+                    showCustomNotification(false, 'هەڵە لە گۆڕینی پاسۆڕد');
+                } else {
+                    currentUserData.password = newPass;
+                    if (localStorage.getItem('currentUser')) {
+                        localStorage.setItem('currentUser', JSON.stringify(currentUserData));
+                    } else {
+                        sessionStorage.setItem('currentUser', JSON.stringify(currentUserData));
+                    }
+                    showCustomNotification(true, 'پاسۆڕد بە سەرکەوتوویی گۆڕدرا');
+                    closePasswordPopup();
+                }
+            } catch (err) {
+                showCustomNotification(false, 'هەڵە ڕوویدا');
+            }
+        }
+
+        async function uploadUserAvatar(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            showCustomNotification(true, 'خەریکی بارکردنی وێنەیەک...');
+
+            try {
+                const fileExt = file.name.split('.').pop();
+                const fileName = `${currentUserData.id}_${Math.random()}.${fileExt}`;
+                const filePath = `${fileName}`;
+
+                const { error: uploadError } = await supabaseClient.storage
+                    .from('avatars')
+                    .upload(filePath, file);
+
+                if (uploadError) {
+                    throw uploadError;
+                }
+
+                const { data: { publicUrl } } = supabaseClient.storage
+                    .from('avatars')
+                    .getPublicUrl(filePath);
+
+                const { error: updateError } = await supabaseClient
+                    .from('users')
+                    .update({ avatar_url: publicUrl })
+                    .eq('id', currentUserData.id);
+
+                if (updateError) throw updateError;
+
+                currentUserData.avatar_url = publicUrl;
+                if (localStorage.getItem('currentUser')) {
+                    localStorage.setItem('currentUser', JSON.stringify(currentUserData));
+                } else {
+                    sessionStorage.setItem('currentUser', JSON.stringify(currentUserData));
+                }
+
+                const imgPrev = document.getElementById('profileImagePreview');
+                if(imgPrev) imgPrev.src = publicUrl;
+
+                showCustomNotification(true, 'وێنەی پروفایل گۆڕدرا');
+            } catch (err) {
+                console.error(err);
+                showCustomNotification(false, 'هەڵە لە بارکردنی وێنەدا');
+            }
+        }
+    </script>
+</body>
+</html>
