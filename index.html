@@ -464,7 +464,6 @@
             margin-bottom: 2px;
         }
 
-        /* ستايلي دوگمەی سەوزی پارەی هێنراوە لە خوارەوەی ساربارەکە */
         .btn-collected-money {
             width: 100%;
             padding: 12px 18px;
@@ -768,7 +767,6 @@
             text-align: center;
         }
 
-        /* ستايلي مۆداڵی پارەی هێنراوە (لە ناوەڕاستی شاشە کەمێک سەرەوەتر) */
         #collectedMoneyModal {
             position: fixed;
             top: 0;
@@ -780,7 +778,7 @@
             display: none;
             justify-content: center;
             align-items: flex-start;
-            padding-top: 25vh; /* کەمێک سەرەوەتر لە ناوەڕاست */
+            padding-top: 25vh;
             z-index: 9999999;
         }
 
@@ -823,7 +821,6 @@
         </div>
     </div>
 
-    <!-- ویندۆی (پارەی هێنراوە) کە لە ناوەڕاستی شاشە کەمێک سەرەوەتر دەردەکەوێت -->
     <div id="collectedMoneyModal">
         <div class="collected-money-card">
             <div class="field" style="margin-bottom: 15px;">
@@ -1049,14 +1046,11 @@
                 showForm(currentUserData);
             }
 
-            // چالاککردنی تەنها ژمارە و دابەشکردنی ڤاریزە بۆ خانەی پارەی هێنراوە
             const collectedInput = document.getElementById('collectedMoneyInput');
             if (collectedInput) {
                 collectedInput.addEventListener('input', function(e) {
-                    // تەنها ژمارە قبوڵ دەکات و پیت یان هێمای تر لاببەرە
                     let value = this.value.replace(/[^0-9]/g, '');
                     if (value) {
-                        // ڕێکخستنی ڤاریزە دوای هەمیشە ٣ ژمارە (Formatting Numbers with Commas)
                         value = Number(value).toLocaleString('en-US');
                     }
                     this.value = value;
@@ -1325,7 +1319,6 @@
                                 <span>باری دووەم</span> <span></span>
                             </button>` : ''}
                         </div>
-                        <!-- سەر باڕەکەی خوارەوە کە دووگمەی (پارەی هێنراوە) تێدایە -->
                         <div style="margin-top: 12px; border-top: 1px solid var(--border-color); padding-top: 10px;">
                             <button type="button" class="btn-collected-money" onclick="openCollectedMoneyModal(1)">
                                 <span>پارەی هێنراە</span>
@@ -1406,7 +1399,6 @@
             }
         }
 
-        // کۆدەکانی پەیوەست بە کردنەوە و داخستن و تۆمارکردنی (پارەی هێنراوە)
         let currentCollectedMoneyLevel = 1;
 
         async function openCollectedMoneyModal(level) {
@@ -1418,7 +1410,6 @@
             if (level === 3) driverName = `${baseDriver} سێ`;
 
             try {
-                // پشکنین بۆ ئەوەی دڵنیابین کە دووگمەی دەرچوون لەزۆن تۆمار کرابێت یان نا
                 const { data, error } = await supabaseClient
                     .from('delivery_records')
                     .select('*')
@@ -1426,12 +1417,10 @@
                     .eq('record_date', today);
 
                 if (error || !data || data.length === 0 || !data[0].record_time) {
-                    // ئەگەر دەرچوون تۆمار نەکرابێت، ئەم ویندۆیە دەبێتەوە کە داوای دەکەیت
                     showCustomNotification(false, 'ئەوتوو جارێ بەسەلامەتی وەرەوە، دواتر دەتوانی پارەکەت تۆمار بکەی');
                     return;
                 }
 
-                // ئەگەر تۆمارکرابوو، ویندۆی پارەی هێنراوە دەکرێتەوە
                 const record = data[0];
                 const inputField = document.getElementById('collectedMoneyInput');
                 inputField.value = record.collected_money ? Number(record.collected_money).toLocaleString('en-US') : '';
@@ -1459,7 +1448,6 @@
             const moneyValue = parseFloat(rawVal) || 0;
 
             try {
-                // داتاکە دەچێتە تەبڵی delivery_records بۆ ڕیزی collected_money
                 const { error } = await supabaseClient
                     .from('delivery_records')
                     .update({ collected_money: moneyValue })
@@ -1606,16 +1594,10 @@
             const currentUsername = currentUserData ? currentUserData.username : '';
 
             try {
-                let query = supabaseClient
-                    .from('delivery_records')
-                    .select('*');
+                let query = supabaseClient.from('delivery_records').select('*');
 
-                if (fromDate) {
-                    query = query.gte('record_date', fromDate);
-                }
-                if (toDate) {
-                    query = query.lte('record_date', toDate);
-                }
+                if (fromDate) query = query.gte('record_date', fromDate);
+                if (toDate) query = query.lte('record_date', toDate);
 
                 const profession = currentUserData ? (currentUserData.profession || currentUserData.role || '') : '';
                 const profLower = profession.toLowerCase();
@@ -1627,7 +1609,6 @@
                 query = query.order('record_date', { ascending: false }).order('record_time', { ascending: false });
 
                 const { data, error } = await query;
-
                 if (error) throw error;
 
                 if (!data || data.length === 0) {
@@ -1636,11 +1617,7 @@
                     return;
                 }
 
-                let sumWeight = 0;
-                let sumPieces = 0;
-                let totalReceiptsCount = data.length;
-                let sumMoney = 0;
-
+                let sumWeight = 0, sumPieces = 0, totalReceiptsCount = data.length, sumMoney = 0;
                 recordsContainer.innerHTML = '';
 
                 data.forEach(record => {
@@ -1650,50 +1627,33 @@
 
                     const card = document.createElement('div');
                     card.className = 'record-card';
-                    
                     card.onclick = () => {
                         const isActive = card.classList.contains('active');
                         card.classList.toggle('active', !isActive);
-                        
-                        if (!isActive) {
-                            setTimeout(() => {
-                                card.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                            }, 150);
-                        }
                     };
 
                     card.innerHTML = `
                         <div class="record-main-info">
+                            <div class="info-row"><span class="label">بەروار:</span><span class="value">${record.record_date}</span></div>
+                            <div class="info-row"><span class="label">دابەشکار:</span><span class="value">${record.distributor}</span></div>
+                            <div class="info-row"><span class="label">مەندوب:</span><span class="value">${record.delegate}</span></div>
                             <div class="info-row">
-                                <span class="label">بەروار:</span>
-                                <span class="value">${record.record_date}</span>
-                            </div>
-                            <div class="info-row">
-                                <span class="label">ناوی دابەشکار:</span>
-                                <span class="value">${record.distributor}</span>
-                            </div>
-                            <div class="info-row">
-                                <span class="label">ناوی مەندوب:</span>
-                                <span class="value">${record.delegate}</span>
-                            </div>
-                            <div class="info-row">
-                                <div><span class="label">زۆن:</span> <span class="value">${record.zone}</span></div>
-                                <div><span class="label">سەیارە:</span> <span class="value">${record.vehicle}</span></div>
+                                <div><span class="label">زۆن:</span><span class="value">${record.zone}</span></div>
+                                <div><span class="label">سەیارە:</span><span class="value">${record.vehicle}</span></div>
                             </div>
                         </div>
                         <div class="record-details">
-                            <div class="detail-item"><span class="label">شۆفێر:</span> <span class="value">${record.driver}</span></div>
-                            <div class="detail-item"><span class="label">کێشی بار:</span> <span class="value">${record.cargo_weight} کگم</span></div>
-                            <div class="detail-item"><span class="label">ژمارەی پارچە:</span> <span class="value">${record.pieces_count}</span></div>
-                            <div class="detail-item"><span class="label">ژمارەی وەسڵ:</span> <span class="value">${record.receipt_number}</span></div>
-                            <div class="detail-item"><span class="label">پارەی هێنراوە:</span> <span class="value">${record.collected_money ? Number(record.collected_money).toLocaleString() : 0} د.ع</span></div>
-                            <div class="detail-item"><span class="label">کاتی تۆمار:</span> <span class="value">${formatTimeDisplay(record.record_time)}</span></div>
-                            <div class="detail-item"><span class="label">کاتی ناو زۆن:</span> <span class="value">${record.in_zone_time ? formatTimeDisplay(record.in_zone_time) : 'ناتۆمارکراو'}</span></div>
-                            <div class="detail-item"><span class="label">کاتی دەرچوون لە زۆن:</span> <span class="value">${record.out_zone_time ? formatTimeDisplay(record.out_zone_time) : 'ناتۆمارکراو'}</span></div>
-                            <div class="detail-item"><span class="label">کاتی گەیشتنەوە:</span> <span class="value">${record.arrival_time ? formatTimeDisplay(record.arrival_time) : 'ناتۆمارکراو'}</span></div>
+                            <div class="detail-item"><span class="label">شۆفێر:</span><span class="value">${record.driver}</span></div>
+                            <div class="detail-item"><span class="label">کێشی بار:</span><span class="value">${record.cargo_weight} کگم</span></div>
+                            <div class="detail-item"><span class="label">ژمارەی پارچە:</span><span class="value">${record.pieces_count}</span></div>
+                            <div class="detail-item"><span class="label">ژمارەی وەسڵ:</span><span class="value">${record.receipt_number}</span></div>
+                            <div class="detail-item"><span class="label">پارەی هێنراوە:</span><span class="value">${record.collected_money ? Number(record.collected_money).toLocaleString() : 0} د.ع</span></div>
+                            <div class="detail-item"><span class="label">کاتی تۆمار:</span><span class="value">${formatTimeDisplay(record.record_time)}</span></div>
+                            <div class="detail-item"><span class="label">کاتی ناو زۆن:</span><span class="value">${record.in_zone_time ? formatTimeDisplay(record.in_zone_time) : 'ناتۆمارکراو'}</span></div>
+                            <div class="detail-item"><span class="label">کاتی دەرچوون:</span><span class="value">${record.out_zone_time ? formatTimeDisplay(record.out_zone_time) : 'ناتۆمارکراو'}</span></div>
+                            <div class="detail-item"><span class="label">گەیشتنەوە:</span><span class="value">${record.arrival_time ? formatTimeDisplay(record.arrival_time) : 'ناتۆمارکراو'}</span></div>
                         </div>
                     `;
-
                     recordsContainer.appendChild(card);
                 });
 
@@ -1703,103 +1663,48 @@
                 document.getElementById('totalMoney').innerText = sumMoney.toLocaleString() + ' د.ع';
 
             } catch (err) {
-                console.error('هەڵە لە هێنانی داتاکان:', err.message);
-                if(!isBackground) {
-                    recordsContainer.innerHTML = '<div class="no-data" style="color: red;">هەڵەیەک ڕویدا لە پەیوەندیکردن بە داتابەیس</div>';
-                }
+                console.error(err);
+                if(!isBackground) recordsContainer.innerHTML = '<div class="no-data" style="color: red;">هەڵە لە داتابەیس</div>';
                 resetTotals();
             }
         }
 
         function resetTotals() {
-            const tw = document.getElementById('totalWeight');
-            const tp = document.getElementById('totalPieces');
-            const tr = document.getElementById('totalReceipts');
-            const tm = document.getElementById('totalMoney');
-            if(tw) tw.innerText = '٠ کگم';
-            if(tp) tp.innerText = '٠';
-            if(tr) tr.innerText = '٠';
-            if(tm) tm.innerText = '٠ د.ع';
+            if(document.getElementById('totalWeight')) document.getElementById('totalWeight').innerText = '٠ کگم';
+            if(document.getElementById('totalPieces')) document.getElementById('totalPieces').innerText = '٠';
+            if(document.getElementById('totalReceipts')) document.getElementById('totalReceipts').innerText = '٠';
+            if(document.getElementById('totalMoney')) document.getElementById('totalMoney').innerText = '٠ د.ع';
         }
 
         async function handleSecondCargoClick() {
             const today = getLocalTodayDate();
             const driverName = currentUserData ? currentUserData.username : '';
-
             try {
-                const { data, error } = await supabaseClient
-                    .from('delivery_records')
-                    .select('*')
-                    .eq('driver', driverName)
-                    .eq('record_date', today);
-
-                if (error || !data || data.length === 0) {
-                    showCustomNotification(false, 'تکایە سەرەتا دەبێت فۆڕمی دەرچوون و گەشتنەوە تۆمار بکەیت');
-                    return;
-                }
-
-                const record = data[0];
-                if (!record.arrival_time) {
+                const { data } = await supabaseClient.from('delivery_records').select('*').eq('driver', driverName).eq('record_date', today);
+                if (!data || data.length === 0 || !data[0].arrival_time) {
                     showCustomNotification(false, 'تکایە سەرەتا دەبێت (گەشتنەوە) تۆمار بکەیت');
                     return;
                 }
-
-                const [arrHour, arrMin] = record.arrival_time.split(':').map(Number);
-                const arrDate = new Date();
-                arrDate.setHours(arrHour, arrMin + 5, 0, 0);
-
-                const now = new Date();
-                if (now < arrDate) {
-                    const diffMins = Math.ceil((arrDate - now) / 60000);
-                    showCustomNotification(false, `بۆ ئەم دووگمەیە دەبێت ${diffMins} دەقەی تر چاوەڕێ بکەیت`);
-                    return;
-                }
-
                 renderDriverMainView(2);
                 showCustomNotification(true, 'باری دووەم چالاک بوو');
             } catch (err) {
-                showCustomNotification(false, 'هەڵە روویدا لە پشکنینی کات');
+                showCustomNotification(false, 'هەڵە ڕوویدا');
             }
         }
 
         async function handleThirdCargoClick() {
             const today = getLocalTodayDate();
-            const baseDriver = currentUserData ? currentUserData.username : '';
-            const driverName = `${baseDriver} دوو`;
-
+            const driverName = (currentUserData ? currentUserData.username : '') + ' دوو';
             try {
-                const { data, error } = await supabaseClient
-                    .from('delivery_records')
-                    .select('*')
-                    .eq('driver', driverName)
-                    .eq('record_date', today);
-
-                if (error || !data || data.length === 0) {
-                    showCustomNotification(false, 'تکایە سەرەتا دەبێت گەشتنەوە دوو تۆمار بکەیت');
-                    return;
-                }
-
-                const record = data[0];
-                if (!record.arrival_time) {
+                const { data } = await supabaseClient.from('delivery_records').select('*').eq('driver', driverName).eq('record_date', today);
+                if (!data || data.length === 0 || !data[0].arrival_time) {
                     showCustomNotification(false, 'تکایە سەرەتا دەبێت (گەشتنەوە دوو) تۆمار بکەیت');
                     return;
                 }
-
-                const [arrHour, arrMin] = record.arrival_time.split(':').map(Number);
-                const arrDate = new Date();
-                arrDate.setHours(arrHour, arrMin + 5, 0, 0);
-
-                const now = new Date();
-                if (now < arrDate) {
-                    const diffMins = Math.ceil((arrDate - now) / 60000);
-                    showCustomNotification(false, `بۆ باری سێیەم دەبێت ${diffMins} دەقەی تر چاوەڕێ بکەیت`);
-                    return;
-                }
-
                 renderDriverMainView(3);
                 showCustomNotification(true, 'باری سێیەم چالاک بوو');
             } catch (err) {
-                showCustomNotification(false, 'هەڵە روویدا لە پشکنینی کات');
+                showCustomNotification(false, 'هەڵە ڕوویدا');
             }
         }
 
@@ -1810,64 +1715,36 @@
             const now24Hour = getLocalCurrentTime();
 
             try {
-                const { data, error } = await supabaseClient
-                    .from('delivery_records')
-                    .select('*')
-                    .eq('driver', driverName)
-                    .eq('record_date', today);
-
-                if (error || !data || data.length === 0) {
-                    showCustomNotification(false, isDouble ? 'سەرەتا دەبێت دەرچوون دوو تۆمار بکەیت' : 'سەرەتا دەبێت فۆڕمی دەرچوون تۆمار بکەیت');
+                const { data } = await supabaseClient.from('delivery_records').select('*').eq('driver', driverName).eq('record_date', today);
+                if (!data || data.length === 0) {
+                    showCustomNotification(false, 'تکایە سەرەتا فۆڕمی دەرچوون تۆمار بکە');
                     return;
                 }
-
                 const record = data[0];
 
                 if (actionType === 'in') {
                     if (record.in_zone_time) {
-                        showConfirmModalWithTime(record.in_zone_time, (confirmed, manualTime) => {
-                            if (confirmed && manualTime) {
-                                executeZoneUpdate(record.id, 'in_zone_time', manualTime, isDouble ? 2 : 1);
-                            }
-                        });
+                        showConfirmModalWithTime(record.in_zone_time, (yes, t) => { if (yes && t) executeZoneUpdate(record.id, 'in_zone_time', t, isDouble ? 2 : 1); });
                         return;
                     }
                     executeZoneUpdate(record.id, 'in_zone_time', now24Hour, isDouble ? 2 : 1);
-
                 } else if (actionType === 'out') {
-                    if (!record.in_zone_time) {
-                        showCustomNotification(false, 'تکایە سەرەتا دووگمەی (ناو زۆن) تۆمار بکە');
-                        return;
-                    }
-
+                    if (!record.in_zone_time) { showCustomNotification(false, 'سەرەتا ناو زۆن تۆمار بکە'); return; }
                     if (record.out_zone_time) {
-                        showConfirmModalWithTime(record.out_zone_time, (confirmed, manualTime) => {
-                            if (confirmed && manualTime) {
-                                executeZoneUpdate(record.id, 'out_zone_time', manualTime, isDouble ? 2 : 1);
-                            }
-                        });
+                        showConfirmModalWithTime(record.out_zone_time, (yes, t) => { if (yes && t) executeZoneUpdate(record.id, 'out_zone_time', t, isDouble ? 2 : 1); });
                         return;
                     }
                     executeZoneUpdate(record.id, 'out_zone_time', now24Hour, isDouble ? 2 : 1);
-
                 } else if (actionType === 'arrival') {
-                    if (!record.out_zone_time) {
-                        showCustomNotification(false, 'تکایە سەرەتا دووگمەی (دەرێی زۆن) تۆمار بکە');
-                        return;
-                    }
-
+                    if (!record.out_zone_time) { showCustomNotification(false, 'سەرەتا دەرێی زۆن تۆمار بکە'); return; }
                     if (record.arrival_time) {
-                        showConfirmModalWithTime(record.arrival_time, (confirmed, manualTime) => {
-                            if (confirmed && manualTime) {
-                                executeZoneUpdate(record.id, 'arrival_time', manualTime, isDouble ? 2 : 1);
-                            }
-                        });
+                        showConfirmModalWithTime(record.arrival_time, (yes, t) => { if (yes && t) executeZoneUpdate(record.id, 'arrival_time', t, isDouble ? 2 : 1); });
                         return;
                     }
                     executeZoneUpdate(record.id, 'arrival_time', now24Hour, isDouble ? 2 : 1);
                 }
             } catch (err) {
-                showCustomNotification(false, 'هەڵە روویدا لە پەیوەندی بە سیستەمەوە');
+                showCustomNotification(false, 'هەڵە روویدا');
             }
         }
 
@@ -1875,18 +1752,9 @@
             try {
                 const updateObj = {};
                 updateObj[columnName] = timeVal;
-
-                const { error: updateError } = await supabaseClient
-                    .from('delivery_records')
-                    .update(updateObj)
-                    .eq('id', recordId);
-
-                if (updateError) {
-                    showCustomNotification(false, 'هەڵە روویدا لە تۆمارکردنی کات');
-                } else {
-                    showCustomNotification(true, `کاتەکە بە سەرکەوتوویی نوێکرایەوە: ${timeVal}`);
-                    renderDriverMainView(level);
-                }
+                await supabaseClient.from('delivery_records').update(updateObj).eq('id', recordId);
+                showCustomNotification(true, 'کاتەکە نوێکرایەوە');
+                renderDriverMainView(level);
             } catch (err) {
                 showCustomNotification(false, 'هەڵە روویدا');
             }
@@ -1894,69 +1762,37 @@
 
         async function checkAndExecuteZoneActionTriple(actionType) {
             const today = getLocalTodayDate();
-            const baseDriver = currentUserData ? currentUserData.username : '';
-            const driverName = `${baseDriver} سێ`;
+            const driverName = (currentUserData ? currentUserData.username : '') + ' سێ';
             const now24Hour = getLocalCurrentTime();
 
             try {
-                const { data, error } = await supabaseClient
-                    .from('delivery_records')
-                    .select('*')
-                    .eq('driver', driverName)
-                    .eq('record_date', today);
-
-                if (error || !data || data.length === 0) {
-                    showCustomNotification(false, 'سەرەتا دەبێت دەرچوون سێ تۆمار بکەیت');
-                    return;
-                }
-
+                const { data } = await supabaseClient.from('delivery_records').select('*').eq('driver', driverName).eq('record_date', today);
+                if (!data || data.length === 0) { showCustomNotification(false, 'سەرەتا دەرچوون سێ تۆمار بکە'); return; }
                 const record = data[0];
 
                 if (actionType === 'in') {
                     if (record.in_zone_time) {
-                        showConfirmModalWithTime(record.in_zone_time, (confirmed, manualTime) => {
-                            if (confirmed && manualTime) {
-                                executeZoneUpdate(record.id, 'in_zone_time', manualTime, 3);
-                            }
-                        });
+                        showConfirmModalWithTime(record.in_zone_time, (yes, t) => { if (yes && t) executeZoneUpdate(record.id, 'in_zone_time', t, 3); });
                         return;
                     }
                     executeZoneUpdate(record.id, 'in_zone_time', now24Hour, 3);
-
                 } else if (actionType === 'out') {
-                    if (!record.in_zone_time) {
-                        showCustomNotification(false, 'تکایە سەرەتا دووگمەی (ناو زۆن سێ) تۆمار بکە');
-                        return;
-                    }
-
+                    if (!record.in_zone_time) { showCustomNotification(false, 'سەرەتا ناو زۆن تۆمار بکە'); return; }
                     if (record.out_zone_time) {
-                        showConfirmModalWithTime(record.out_zone_time, (confirmed, manualTime) => {
-                            if (confirmed && manualTime) {
-                                executeZoneUpdate(record.id, 'out_zone_time', manualTime, 3);
-                            }
-                        });
+                        showConfirmModalWithTime(record.out_zone_time, (yes, t) => { if (yes && t) executeZoneUpdate(record.id, 'out_zone_time', t, 3); });
                         return;
                     }
                     executeZoneUpdate(record.id, 'out_zone_time', now24Hour, 3);
-
                 } else if (actionType === 'arrival') {
-                    if (!record.out_zone_time) {
-                        showCustomNotification(false, 'تکایە سەرەتا دووگمەی (دەرێی زۆن سێ) تۆمار بکە');
-                        return;
-                    }
-
+                    if (!record.out_zone_time) { showCustomNotification(false, 'سەرەتا دەرێی زۆن تۆمار بکە'); return; }
                     if (record.arrival_time) {
-                        showConfirmModalWithTime(record.arrival_time, (confirmed, manualTime) => {
-                            if (confirmed && manualTime) {
-                                executeZoneUpdate(record.id, 'arrival_time', manualTime, 3);
-                            }
-                        });
+                        showConfirmModalWithTime(record.arrival_time, (yes, t) => { if (yes && t) executeZoneUpdate(record.id, 'arrival_time', t, 3); });
                         return;
                     }
                     executeZoneUpdate(record.id, 'arrival_time', now24Hour, 3);
                 }
             } catch (err) {
-                showCustomNotification(false, 'هەڵە روویدا لە پەیوەندی بە سیستەمەوە');
+                showCustomNotification(false, 'هەڵە روویدا');
             }
         }
 
@@ -1965,81 +1801,42 @@
             const today = getLocalTodayDate();
             const baseDriver = currentUserData ? currentUserData.username : '';
             const driverName = isDouble ? `${baseDriver} دوو` : baseDriver;
-            const nowTime = getLocalCurrentTime();
-
             let existingRecord = null;
             try {
-                const { data } = await supabaseClient
-                    .from('delivery_records')
-                    .select('*')
-                    .eq('driver', driverName)
-                    .eq('record_date', today);
-
-                if (data && data.length > 0) {
-                    existingRecord = data[0];
-                }
-            } catch (err) {
-                console.error(err);
-            }
+                const { data } = await supabaseClient.from('delivery_records').select('*').eq('driver', driverName).eq('record_date', today);
+                if (data && data.length > 0) existingRecord = data[0];
+            } catch (err) { console.error(err); }
 
             const isEditMode = existingRecord !== null;
             const readOnlyAttr = isEditMode ? 'readonly' : '';
-            let rawRecordTime = isEditMode && existingRecord.record_time ? existingRecord.record_time : nowTime;
-            if (rawRecordTime && rawRecordTime.split(':').length > 2) {
-                rawRecordTime = rawRecordTime.split(':').slice(0, 2).join(':');
-            }
+            let rawRecordTime = isEditMode && existingRecord.record_time ? existingRecord.record_time : getLocalCurrentTime();
 
             const card = document.getElementById('formCardContent');
             card.innerHTML = `
                 <div class="form-header-flex">
-                    <h2>فۆڕمی دەرچوون ${isDouble ? 'دوو' : 'یەک'}</h2>
+                    <h2>فۆڕمی دەرچوون</h2>
                     <span class="form-date-display">${today}</span>
                 </div>
                 <div class="driver-form-stack">
-                    <div class="field">
-                        <input type="text" id="d_driver" value="${driverName}" placeholder="شۆفێر" readonly required>
-                    </div>
-                    <div class="field">
-                        <input type="text" id="d_distributor" value="${isEditMode ? (existingRecord.distributor || '') : ''}" placeholder="دابەشکار" ${readOnlyAttr} autocomplete="off" onfocus="if(!this.readOnly) showDropdown('distributor', distributorsList)" oninput="filterDropdown('distributor', distributorsList)" onchange="autoSaveRecord(${isDouble ? 2 : 1})" required>
-                        <div id="dropdown_d_distributor" class="autocomplete-items"></div>
-                    </div>
-                    <div class="field">
-                        <input type="text" id="d_delegate" value="${isEditMode ? (existingRecord.delegate || '') : ''}" placeholder="مەندوب" ${readOnlyAttr} autocomplete="off" onfocus="if(!this.readOnly) showDropdown('delegate', delegatesList)" oninput="filterDropdown('delegate', delegatesList)" onchange="autoSaveRecord(${isDouble ? 2 : 1})" required>
-                        <div id="dropdown_d_delegate" class="autocomplete-items"></div>
-                    </div>
-                    <div class="field">
-                        <input type="text" id="d_zone" value="${isEditMode ? (existingRecord.zone || '') : ''}" placeholder="ناوچە / زۆن" ${readOnlyAttr} autocomplete="off" onfocus="if(!this.readOnly) showDropdown('zone', zonesList)" oninput="filterDropdown('zone', zonesList)" onchange="autoSaveRecord(${isDouble ? 2 : 1})" required>
-                        <div id="dropdown_d_zone" class="autocomplete-items"></div>
-                    </div>
-                    <div class="field">
-                        <input type="text" id="d_vehicle" value="${isEditMode ? (existingRecord.vehicle || '') : ''}" placeholder="ژمارەی سەیارە" ${readOnlyAttr} autocomplete="off" onfocus="if(!this.readOnly) showDropdown('vehicle', vehiclesList)" oninput="filterDropdown('vehicle', vehiclesList)" onchange="autoSaveRecord(${isDouble ? 2 : 1})" required>
-                        <div id="dropdown_d_vehicle" class="autocomplete-items"></div>
-                    </div>
-                    <div class="field">
-                        <input type="number" step="any" id="d_cargoWeight" value="${isEditMode ? (existingRecord.cargo_weight || '') : ''}" placeholder="کێشی بار" ${readOnlyAttr} onchange="autoSaveRecord(${isDouble ? 2 : 1})" required>
-                    </div>
-                    <div class="field">
-                        <input type="number" id="d_piecesCount" value="${isEditMode ? (existingRecord.pieces_count || '') : ''}" placeholder="ژمارەی پارچەکان" ${readOnlyAttr} onchange="autoSaveRecord(${isDouble ? 2 : 1})" required>
-                    </div>
-                    <div class="field">
-                        <input type="number" id="d_receiptNumber" value="${isEditMode ? (existingRecord.receipt_number || '') : ''}" placeholder="ژمارەی وەسڵ" ${readOnlyAttr} onchange="autoSaveRecord(${isDouble ? 2 : 1})" required>
-                    </div>
-                    <div class="field">
-                        <input type="time" id="d_recordTime" value="${rawRecordTime}" ${readOnlyAttr} onchange="autoSaveRecord(${isDouble ? 2 : 1})" required>
-                    </div>
-                    <div class="form-buttons-row" id="actionButtonContainer" style="margin-top: 8px;">
-                        ${isEditMode ? `<button type="button" class="btn-submit" id="mainActionBtn" style="text-align: right; padding-right: 20px;" onclick="enableEditingForForm(${isDouble ? 2 : 1})">چاککردن</button>` : `<button type="button" class="btn-submit" id="mainActionBtn" style="text-align: right; padding-right: 20px;" onclick="submitDeliveryRecord(${isDouble ? 2 : 1})">تۆمارکردن</button>`}
-                        <button type="button" class="btn-back" style="text-align: right; padding-right: 20px;" onclick="renderDriverMainView(${isDouble ? 2 : 1})">گەڕانەوە</button>
+                    <div class="field"><input type="text" id="d_driver" value="${driverName}" readonly required></div>
+                    <div class="field"><input type="text" id="d_distributor" value="${isEditMode ? existingRecord.distributor : ''}" placeholder="دابەشکار" ${readOnlyAttr} autocomplete="off" onfocus="showDropdown('distributor', distributorsList)" oninput="filterDropdown('distributor', distributorsList)" required><div id="dropdown_d_distributor" class="autocomplete-items"></div></div>
+                    <div class="field"><input type="text" id="d_delegate" value="${isEditMode ? existingRecord.delegate : ''}" placeholder="مەندوب" ${readOnlyAttr} autocomplete="off" onfocus="showDropdown('delegate', delegatesList)" oninput="filterDropdown('delegate', delegatesList)" required><div id="dropdown_d_delegate" class="autocomplete-items"></div></div>
+                    <div class="field"><input type="text" id="d_zone" value="${isEditMode ? existingRecord.zone : ''}" placeholder="زۆن" ${readOnlyAttr} autocomplete="off" onfocus="showDropdown('zone', zonesList)" oninput="filterDropdown('zone', zonesList)" required><div id="dropdown_d_zone" class="autocomplete-items"></div></div>
+                    <div class="field"><input type="text" id="d_vehicle" value="${isEditMode ? existingRecord.vehicle : ''}" placeholder="سەیارە" ${readOnlyAttr} autocomplete="off" onfocus="showDropdown('vehicle', vehiclesList)" oninput="filterDropdown('vehicle', vehiclesList)" required><div id="dropdown_d_vehicle" class="autocomplete-items"></div></div>
+                    <div class="field"><input type="number" step="any" id="d_cargoWeight" value="${isEditMode ? existingRecord.cargo_weight : ''}" placeholder="کێشی بار" ${readOnlyAttr} required></div>
+                    <div class="field"><input type="number" id="d_piecesCount" value="${isEditMode ? existingRecord.pieces_count : ''}" placeholder="ژمارەی پارچە" ${readOnlyAttr} required></div>
+                    <div class="field"><input type="number" id="d_receiptNumber" value="${isEditMode ? existingRecord.receipt_number : ''}" placeholder="ژمارەی وەسڵ" ${readOnlyAttr} required></div>
+                    <div class="field"><input type="time" id="d_recordTime" value="${rawRecordTime}" ${readOnlyAttr} required></div>
+                    <div class="form-buttons-row" style="margin-top: 8px;">
+                        ${isEditMode ? `<button type="button" class="btn-submit" id="mainActionBtn" onclick="enableEditingForForm(${isDouble ? 2 : 1})">چاککردن</button>` : `<button type="button" class="btn-submit" id="mainActionBtn" onclick="submitDeliveryRecord(${isDouble ? 2 : 1})">تۆمارکردن</button>`}
+                        <button type="button" class="btn-back" onclick="renderDriverMainView(${isDouble ? 2 : 1})">گەڕانەوە</button>
                     </div>
                 </div>
             `;
-
             if (!isEditMode) {
                 liveTimeInterval = setInterval(() => {
                     const timeEl = document.getElementById('d_recordTime');
-                    if (timeEl && document.activeElement !== timeEl) {
-                        timeEl.value = getLocalCurrentTime();
-                    }
+                    if (timeEl && document.activeElement !== timeEl) timeEl.value = getLocalCurrentTime();
                 }, 1000);
             }
         }
@@ -2047,153 +1844,57 @@
         async function checkAndRenderDriverDeliveryFormTriple() {
             clearAllIntervals();
             const today = getLocalTodayDate();
-            const baseDriver = currentUserData ? currentUserData.username : '';
-            const driverName = `${baseDriver} سێ`;
-            const nowTime = getLocalCurrentTime();
-
+            const driverName = (currentUserData ? currentUserData.username : '') + ' سێ';
             let existingRecord = null;
             try {
-                const { data } = await supabaseClient
-                    .from('delivery_records')
-                    .select('*')
-                    .eq('driver', driverName)
-                    .eq('record_date', today);
-
-                if (data && data.length > 0) {
-                    existingRecord = data[0];
-                }
-            } catch (err) {
-                console.error(err);
-            }
+                const { data } = await supabaseClient.from('delivery_records').select('*').eq('driver', driverName).eq('record_date', today);
+                if (data && data.length > 0) existingRecord = data[0];
+            } catch (err) { console.error(err); }
 
             const isEditMode = existingRecord !== null;
             const readOnlyAttr = isEditMode ? 'readonly' : '';
-            let rawRecordTime = isEditMode && existingRecord.record_time ? existingRecord.record_time : nowTime;
-            if (rawRecordTime && rawRecordTime.split(':').length > 2) {
-                rawRecordTime = rawRecordTime.split(':').slice(0, 2).join(':');
-            }
+            let rawRecordTime = isEditMode && existingRecord.record_time ? existingRecord.record_time : getLocalCurrentTime();
 
             const card = document.getElementById('formCardContent');
             card.innerHTML = `
-                <div class="form-header-flex">
-                    <h2>فۆڕمی دەرچوون سێ</h2>
-                    <span class="form-date-display">${today}</span>
-                </div>
+                <div class="form-header-flex"><h2>فۆڕمی دەرچوون سێ</h2><span class="form-date-display">${today}</span></div>
                 <div class="driver-form-stack">
-                    <div class="field">
-                        <input type="text" id="d_driver" value="${driverName}" placeholder="شۆفێر" readonly required>
-                    </div>
-                    <div class="field">
-                        <input type="text" id="d_distributor" value="${isEditMode ? (existingRecord.distributor || '') : ''}" placeholder="دابەشکار" ${readOnlyAttr} autocomplete="off" onfocus="if(!this.readOnly) showDropdown('distributor', distributorsList)" oninput="filterDropdown('distributor', distributorsList)" onchange="autoSaveRecord(3)" required>
-                        <div id="dropdown_d_distributor" class="autocomplete-items"></div>
-                    </div>
-                    <div class="field">
-                        <input type="text" id="d_delegate" value="${isEditMode ? (existingRecord.delegate || '') : ''}" placeholder="مەندوب" ${readOnlyAttr} autocomplete="off" onfocus="if(!this.readOnly) showDropdown('delegate', delegatesList)" oninput="filterDropdown('delegate', delegatesList)" onchange="autoSaveRecord(3)" required>
-                        <div id="dropdown_d_delegate" class="autocomplete-items"></div>
-                    </div>
-                    <div class="field">
-                        <input type="text" id="d_zone" value="${isEditMode ? (existingRecord.zone || '') : ''}" placeholder="ناوچە / زۆن" ${readOnlyAttr} autocomplete="off" onfocus="if(!this.readOnly) showDropdown('zone', zonesList)" oninput="filterDropdown('zone', zonesList)" onchange="autoSaveRecord(3)" required>
-                        <div id="dropdown_d_zone" class="autocomplete-items"></div>
-                    </div>
-                    <div class="field">
-                        <input type="text" id="d_vehicle" value="${isEditMode ? (existingRecord.vehicle || '') : ''}" placeholder="ژمارەی سەیارە" ${readOnlyAttr} autocomplete="off" onfocus="if(!this.readOnly) showDropdown('vehicle', vehiclesList)" oninput="filterDropdown('vehicle', vehiclesList)" onchange="autoSaveRecord(3)" required>
-                        <div id="dropdown_d_vehicle" class="autocomplete-items"></div>
-                    </div>
-                    <div class="field">
-                        <input type="number" step="any" id="d_cargoWeight" value="${isEditMode ? (existingRecord.cargo_weight || '') : ''}" placeholder="کێشی بار" ${readOnlyAttr} onchange="autoSaveRecord(3)" required>
-                    </div>
-                    <div class="field">
-                        <input type="number" id="d_piecesCount" value="${isEditMode ? (existingRecord.pieces_count || '') : ''}" placeholder="ژمارەی پارچەکان" ${readOnlyAttr} onchange="autoSaveRecord(3)" required>
-                    </div>
-                    <div class="field">
-                        <input type="number" id="d_receiptNumber" value="${isEditMode ? (existingRecord.receipt_number || '') : ''}" placeholder="ژمارەی وەسڵ" ${readOnlyAttr} onchange="autoSaveRecord(3)" required>
-                    </div>
-                    <div class="field">
-                        <input type="time" id="d_recordTime" value="${rawRecordTime}" ${readOnlyAttr} onchange="autoSaveRecord(3)" required>
-                    </div>
-                    <div class="form-buttons-row" id="actionButtonContainer" style="margin-top: 8px;">
-                        ${isEditMode ? `<button type="button" class="btn-submit" id="mainActionBtn" style="text-align: right; padding-right: 20px;" onclick="enableEditingForForm(3)">چاککردن</button>` : `<button type="button" class="btn-submit" id="mainActionBtn" style="text-align: right; padding-right: 20px;" onclick="submitDeliveryRecord(3)">تۆمارکردن</button>`}
-                        <button type="button" class="btn-back" style="text-align: right; padding-right: 20px;" onclick="renderDriverMainView(3)">گەڕانەوە</button>
+                    <div class="field"><input type="text" id="d_driver" value="${driverName}" readonly required></div>
+                    <div class="field"><input type="text" id="d_distributor" value="${isEditMode ? existingRecord.distributor : ''}" placeholder="دابەشکار" ${readOnlyAttr} autocomplete="off" onfocus="showDropdown('distributor', distributorsList)" oninput="filterDropdown('distributor', distributorsList)" required><div id="dropdown_d_distributor" class="autocomplete-items"></div></div>
+                    <div class="field"><input type="text" id="d_delegate" value="${isEditMode ? existingRecord.delegate : ''}" placeholder="مەندوب" ${readOnlyAttr} autocomplete="off" onfocus="showDropdown('delegate', delegatesList)" oninput="filterDropdown('delegate', delegatesList)" required><div id="dropdown_d_delegate" class="autocomplete-items"></div></div>
+                    <div class="field"><input type="text" id="d_zone" value="${isEditMode ? existingRecord.zone : ''}" placeholder="زۆن" ${readOnlyAttr} autocomplete="off" onfocus="showDropdown('zone', zonesList)" oninput="filterDropdown('zone', zonesList)" required><div id="dropdown_d_zone" class="autocomplete-items"></div></div>
+                    <div class="field"><input type="text" id="d_vehicle" value="${isEditMode ? existingRecord.vehicle : ''}" placeholder="سەیارە" ${readOnlyAttr} autocomplete="off" onfocus="showDropdown('vehicle', vehiclesList)" oninput="filterDropdown('vehicle', vehiclesList)" required><div id="dropdown_d_vehicle" class="autocomplete-items"></div></div>
+                    <div class="field"><input type="number" step="any" id="d_cargoWeight" value="${isEditMode ? existingRecord.cargo_weight : ''}" placeholder="کێشی بار" ${readOnlyAttr} required></div>
+                    <div class="field"><input type="number" id="d_piecesCount" value="${isEditMode ? existingRecord.pieces_count : ''}" placeholder="ژمارەی پارچە" ${readOnlyAttr} required></div>
+                    <div class="field"><input type="number" id="d_receiptNumber" value="${isEditMode ? existingRecord.receipt_number : ''}" placeholder="ژمارەی وەسڵ" ${readOnlyAttr} required></div>
+                    <div class="field"><input type="time" id="d_recordTime" value="${rawRecordTime}" ${readOnlyAttr} required></div>
+                    <div class="form-buttons-row" style="margin-top: 8px;">
+                        ${isEditMode ? `<button type="button" class="btn-submit" id="mainActionBtn" onclick="enableEditingForForm(3)">چاککردن</button>` : `<button type="button" class="btn-submit" id="mainActionBtn" onclick="submitDeliveryRecord(3)">تۆمارکردن</button>`}
+                        <button type="button" class="btn-back" onclick="renderDriverMainView(2)">گەڕانەوە</button>
                     </div>
                 </div>
             `;
-
-            if (!isEditMode) {
-                liveTimeInterval = setInterval(() => {
-                    const timeEl = document.getElementById('d_recordTime');
-                    if (timeEl && document.activeElement !== timeEl) {
-                        timeEl.value = getLocalCurrentTime();
-                    }
-                }, 1000);
-            }
         }
 
         function enableEditingForForm(level) {
-            clearAllIntervals();
-            const inputs = document.querySelectorAll('.driver-form-stack input:not(#d_driver)');
-            inputs.forEach(input => {
-                input.removeAttribute('readonly');
-            });
+            document.querySelectorAll('.driver-form-stack input:not(#d_driver)').forEach(i => i.removeAttribute('readonly'));
             const btn = document.getElementById('mainActionBtn');
             btn.textContent = 'تۆمار';
             btn.style.background = '#10b981';
             btn.setAttribute('onclick', `submitDeliveryRecord(${level})`);
         }
 
-        async function autoSaveRecord(level) {
-            const today = getLocalTodayDate();
-            const driverName = document.getElementById('d_driver').value.trim();
-
-            const updatedData = {
-                distributor: document.getElementById('d_distributor').value.trim(),
-                delegate: document.getElementById('d_delegate').value.trim(),
-                zone: document.getElementById('d_zone').value.trim(),
-                vehicle: document.getElementById('d_vehicle').value.trim(),
-                cargo_weight: parseFloat(document.getElementById('d_cargoWeight').value) || 0,
-                pieces_count: parseInt(document.getElementById('d_piecesCount').value) || 0,
-                receipt_number: parseInt(document.getElementById('d_receiptNumber').value) || 0,
-                record_time: document.getElementById('d_recordTime').value.trim()
-            };
-
-            try {
-                const { data: existingCheck } = await supabaseClient
-                    .from('delivery_records')
-                    .select('id')
-                    .eq('driver', driverName)
-                    .eq('record_date', today);
-
-                if (existingCheck && existingCheck.length > 0) {
-                    await supabaseClient
-                        .from('delivery_records')
-                        .update(updatedData)
-                        .eq('driver', driverName)
-                        .eq('record_date', today);
-                }
-            } catch (err) {
-                console.error(err);
-            }
-        }
-
         function showDropdown(type, itemsArray) {
             closeAllDropdowns();
-            const inputMap = {
-                'distributor': 'd_distributor',
-                'delegate': 'd_delegate',
-                'zone': 'd_zone',
-                'vehicle': 'd_vehicle'
-            };
+            const inputMap = { 'distributor': 'd_distributor', 'delegate': 'd_delegate', 'zone': 'd_zone', 'vehicle': 'd_vehicle' };
             const inputId = inputMap[type];
             const inputEl = document.getElementById(inputId);
             if (inputEl && inputEl.readOnly) return;
-
             const dropContainer = document.getElementById(`dropdown_${inputId}`);
             if (!dropContainer) return;
 
             dropContainer.innerHTML = '';
-            if (itemsArray.length === 0) {
-                dropContainer.style.display = 'none';
-                return;
-            }
+            if (itemsArray.length === 0) { dropContainer.style.display = 'none'; return; }
 
             dropContainer.style.display = 'block';
             itemsArray.forEach(item => {
@@ -2203,45 +1904,26 @@
                 div.onclick = () => {
                     document.getElementById(inputId).value = item;
                     closeAllDropdowns();
-                    const dName = document.getElementById('d_driver').value;
-                    let lvl = 1;
-                    if(dName.includes('دوو')) lvl = 2;
-                    if(dName.includes('سێ')) lvl = 3;
-                    autoSaveRecord(lvl);
                 };
                 dropContainer.appendChild(div);
             });
         }
 
         function filterDropdown(type, itemsArray) {
-            const inputMap = {
-                'distributor': 'd_distributor',
-                'delegate': 'd_delegate',
-                'zone': 'd_zone',
-                'vehicle': 'd_vehicle'
-            };
-            const inputId = inputMap[type];
-            const inputEl = document.getElementById(inputId);
-            if (inputEl && inputEl.readOnly) return;
-
-            const val = inputEl.value.toLowerCase();
-            const filtered = itemsArray.filter(i => i.toLowerCase().includes(val));
-            showDropdown(type, filtered);
+            const inputMap = { 'distributor': 'd_distributor', 'delegate': 'd_delegate', 'zone': 'd_zone', 'vehicle': 'd_vehicle' };
+            const val = document.getElementById(inputMap[type]).value.toLowerCase();
+            showDropdown(type, itemsArray.filter(i => i.toLowerCase().includes(val)));
         }
 
         async function submitDeliveryRecord(level) {
             clearAllIntervals();
             const today = getLocalTodayDate();
-            
             const distributorInputVal = document.getElementById('d_distributor').value.trim();
-            const isValidDistributor = distributorsList.some(d => d.toLowerCase() === distributorInputVal.toLowerCase());
             
-            if (!isValidDistributor) {
-                showCustomNotification(false, 'هەڵە: ناوی دابەشکار نەدۆزرایەوە یان هەڵەیە!');
+            if (!distributorsList.some(d => d.toLowerCase() === distributorInputVal.toLowerCase())) {
+                showCustomNotification(false, 'ناوی دابەشکار هەڵەیە!');
                 return;
             }
-
-            const recordTimeVal = document.getElementById('d_recordTime').value.trim() || getLocalCurrentTime();
 
             const recordData = {
                 driver: document.getElementById('d_driver').value.trim(),
@@ -2253,90 +1935,30 @@
                 pieces_count: parseInt(document.getElementById('d_piecesCount').value) || 0,
                 receipt_number: parseInt(document.getElementById('d_receiptNumber').value) || 0,
                 record_date: today,
-                record_time: recordTimeVal
+                record_time: document.getElementById('d_recordTime').value.trim() || getLocalCurrentTime()
             };
 
             try {
-                const { data: existing } = await supabaseClient
-                    .from('delivery_records')
-                    .select('id')
-                    .eq('driver', recordData.driver)
-                    .eq('record_date', today);
+                const { data: existing } = await supabaseClient.from('delivery_records').select('id').eq('driver', recordData.driver).eq('record_date', today);
+                let err = existing && existing.length > 0 ? 
+                    (await supabaseClient.from('delivery_records').update(recordData).eq('driver', recordData.driver).eq('record_date', today)).error :
+                    (await supabaseClient.from('delivery_records').insert([recordData])).error;
 
-                let error = null;
-                if (existing && existing.length > 0) {
-                    const { error: updateErr } = await supabaseClient
-                        .from('delivery_records')
-                        .update(recordData)
-                        .eq('driver', recordData.driver)
-                        .eq('record_date', today);
-                    error = updateErr;
-                } else {
-                    const { error: insertErr } = await supabaseClient
-                        .from('delivery_records')
-                        .insert([recordData]);
-                    error = insertErr;
-                }
-
-                if (error) {
-                    showCustomNotification(false, 'هەڵە روویدا');
-                } else {
-                    showCustomNotification(true, 'سەرکەوتوو بوو');
-                    renderDriverMainView(level);
-                }
-            } catch (err) {
-                showCustomNotification(false, 'هەڵە روویدا');
-            }
+                if (err) showCustomNotification(false, 'هەڵە روویدا');
+                else { showCustomNotification(true, 'سەرکەوتوو بوو'); renderDriverMainView(level); }
+            } catch (err) { showCustomNotification(false, 'هەڵە روویدا'); }
         }
 
         function switchDriverTab(btn, tabName, titleText, isSettings = false) {
             clearAllIntervals();
             document.querySelectorAll('#driverNavBar .nav-item').forEach(b => b.classList.remove('active'));
             if(btn) btn.classList.add('active');
-
             const card = document.getElementById('formCardContent');
 
             if (isSettings) {
-                const userAvatar = currentUserData && currentUserData.avatar_url ? currentUserData.avatar_url : 'https://via.placeholder.com/240';
-                const userName = currentUserData ? currentUserData.username : '';
-                const userProfession = currentUserData ? (currentUserData.profession || currentUserData.role || '') : '';
-
-                card.innerHTML = `
-                    <div class="form-header-flex" style="margin-bottom: 4px;">
-                        <h2>ڕێکخستنەکانی هەژمار</h2>
-                        <button type="button" class="btn-back" style="width: auto; padding: 4px 10px; font-size: 11px;" onclick="handleLogout()">چوونەدەرەوە</button>
-                    </div>
-                    <div class="settings-avatar-container">
-                        <label class="avatar-upload-circle" title="گۆڕینی وێنەی پروفایل">
-                            <img id="profileImagePreview" src="${userAvatar}" alt="پروفایل">
-                            <div class="camera-overlay">
-                                <svg viewBox="0 0 24 24"><path d="M12 15.2c1.77 0 3.2-1.43 3.2-3.2s-1.43-3.2-3.2-3.2-3.2 1.43-3.2 3.2 1.43 3.2 3.2 3.2zm0-5.4c1.1 0 2 .9 2 2s-.9 2-2 2-2-.9-2-2 .9-2 2-2zm9-3h-3.17L15 4H9L7.17 6.8H4c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8.8c0-1.1-.9-2-2-2zm0 12H4V8.8h4.05l1.83-2.8h4.24l1.83 2.8H20v10z"/></svg>
-                            </div>
-                            <input type="file" accept="image/*" onchange="uploadUserAvatar(event)">
-                        </label>
-                        <div class="settings-username-display">${userName} (${userProfession})</div>
-                    </div>
-                    <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 15px;">
-                        <button type="button" class="btn-sub" onclick="openPasswordPopup()">
-                            <span>گۆڕینی تێپەڕەوشە</span>
-                            <svg style="width:16px;height:16px;fill:currentColor;" viewBox="0 0 24 24"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg>
-                        </button>
-                        <button type="button" class="btn-sub" onclick="toggleAppTheme()">
-                            <span id="themeToggleText">  تاریك وڕۆناك</span>
-                            <svg style="width:16px;height:16px;fill:currentColor;" viewBox="0 0 24 24"><path d="M20 8.69V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12 20 8.69zM12 18c-3.31 0-6-2.69-6-6s2.69-6 6-6 6 2.69 6 6-2.69 6-6 6z"/></svg>
-                        </button>
-                    </div>
-                `;
-            } else if (tabName === 'زانیاری') {
-                card.innerHTML = `
-                    <h2>${titleText}</h2>
-                    <p style="margin-top: 10px; color: var(--sub-text);">زانیاری تەواوی شۆفێر لێرە نمایش دەکرێت.</p>
-                `;
+                renderSettings(card);
             } else {
-                card.innerHTML = `
-                    <h2>${titleText}</h2>
-                    <p style="margin-top: 10px; color: var(--sub-text);">ئەم فۆڕمە بەتاڵە.</p>
-                `;
+                card.innerHTML = `<h2>${titleText}</h2><p style="margin-top: 10px; color: var(--sub-text);">ئەم فۆڕمە بەتاڵە.</p>`;
             }
         }
 
@@ -2344,160 +1966,71 @@
             clearAllIntervals();
             document.querySelectorAll('#defaultNavBar .nav-item').forEach(b => b.classList.remove('active'));
             if(btn) btn.classList.add('active');
-
             const card = document.getElementById('formCardContent');
 
             if (isSettings) {
-                const userAvatar = currentUserData && currentUserData.avatar_url ? currentUserData.avatar_url : 'https://via.placeholder.com/240';
-                const userName = currentUserData ? currentUserData.username : '';
-                const userProfession = currentUserData ? (currentUserData.profession || currentUserData.role || '') : '';
-
-                card.innerHTML = `
-                    <div class="form-header-flex" style="margin-bottom: 4px;">
-                        <h2>ڕێکخستنەکانی هەژمار</h2>
-                        <button type="button" class="btn-back" style="width: auto; padding: 4px 10px; font-size: 11px;" onclick="handleLogout()">چوونەدەرەوە</button>
-                    </div>
-                    <div class="settings-avatar-container">
-                        <label class="avatar-upload-circle" title="گۆڕینی وێنەی پروفایل">
-                            <img id="profileImagePreview" src="${userAvatar}" alt="پروفایل">
-                            <div class="camera-overlay">
-                                <svg viewBox="0 0 24 24"><path d="M12 15.2c1.77 0 3.2-1.43 3.2-3.2s-1.43-3.2-3.2-3.2-3.2 1.43-3.2 3.2 1.43 3.2 3.2 3.2zm0-5.4c1.1 0 2 .9 2 2s-.9 2-2 2-2-.9-2-2 .9-2 2-2zm9-3h-3.17L15 4H9L7.17 6.8H4c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8.8c0-1.1-.9-2-2-2zm0 12H4V8.8h4.05l1.83-2.8h4.24l1.83 2.8H20v10z"/></svg>
-                            </div>
-                            <input type="file" accept="image/*" onchange="uploadUserAvatar(event)">
-                        </label>
-                        <div class="settings-username-display">${userName} (${userProfession})</div>
-                    </div>
-                    <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 15px;">
-                        <button type="button" class="btn-sub" onclick="openPasswordPopup()">
-                            <span>گۆڕینی تێپەڕەوشە</span>
-                            <svg style="width:16px;height:16px;fill:currentColor;" viewBox="0 0 24 24"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg>
-                        </button>
-                        <button type="button" class="btn-sub" onclick="toggleAppTheme()">
-                            <span id="themeToggleText">گۆڕینی ڕەنگ )</span>
-                            <svg style="width:16px;height:16px;fill:currentColor;" viewBox="0 0 24 24"><path d="M20 8.69V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12 20 8.69zM12 18c-3.31 0-6-2.69-6-6s2.69-6 6-6 6 2.69 6 6-2.69 6-6 6z"/></svg>
-                        </button>
-                    </div>
-                `;
-            } else if (tabName === 'زانیاری') {
-                card.innerHTML = `
-                    <h2>${titleText}</h2>
-                    <p style="margin-top: 10px; color: var(--sub-text);">زانیاری تەواوی بەکارهێنەر لێرە نمایش دەکرێت.</p>
-                `;
+                renderSettings(card);
             } else {
-                card.innerHTML = `
-                    <h2>${titleText}</h2>
-                    <p style="margin-top: 10px; color: var(--sub-text);">ئەم فۆڕمە بەتاڵە.</p>
-                `;
+                card.innerHTML = `<h2>${titleText}</h2><p style="margin-top: 10px; color: var(--sub-text);">ئەم فۆڕمە بەتاڵە.</p>`;
             }
         }
 
-        function toggleAppTheme() {
-            document.body.classList.toggle('light-theme');
-            if (document.body.classList.contains('light-theme')) {
-                localStorage.setItem('theme', 'light');
-            } else {
-                localStorage.setItem('theme', 'dark');
-            }
+        function renderSettings(card) {
+            const userAvatar = currentUserData && currentUserData.avatar_url ? currentUserData.avatar_url : 'https://via.placeholder.com/240';
+            const userName = currentUserData ? currentUserData.username : '';
+            const userProfession = currentUserData ? (currentUserData.profession || currentUserData.role || '') : '';
+
+            card.innerHTML = `
+                <div class="form-header-flex" style="margin-bottom: 4px;">
+                    <h2>ڕێکخستنەکانی هەژمار</h2>
+                    <button type="button" class="btn-back" style="width: auto; padding: 4px 10px; font-size: 11px;" onclick="handleLogout()">چوونەدەرەوە</button>
+                </div>
+                <div class="settings-avatar-container">
+                    <label class="avatar-upload-circle">
+                        <img id="profileImagePreview" src="${userAvatar}" alt="پروفایل">
+                        <div class="camera-overlay"><svg viewBox="0 0 24 24"><path d="M12 15.2c1.77 0 3.2-1.43 3.2-3.2s-1.43-3.2-3.2-3.2-3.2 1.43-3.2 3.2 1.43 3.2 3.2 3.2zm0-5.4c1.1 0 2 .9 2 2s-.9 2-2 2-2-.9-2-2 .9-2 2-2zm9-3h-3.17L15 4H9L7.17 6.8H4c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8.8c0-1.1-.9-2-2-2zm0 12H4V8.8h4.05l1.83-2.8h4.24l1.83 2.8H20v10z"/></svg></div>
+                    </label>
+                    <div class="settings-username-display">${userName} (${userProfession})</div>
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 15px;">
+                    <button type="button" class="btn-sub" onclick="openPasswordPopup()"><span>گۆڕینی تێپەڕەوشە</span></button>
+                    <button type="button" class="btn-sub" onclick="toggleAppTheme()"><span>تاریک و ڕۆناکی</span></button>
+                </div>
+            `;
         }
 
         function handleLogout() {
-            clearAllIntervals();
             localStorage.removeItem('currentUser');
             sessionStorage.removeItem('currentUser');
             location.reload();
         }
 
-        function openPasswordPopup() {
-            document.getElementById('passwordPopupModal').style.display = 'flex';
+        function toggleAppTheme() {
+            document.body.classList.toggle('light-theme');
+            localStorage.setItem('theme', document.body.classList.contains('light-theme') ? 'light' : 'dark');
         }
 
-        function closePasswordPopup() {
-            document.getElementById('passwordPopupModal').style.display = 'none';
-            document.getElementById('popupOldPassword').value = '';
-            document.getElementById('popupNewPassword').value = '';
-        }
+        function openPasswordPopup() { document.getElementById('passwordPopupModal').style.display = 'flex'; }
+        function closePasswordPopup() { document.getElementById('passwordPopupModal').style.display = 'none'; }
 
         async function updateUserPassword() {
             const oldPass = document.getElementById('popupOldPassword').value.trim();
             const newPass = document.getElementById('popupNewPassword').value.trim();
-
             if (oldPass.length !== 4 || newPass.length !== 4) {
-                showCustomNotification(false, 'تکایە تێپەڕەوشە دەبێت ٤ ژمارە بێت');
+                showCustomNotification(false, 'پاسۆڕد دەبێت ٤ ژمارە بێت');
                 return;
             }
-
             if (String(currentUserData.password).trim() !== oldPass) {
                 showCustomNotification(false, 'پاسۆڕدی کۆن هەڵەیە');
                 return;
             }
-
             try {
-                const { error } = await supabaseClient
-                    .from('users')
-                    .update({ password: newPass })
-                    .eq('id', currentUserData.id);
-
-                if (error) {
-                    showCustomNotification(false, 'هەڵە لە گۆڕینی پاسۆڕد');
-                } else {
-                    currentUserData.password = newPass;
-                    if (localStorage.getItem('currentUser')) {
-                        localStorage.setItem('currentUser', JSON.stringify(currentUserData));
-                    } else {
-                        sessionStorage.setItem('currentUser', JSON.stringify(currentUserData));
-                    }
-                    showCustomNotification(true, 'پاسۆڕد بە سەرکەوتوویی گۆڕدرا');
-                    closePasswordPopup();
-                }
+                await supabaseClient.from('users').update({ password: newPass }).eq('id', currentUserData.id);
+                currentUserData.password = newPass;
+                showCustomNotification(true, 'پاسۆڕد گۆڕرا');
+                closePasswordPopup();
             } catch (err) {
-                showCustomNotification(false, 'هەڵە ڕوویدا');
-            }
-        }
-
-        async function uploadUserAvatar(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-
-            showCustomNotification(true, 'خەریکی بارکردنی وێنەیەک...');
-
-            try {
-                const fileExt = file.name.split('.').pop();
-                const fileName = `${currentUserData.id}_${Math.random()}.${fileExt}`;
-                const filePath = `${fileName}`;
-
-                const { error: uploadError } = await supabaseClient.storage
-                    .from('avatars')
-                    .upload(filePath, file);
-
-                if (uploadError) {
-                    throw uploadError;
-                }
-
-                const { data: { publicUrl } } = supabaseClient.storage
-                    .from('avatars')
-                    .getPublicUrl(filePath);
-
-                const { error: updateError } = await supabaseClient
-                    .from('users')
-                    .update({ avatar_url: publicUrl })
-                    .eq('id', currentUserData.id);
-
-                if (updateError) throw updateError;
-
-                currentUserData.avatar_url = publicUrl;
-                if (localStorage.getItem('currentUser')) {
-                    localStorage.setItem('currentUser', JSON.stringify(currentUserData));
-                } else {
-                    sessionStorage.setItem('currentUser', JSON.stringify(currentUserData));
-                }
-
-                const imgPrev = document.getElementById('profileImagePreview');
-                if(imgPrev) imgPrev.src = publicUrl;
-
-                showCustomNotification(true, 'وێنەی پروفایل گۆڕدرا');
-            } catch (err) {
-                console.error(err);
-                showCustomNotification(false, 'هەڵە لە بارکردنی وێنەدا');
+                showCustomNotification(false, 'هەڵە روویدا');
             }
         }
     </script>
