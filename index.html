@@ -4,6 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>سیستەمی بەڕێوەبردنی گەیاندن - تەواو و یەکگرتوو</title>
+    <!-- لێرەدا مانفێستەکە بەستراوەتەوە بۆ ئەوەی وەک ئەپ دابەزێت -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#121212">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         :root {
@@ -1055,6 +1058,11 @@
                     }
                     this.value = value;
                 });
+            }
+
+            // چالاککردنی Service Worker بۆ ئەوەی گیت هاب وەک ئەپ بناسێت
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.register('sw.js').catch(err => console.log('SW registration failed:', err));
             }
         });
 
