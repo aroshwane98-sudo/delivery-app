@@ -369,6 +369,60 @@ input[type='date'], input[type='time'] { direction: ltr; text-align: right; }
   border-top: 1px solid var(--border); padding-top: 8px;
 }
 
+.hist-money-row {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  background: var(--surface-2); border: 1px solid var(--border);
+  border-radius: 11px; padding: 8px 12px; margin-top: 8px;
+  transition: all 0.15s ease;
+}
+.hist-money-row.pending {
+  border-color: rgba(245, 158, 11, 0.45);
+  background: color-mix(in srgb, #f59e0b 9%, var(--surface-2));
+}
+.hist-money-row:hover { border-color: var(--accent); }
+.hist-money-info { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.badge-unrecorded {
+  font-size: 0.72rem; font-weight: 700; padding: 2px 8px; border-radius: 99px;
+  background: rgba(245, 158, 11, 0.18); color: #f59e0b;
+}
+.badge-recorded {
+  font-size: 0.72rem; font-weight: 700; padding: 2px 8px; border-radius: 99px;
+  background: color-mix(in srgb, var(--accent) 16%, transparent); color: var(--accent);
+}
+.btn-hist-money {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-family: inherit; font-size: 0.78rem; font-weight: 700;
+  padding: 6px 12px; border-radius: 8px;
+  border: 1px solid var(--border); background: var(--surface); color: var(--text);
+  cursor: pointer; transition: all 0.15s ease;
+}
+.btn-hist-money:hover { border-color: var(--accent); color: var(--accent); background: color-mix(in srgb, var(--accent) 8%, var(--surface)); }
+.btn-hist-money.pulse-btn {
+  background: var(--accent); color: #fff; border-color: transparent;
+  box-shadow: 0 2px 10px color-mix(in srgb, var(--accent) 32%, transparent);
+}
+.btn-hist-money.pulse-btn:hover { filter: brightness(1.1); }
+
+.alert-pending-money {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  background: color-mix(in srgb, #f59e0b 12%, var(--surface));
+  border: 1.5px dashed #f59e0b; border-radius: var(--radius);
+  padding: 12px 16px; margin-bottom: 12px;
+  animation: rise 0.3s ease both;
+}
+.alert-pending-money-text { display: flex; flex-direction: column; gap: 2px; }
+.alert-pending-money-text strong { font-size: 0.92rem; color: #f59e0b; }
+.alert-pending-money-text p { font-size: 0.82rem; color: var(--text); }
+
+.btn-mini-money {
+  display: inline-flex; align-items: center; justify-content: center;
+  padding: 2px 6px; font-size: 0.72rem; border-radius: 6px;
+  border: 1px solid var(--border); background: var(--surface-2);
+  color: var(--accent); cursor: pointer; margin-inline-start: 4px;
+}
+.btn-mini-money:hover { background: color-mix(in srgb, var(--accent) 15%, transparent); border-color: var(--accent); }
+.editable-money { cursor: pointer; }
+
 /* ---------------- ناڤیگەیشنی خوارەوە ---------------- */
 
 .bottom-nav {
@@ -1157,3 +1211,169 @@ input[type='date'], input[type='time'] { direction: ltr; text-align: right; }
     page-break-inside: avoid !important;
   }
 }
+
+/* =========================================================
+ *  نۆتیفیکەیشن — بەلکە، ڕاڤەکار، پانێل
+ * ========================================================= */
+
+.notif-bell-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.notif-badge {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  background: #ef4444;
+  color: #fff;
+  border-radius: 50%;
+  font-size: 0.62rem;
+  font-weight: 800;
+  min-width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 3px;
+  pointer-events: none;
+  line-height: 1;
+  box-shadow: 0 0 0 2px var(--surface, #121a2b);
+  animation: notif-pop .3s ease;
+}
+
+@keyframes notif-pop {
+  0%   { transform: scale(0); }
+  70%  { transform: scale(1.25); }
+  100% { transform: scale(1); }
+}
+
+.notif-panel-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 900;
+  display: flex;
+  align-items: stretch;
+  justify-content: flex-end;
+}
+
+.notif-panel-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, .45);
+}
+
+.notif-drawer {
+  position: relative;
+  z-index: 1;
+  width: min(380px, 95vw);
+  background: var(--surface);
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  box-shadow: -4px 0 32px rgba(0, 0, 0, .35);
+  animation: notif-slide-in .22s ease;
+}
+
+@keyframes notif-slide-in {
+  from { transform: translateX(100%); }
+  to   { transform: translateX(0); }
+}
+
+.notif-drawer-head {
+  padding: 18px 18px 14px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.notif-drawer-head h3 {
+  font-size: 1rem;
+  font-weight: 800;
+  margin: 0;
+}
+
+.notif-drawer-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.notif-item {
+  background: var(--surface-2);
+  border-radius: 12px;
+  padding: 12px 14px;
+  border-inline-end: 3px solid var(--accent);
+  transition: opacity .2s;
+}
+
+.notif-item.read {
+  opacity: .6;
+  border-inline-end-color: var(--border);
+}
+
+.notif-item-meta {
+  display: flex;
+  justify-content: space-between;
+  font-size: .72rem;
+  color: var(--muted);
+  margin-bottom: 5px;
+}
+
+.notif-item-who {
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.notif-item-msg {
+  font-size: .86rem;
+  line-height: 1.55;
+}
+
+.notif-empty {
+  text-align: center;
+  padding: 50px 20px;
+  color: var(--muted);
+  font-size: .9rem;
+}
+
+.notif-empty-ico {
+  font-size: 2.5rem;
+  margin-bottom: 10px;
+  display: block;
+}
+
+/* =========================================================
+ *  کاتی دەوام — duration field hint
+ * ========================================================= */
+
+.duration-calc-hint {
+  font-size: 0.78rem;
+  color: var(--muted);
+  margin-top: 4px;
+  line-height: 1.4;
+}
+
+.duration-result {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: var(--surface-2);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  font-size: .9rem;
+  margin-top: 6px;
+}
+
+.duration-result b {
+  color: var(--accent);
+  font-size: 1.05rem;
+}
+

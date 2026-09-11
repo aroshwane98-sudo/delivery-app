@@ -6,7 +6,65 @@
  *  ٣. زۆنەکان (zonesv2)
  * ========================================================= */
 
+/* =========================================================
+ *  کۆگای نۆتیفیکەیشن — لوکالستۆریج، ٣٠ ڕۆژ، ئاگادارکردنەوەی دووەم
+ * ========================================================= */
+const NotifStore = (() => {
+  const KEY = 'dlv_notifications';
+  const MAX_DAYS = 30;
+
+  function load() {
+    try { return JSON.parse(localStorage.getItem(KEY) || '[]'); } catch (_) { return []; }
+  }
+  function save(arr) {
+    try { localStorage.setItem(KEY, JSON.stringify(arr)); } catch (_) {}
+  }
+  function purge() {
+    const cutoff = Date.now() - MAX_DAYS * 864e5;
+    const arr = load().filter(n => n.ts >= cutoff);
+    save(arr);
+    return arr;
+  }
+  function getAll() { return purge(); }
+  function push(notif) {
+    const arr = purge();
+    arr.unshift({
+      id: `n_${Date.now()}_${Math.random().toString(36).slice(2)}`,
+      ts: Date.now(),
+      read: false,
+      ...notif,
+    });
+    save(arr);
+    _updateBadge();
+  }
+  function unreadCount() { return purge().filter(n => !n.read).length; }
+  function markAllRead() {
+    const arr = load().map(n => ({ ...n, read: true }));
+    save(arr);
+    _updateBadge();
+  }
+  function _updateBadge() {
+    const badge = document.getElementById('notif-badge');
+    if (!badge) return;
+    const count = unreadCount();
+    badge.textContent = count > 99 ? '99+' : String(count);
+    badge.style.display = count > 0 ? '' : 'none';
+  }
+  function init() { _updateBadge(); }
+  return { push, getAll, unreadCount, markAllRead, init, _updateBadge };
+})();
+
+/* =========================================================
+ *  کۆگای کاتی دەوام — پاشەکەوتکردنی کاتی بنەڕەت لە لوکالستۆریج
+ * ========================================================= */
+const BaseTimeStore = {
+  KEY: 'dlv_base_time',
+  get() { return localStorage.getItem(this.KEY) || ''; },
+  set(t) { if (t) localStorage.setItem(this.KEY, t); },
+};
+
 const AdminView = (() => {
+
   const $ = (sel, root) => (root || document).querySelector(sel);
 
   let container = null;
@@ -146,7 +204,13 @@ const AdminView = (() => {
             <h2 class="hero-title">🛡️ پانێلی بەڕێوەبردن</h2>
             <p class="hero-sub">تەواوی داتاکانی هەر دوو پڕۆژەی Supabase و کۆنتڕۆڵی CRUD</p>
           </div>
-          <button class="btn btn-ghost btn-sm" id="admin-refresh-btn">⟳ نوێکردنەوە</button>
+          <div style="display:flex;align-items:center;gap:8px">
+            <div class="notif-bell-wrap">
+              <button class="btn btn-ghost btn-sm" id="notif-bell-btn" title="نۆتیفیکەیشنەکان">🔔</button>
+              <span class="notif-badge" id="notif-badge" style="display:none"></span>
+            </div>
+            <button class="btn btn-ghost btn-sm" id="admin-refresh-btn">⟳ نوێکردنەوە</button>
+          </div>
         </div>
 
         <!-- بەشەکان (Subtabs) -->
@@ -175,10 +239,14 @@ const AdminView = (() => {
     });
 
     $('#admin-refresh-btn', el).addEventListener('click', () => loadData());
+    $('#notif-bell-btn', el)?.addEventListener('click', openNotifPanel);
+
+    NotifStore.init(); // نوێکردنەوەی بەلکەی نۆتیفیکەیشن
 
     loadData();
     start();
   }
+
 
   function renderContent() {
     const wrap = $('#admin-content', container);
@@ -198,8 +266,51 @@ const AdminView = (() => {
   }
 
   /* =========================================================
-   *  ١. بەشی تۆمارەکانی گەیاندن (delivery_records)
+   *  پانێلی نۆتیفیکەیشنەکان
    * ========================================================= */
+
+  function openNotifPanel() {
+    const notifs = NotifStore.getAll();
+    NotifStore.markAllRead();
+
+    function fmtTs(ts) {
+      const d = new Date(ts);
+      const date = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+      const time = `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+      return `${date} • ${time}`;
+    }
+
+    const overlay = document.createElement('div');
+    overlay.className = 'notif-panel-overlay';
+    overlay.innerHTML = `
+      <div class="notif-panel-backdrop"></div>
+      <div class="notif-drawer">
+        <div class="notif-drawer-head">
+          <h3>🔔 نۆتیفیکەیشنەکان</h3>
+          <button class="btn btn-ghost btn-sm" id="notif-close-btn">✕ داخستن</button>
+        </div>
+        <div class="notif-drawer-body">
+          ${!notifs.length
+            ? `<div class="notif-empty"><span class="notif-empty-ico">🔔</span>هیچ نۆتیفیکەیشنێک نییە</div>`
+            : notifs.map(n => `
+              <div class="notif-item ${n.read ? 'read' : ''}">
+                <div class="notif-item-meta">
+                  <span class="notif-item-who">👤 ${UI.esc(n.who || '—')}</span>
+                  <span>${UI.esc(fmtTs(n.ts))}</span>
+                </div>
+                <div class="notif-item-msg">${UI.esc(n.msg)}</div>
+              </div>`).join('')}
+        </div>
+      </div>`;
+
+    document.body.appendChild(overlay);
+
+    const close = () => overlay.remove();
+    overlay.querySelector('.notif-panel-backdrop').addEventListener('click', close);
+    overlay.querySelector('#notif-close-btn').addEventListener('click', close);
+  }
+
+
 
   function renderRecordsTab(wrap) {
     const rows = filteredRecords();

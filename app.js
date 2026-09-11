@@ -22,9 +22,9 @@ const App = (() => {
 
   function defineTabs() {
     TABS.length = 0;
-    if (currentUser?.profession === CONFIG.PROFESSION_DRIVER) {
+    if (currentUser?.profession === CONFIG.PROFESSION_DRIVER || currentUser?.profession === CONFIG.PROFESSION_DISTRIBUTOR) {
       TABS.push({
-        id: 'driver', label: 'کارەکان', icon: ICONS.truck, roles: [CONFIG.PROFESSION_DRIVER],
+        id: 'driver', label: 'کارەکان', icon: ICONS.truck, roles: [CONFIG.PROFESSION_DRIVER, CONFIG.PROFESSION_DISTRIBUTOR],
         render: el => DriverView.render(el),
         onDeactivate: () => DriverView.stop(),
       });
