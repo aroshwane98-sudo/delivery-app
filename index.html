@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="ckb" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0b1220">
+  <meta name="description" content="سیستەمی ڕێکخستن، بەدواداچوون و تۆمارکردنی پرۆسەکانی گەیاندن — شۆفێر، دابەشکار و مەندوب">
+  <title>سیستەمی گەیاندن</title>
+
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icon-192.png" type="image/png">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <!-- ======================= چوونەژوورەوە ======================= -->
+  <div id="login-view" class="login-view" hidden>
+    <div class="login-card">
+      <div class="login-logo" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M1 3h13v13H1z"/><path d="M14 8h4.6l2.4 3.2V16H14z"/>
+          <circle cx="5.5" cy="18.5" r="1.8"/><circle cx="17.5" cy="18.5" r="1.8"/>
+        </svg>
+      </div>
+      <h1 class="login-title">سیستەمی گەیاندن</h1>
+      <p class="login-sub">بەخێربێیت — بۆ بەردەوامبوون بچۆ ژوورەوە</p>
+
+      <form id="login-form" autocomplete="off" novalidate>
+        <div class="field">
+          <label for="login-username">ناوی بەکارهێنەر</label>
+          <select id="login-username">
+            <option value="" selected disabled>بەکارهێنەرێک هەڵبژێرە...</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="login-password">تێپەڕەوشە <span class="muted">(٤ ژمارە)</span></label>
+          <input id="login-password" type="password" inputmode="numeric" maxlength="4"
+                 placeholder="••••" autocomplete="off" class="pin-input">
+        </div>
+        <label class="check-row" for="login-remember">
+          <input type="checkbox" id="login-remember" checked>
+          <span>منی بیربکە</span>
+        </label>
+        <button type="submit" id="login-btn" class="btn btn-primary btn-block">چوونەژوورەوە</button>
+      </form>
+      <p class="login-foot" id="login-foot"></p>
+    </div>
+  </div>
+
+  <!-- ======================= ئەپڵیکەیشن ======================= -->
+  <div id="app-view" hidden>
+    <header class="topbar">
+      <div class="topbar-user" id="topbar-user"></div>
+      <div class="topbar-actions">
+        <button class="icon-btn" id="theme-toggle" title="گۆڕینی ڕوون/تاریک" aria-label="گۆڕینی ڕووکار">
+          <span id="theme-toggle-ico">☀</span>
+        </button>
+        <button class="icon-btn" id="logout-btn" title="دەرچوون لە هەژمار" aria-label="دەرچوون">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="20" height="20">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/>
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <main id="page" class="page"></main>
+
+    <nav class="bottom-nav" id="bottom-nav" role="tablist"></nav>
+  </div>
+
+  <script src="config.js"></script>
+  <script src="api.js"></script>
+  <script src="store.js"></script>
+  <script src="xlsx.full.min.js"></script>
+  <script src="ui.js"></script>
+  <script src="view-driver.js"></script>
+  <script src="view-reports.js"></script>
+  <script src="view-admin.js"></script>
+  <script src="view-settings.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
