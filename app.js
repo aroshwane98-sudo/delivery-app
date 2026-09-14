@@ -196,6 +196,10 @@ const App = (() => {
     const first = visibleTabs()[0];
     switchTab(first.id);
 
+    // سڕینەوەی نۆتیفیکەیشنە کۆنەکان بەپێی ڕێکخستنی ڕۆژەکان (بێ ڕاوەستان)
+    API.Notifications.removeOlderThanDays(Store.getSettings().notifDays)
+      .catch(e => console.warn('هەڵە لە سڕینەوەی نۆتیفیکەیشنە کۆنەکان:', e));
+
     // نوێکردنەوەی زانیاری بەکارهێنەر لە پاشبنەما (ئاڤاتار و هتد)
     Store.loadLists().then(({ users }) => {
       const fresh = (users || []).find(u => u.id === currentUser.id);

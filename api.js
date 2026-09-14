@@ -176,5 +176,37 @@ const API = (() => {
     },
   };
 
-  return { Records, Lists };
+  /* ---------------- خشتەی نۆتیفیکەیشنەکان (public.notifications) ---------------- */
+
+  const Notifications = {
+    /** هێنانی نۆتیفیکەیشنەکان (نوێترین لە سەرەتا) */
+    async list() {
+      return request(CONFIG.LISTS_URL, CONFIG.LISTS_KEY,
+        '/notifications?select=*&order=created_at.desc&limit=200');
+    },
+
+    /** ناردنی نۆتیفیکەیشن — action دەقی تەواوی گۆڕانکارییەکەیە */
+    async send(action) {
+      if (!action) return null;
+      return request(CONFIG.LISTS_URL, CONFIG.LISTS_KEY,
+        '/notifications', { method: 'POST', body: { action }, prefer: 'return=minimal' });
+    },
+
+    /** سڕینەوەی نۆتیفیکەیشنەکانیش کە لە N ڕۆژ پێشتر بوون */
+    async removeOlderThanDays(days) {
+      const n = Math.max(0, Number(days) || 0);
+      if (!n) return null;
+      const cutoff = new Date(Date.now() - n * 24 * 60 * 60 * 1000).toISOString();
+      return request(CONFIG.LISTS_URL, CONFIG.LISTS_KEY,
+        `/notifications?created_at=lt.${encodeURIComponent(cutoff)}`, { method: 'DELETE' });
+    },
+
+    /** سڕینەوەی هەموو نۆتیفیکەیشنەکان */
+    async removeAll() {
+      return request(CONFIG.LISTS_URL, CONFIG.LISTS_KEY,
+        '/notifications?id=gte.0', { method: 'DELETE' });
+    },
+  };
+
+  return { Records, Lists, Notifications };
 })();

@@ -63,6 +63,22 @@ const SettingsView = (() => {
         <p class="hint">لەکاتی داگرتنی هەر ڕیزێکی زانیاریەکانت پڕبە شاشە زانیاریەکان دەبینیت</p>
       </section>
 
+      ${u.profession === CONFIG.PROFESSION_SUPERVISOR ? `
+      <section class="card">
+        <h3 class="section-title">🔔 نۆتیفیکەیشنەکانی گۆڕانکاری</h3>
+        <div class="field-row">
+          <div class="field">
+            <label>سڕینەوەی نۆتیفیکەیشنەکان دوای (ڕۆژ)</label>
+            <input id="notif-days" type="number" min="1" step="1" value="${Math.max(1, Number(s.notifDays) || 1)}">
+          </div>
+          <div class="field" style="display:flex;align-items:flex-end">
+            <button class="btn btn-primary" id="notif-days-save" type="button" style="width:100%">پاشەکەوتکردن</button>
+          </div>
+        </div>
+        <p class="hint">نۆتیفیکەیشنی هەر گۆڕانکارییەک بۆ خشتەی public.notifications دەنێردرێت و لە دوای ئەم ژمارە ڕۆژە خۆکاری دەسڕدرێتەوە (بنەڕەت: ١ ڕۆژ). سڕینەوەی خۆکار لە کاتی چوونە ژوورەوە جێبەجێ دەبێت.</p>
+        <button class="btn btn-danger btn-block" id="notif-delete-all" type="button">🗑 سڕینەوەی هەموو نۆتیفیکەیشنەکان</button>
+      </section>` : ''}
+
       <section class="card">
         <button class="btn btn-danger btn-block" id="settings-logout-btn" type="button">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/></svg>
@@ -110,6 +126,37 @@ const SettingsView = (() => {
     $('#set-row-click-fullscreen', el)?.addEventListener('change', e => {
       Store.saveSettings({ rowClickFullscreen: e.target.checked });
       UI.toast(e.target.checked ? 'ئۆپشنی پیشاندانی پڕ بە شاشە چالاک کرا ✓' : 'ئۆپشنی پیشاندانی پڕ بە شاشە ناچالاک کرا', 'info');
+    });
+
+    /* — نۆتیفیکەیشنەکان (تەنها بەڕێوەبەر) — */
+    $('#notif-days-save', el)?.addEventListener('click', async () => {
+      const days = Math.max(1, Math.floor(Number(UI.toLatinDigits($('#notif-days', el).value)) || 1));
+      Store.saveSettings({ notifDays: days });
+      const btn = $('#notif-days-save', el);
+      UI.btnLoading(btn, true, 'پاشەکەوت دەکرێت...');
+      try {
+        await API.Notifications.removeOlderThanDays(days);
+        UI.toast(`ڕێکخستن پاشەکەوت کرا — نۆتیفیکەیشنەکان دوای ${UI.fmtNum(days)} ڕۆژ دەسڕدرێنەوە ✓`, 'success');
+      } catch (err) {
+        UI.toast('هەڵە لە سڕینەوەی نۆتیفیکەیشنە کۆنەکان: ' + err.message, 'error', 4200);
+      } finally {
+        UI.btnLoading(btn, false);
+      }
+    });
+
+    $('#notif-delete-all', el)?.addEventListener('click', async () => {
+      const ok = await UI.confirmDialog('دڵنیاییت لە سڕینەوەی هەموو نۆتیفیکەیشنەکان؟ ئەم کردارە ناگەڕێتەوە!', { danger: true, okLabel: 'بەڵێ، بیسڕەوە', cancelLabel: 'پاشگەزبوونەوە' });
+      if (!ok) return;
+      const btn = $('#notif-delete-all', el);
+      UI.btnLoading(btn, true, 'دەسڕدرێتەوە...');
+      try {
+        await API.Notifications.removeAll();
+        UI.toast('هەموو نۆتیفیکەیشنەکان سڕدرانەوە ✓', 'success');
+      } catch (err) {
+        UI.toast('هەڵە لە سڕینەوە: ' + err.message, 'error', 4200);
+      } finally {
+        UI.btnLoading(btn, false);
+      }
     });
   }
 

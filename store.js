@@ -41,11 +41,11 @@ const Store = (() => {
   function getSettings() {
     try {
       return Object.assign(
-        { theme: 'dark', accent: CONFIG.DEFAULT_ACCENT, rowClickFullscreen: true },
+        { theme: 'dark', accent: CONFIG.DEFAULT_ACCENT, rowClickFullscreen: true, notifDays: 1 },
         JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}')
       );
     } catch (_) {
-      return { theme: 'dark', accent: CONFIG.DEFAULT_ACCENT, rowClickFullscreen: true };
+      return { theme: 'dark', accent: CONFIG.DEFAULT_ACCENT, rowClickFullscreen: true, notifDays: 1 };
     }
   }
 

@@ -332,6 +332,15 @@ input[type='date'], input[type='time'] { direction: ltr; text-align: right; }
 .detail span { font-size: 0.72rem; color: var(--muted); }
 .detail b { font-size: 0.9rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
+/* — نیشانەی گۆڕانکاری (^) — تەنها بۆ بەڕێوەبەر — */
+.edit-mark {
+  color: #f59e0b;
+  font-weight: 700;
+  font-size: 0.75rem;
+  margin-inline-start: 2px;
+  cursor: help;
+}
+
 .money-row {
   width: 100%; display: flex; align-items: center; gap: 10px;
   background: var(--surface-2); border: 1.5px dashed var(--border);

@@ -13,14 +13,17 @@ const DriverView = (() => {
 
   const isDistributor = () => App.getUser()?.profession === CONFIG.PROFESSION_DISTRIBUTOR;
 
+  // لابردنی نیشانەی دەستکاریکردن (+) لە کۆتایی ناو بۆ ئەوەی حساباتەکان نشکن
+  const stripEditMark = name => String(name || '').replace(/\s*\+\s*$/, '').trim();
+
   const isCargoTwoOrThree = driverName => {
     if (!driverName) return false;
-    const n = UI.norm(driverName);
+    const n = UI.norm(stripEditMark(driverName));
     return n.endsWith(' دوو') || n.endsWith(' سێ') || /\bدوو\b/.test(n) || /\bسێ\b/.test(n);
   };
 
   const driverBaseName = driverName => {
-    return UI.norm(driverName).replace(/\s*(دوو|سێ)$/, '').trim();
+    return UI.norm(stripEditMark(driverName)).replace(/\s*(دوو|سێ)$/, '').trim();
   };
 
   const areDuplicateDepartures = (r1, r2) => {
@@ -45,13 +48,46 @@ const DriverView = (() => {
   };
 
   const cargoIndex = rec => {
-    if (!rec || !rec.driver) return 0;
-    if (rec.driver.endsWith(' دوو')) return 1;
-    if (rec.driver.endsWith(' سێ')) return 2;
+    const drv = stripEditMark(rec && rec.driver);
+    if (!drv) return 0;
+    if (drv.endsWith(' دوو')) return 1;
+    if (drv.endsWith(' سێ')) return 2;
     return 0;
   };
 
   const activeRecord = () => records.find(r => !r.arrival_time) || null;
+
+  /* ---------------- نیشانەی گۆڕانکاری (^) — تەنها بۆ بەڕێوەبەر ---------------- */
+
+  const MARKS_KEY = 'drv_edit_marks';
+  const isSupervisor = () => App.getUser()?.profession === CONFIG.PROFESSION_SUPERVISOR;
+
+  const loadMarks = () => {
+    try { return JSON.parse(localStorage.getItem(MARKS_KEY)) || {}; } catch (_) { return {}; }
+  };
+  const saveMarks = m => { try { localStorage.setItem(MARKS_KEY, JSON.stringify(m)); } catch (_) {} };
+
+  // ناسنامەی جێگیر بۆ تۆمارەکە (id دەگۆڕێت کاتێک update بە INSERT/DELETE جێبەجێ دەبێت)
+  const recSig = r => `${r.record_date}|${stripEditMark(r.driver)}|${r.record_time}`;
+
+  function addEditMarks(rec, fields) {
+    if (!rec || !fields.length) return;
+    const u = App.getUser()?.username || 'نەزانیرا';
+    const marks = loadMarks();
+    const sig = recSig(rec);
+    const m = marks[sig] || {};
+    fields.forEach(f => { m[f] = u; });
+    marks[sig] = m;
+    saveMarks(marks);
+  }
+
+  // نیشانەی ^ لەتەنیشت خانە گۆڕدراوەکان — تەنها بەڕێوەبەر دەیبینێت
+  const markHtml = (rec, field) => {
+    if (!isSupervisor() || !rec) return '';
+    const m = loadMarks()[recSig(rec)];
+    if (!m || !m[field]) return '';
+    return ` <sup class="edit-mark" title="دەستکاریکراوە لەلایەن ${UI.esc(m[field])}">^</sup>`;
+  };
 
   /* ---------------- بارکردنی داتا ---------------- */
 
@@ -225,20 +261,20 @@ const DriverView = (() => {
       <section class="card active-card">
         <div class="active-head">
           <span class="cargo-badge">${UI.esc(CONFIG.CARGO_LABELS[cargoIndex(active)] || 'بار')}</span>
-          <span class="zone-chip">🗺 ${UI.esc(active.zone || '—')}</span>
+          <span class="zone-chip">🗺 ${UI.esc(active.zone || '—')}${markHtml(active, 'zone')}</span>
         </div>
         <div class="active-time-edit-bar">
-          <button type="button" class="btn-edit-times" id="active-edit-times-btn">⏱️ دەستکاری کاتەکان</button>
+          <button type="button" class="btn-edit-times" id="active-edit-times-btn">✏️ دەستکاری داتا</button>
         </div>
         <div class="stepper">${stepsHtml}</div>
         <div class="detail-grid">
-          <div class="detail"><span>شۆفێر</span><b>${UI.esc(active.driver || '—')}</b></div>
-          <div class="detail"><span>دابەشکار</span><b>${UI.esc(active.distributor || '—')}</b></div>
-          <div class="detail"><span>مەندوب</span><b>${UI.esc(active.delegate || '—')}</b></div>
-          <div class="detail"><span>ژمارەی سەیارە</span><b>${UI.esc(active.vehicle || '—')}</b></div>
-          <div class="detail"><span>کێشی بار</span><b>${UI.fmtNum(active.cargo_weight)} کگم</b></div>
-          <div class="detail"><span>پارچەکان</span><b>${UI.fmtNum(active.pieces_count)}</b></div>
-          <div class="detail"><span>وەسڵ</span><b>${UI.fmtNum(active.receipt_number)}</b></div>
+          <div class="detail"><span>شۆفێر</span><b>${UI.esc(active.driver || '—')}${markHtml(active, 'driver')}</b></div>
+          <div class="detail"><span>دابەشکار</span><b>${UI.esc(active.distributor || '—')}${markHtml(active, 'distributor')}</b></div>
+          <div class="detail"><span>مەندوب</span><b>${UI.esc(active.delegate || '—')}${markHtml(active, 'delegate')}</b></div>
+          <div class="detail"><span>ژمارەی سەیارە</span><b>${UI.esc(active.vehicle || '—')}${markHtml(active, 'vehicle')}</b></div>
+          <div class="detail"><span>کێشی بار</span><b>${UI.fmtNum(active.cargo_weight)} کگم${markHtml(active, 'cargo_weight')}</b></div>
+          <div class="detail"><span>پارچەکان</span><b>${UI.fmtNum(active.pieces_count)}${markHtml(active, 'pieces_count')}</b></div>
+          <div class="detail"><span>وەسڵ</span><b>${UI.fmtNum(active.receipt_number)}${markHtml(active, 'receipt_number')}</b></div>
         </div>
         <button class="money-row" id="money-btn" type="button">
           <span class="money-lbl">💰 پارەی هێنراوە</span>
@@ -247,7 +283,7 @@ const DriverView = (() => {
         </button>
       </section>`;
     $('#money-btn', el).addEventListener('click', () => openMoneyModal(active));
-    $('#active-edit-times-btn', el)?.addEventListener('click', () => openEditTimesModal(active));
+    $('#active-edit-times-btn', el)?.addEventListener('click', () => openEditDataModal(active));
   }
 
   function renderAction() {
@@ -284,18 +320,18 @@ const DriverView = (() => {
           <div class="hist-top">
             <b>${UI.esc(CONFIG.CARGO_LABELS[cargoIndex(r)] || 'بار')} — ${UI.esc(r.zone || '—')}</b>
             <div style="display:flex;align-items:center;gap:6px">
-              <button type="button" class="btn-edit-times btn-hist-edit" data-id="${r.id}" title="دەستکاری کاتەکانی ئەم بارە">⏱️ دەستکاری کاتەکان</button>
+              <button type="button" class="btn-edit-times btn-hist-edit" data-id="${r.id}" title="دەستکاریکردنی داتای ئەم بارە">✏️ دەستکاری داتا</button>
             </div>
           </div>
           <div class="hist-meta">
-            <span>🚚 ${UI.esc(r.record_time || '—')}</span>
-            <span>📍 ${UI.esc(r.in_zone_time || '—')}</span>
-            <span>🚏 ${UI.esc(r.out_zone_time || '—')}</span>
-            <span>🏁 ${UI.esc(r.arrival_time || '—')}</span>
+            <span>🚚 ${UI.esc(r.record_time || '—')}${markHtml(r, 'record_time')}</span>
+            <span>📍 ${UI.esc(r.in_zone_time || '—')}${markHtml(r, 'in_zone_time')}</span>
+            <span>🚏 ${UI.esc(r.out_zone_time || '—')}${markHtml(r, 'out_zone_time')}</span>
+            <span>🏁 ${UI.esc(r.arrival_time || '—')}${markHtml(r, 'arrival_time')}</span>
           </div>
           <div class="hist-foot">
-            <span>${UI.fmtNum(r.cargo_weight)} کگم • ${UI.fmtNum(r.pieces_count)} پارچە • ${UI.fmtNum(r.receipt_number)} وەسڵ</span>
-            <span>سەیارە: <b>${UI.esc(r.vehicle || '—')}</b></span>
+            <span>${UI.fmtNum(r.cargo_weight)} کگم${markHtml(r, 'cargo_weight')} • ${UI.fmtNum(r.pieces_count)} پارچە${markHtml(r, 'pieces_count')} • ${UI.fmtNum(r.receipt_number)} وەسڵ${markHtml(r, 'receipt_number')}</span>
+            <span>سەیارە: <b>${UI.esc(r.vehicle || '—')}${markHtml(r, 'vehicle')}</b></span>
           </div>
 
           <!-- بەشی پارەی هێنراوە — دوای گەشتنەوەش لەهەمان ڕۆژ قفڵ نابێت -->
@@ -330,7 +366,7 @@ const DriverView = (() => {
         e.stopPropagation();
         const id = Number(b.dataset.id);
         const r = records.find(x => x.id === id);
-        if (r) openEditTimesModal(r);
+        if (r) openEditDataModal(r);
       });
     });
 
@@ -626,18 +662,39 @@ const DriverView = (() => {
     $('#f-money', body).focus();
   }
 
-  /* ---------------- مۆدالی دەستکاریکردنی کاتەکان (تەنها ئەمڕۆ) ---------------- */
+  /* ---------------- مۆدالی دەستکاریکردنی داتا (تەنها ئەمڕۆ) ---------------- */
 
-  function openEditTimesModal(rec) {
+  function openEditDataModal(rec) {
     if (!rec) return;
     if (rec.record_date !== UI.todayStr()) {
-      UI.toast('ئاگاداری: تەنها دەستکاریکردنی کاتەکانی ئەمڕۆ ڕێگەپێدراوە', 'warning');
+      UI.toast('ئاگاداری: تەنها دەستکاریکردنی داتای ئەمڕۆ ڕێگەپێدراوە', 'warning');
       return;
     }
 
+    const u = App.getUser();
+    const listsNow = lists || { users: [], zones: [], vehicles: [] };
+    const distributors = (listsNow.users || []).filter(x => x.profession === CONFIG.PROFESSION_DISTRIBUTOR).map(x => ({ label: x.username }));
+    const driversList  = (listsNow.users || []).filter(x => x.profession === CONFIG.PROFESSION_DRIVER).map(x => ({ label: x.username }));
+    const delegates    = (listsNow.users || []).filter(x => x.profession === CONFIG.PROFESSION_DELEGATE).map(x => ({ label: x.username }));
+    const zones        = (listsNow.zones || []).map(z => ({ label: z.name }));
+    const vehicles     = (listsNow.vehicles || []).map(v => {
+      const val = v.vehicle_number || v.plate_number || v.number || v.name || v.vehicle || v.plate || Object.values(v)[1] || Object.values(v)[0];
+      return { label: String(val).trim() };
+    }).filter(v => v.label && v.label !== '[object Object]');
+
+    // دیاریکردنی خانەی ناوی خۆی — قفڵ دەکرێت و نیشانەی + لەدوای ناوەکەی دادەنرێت
+    let selfField = null;
+    if (UI.userMatches(rec.driver, u?.username) && !isDistributor()) selfField = 'driver';
+    else if (UI.userMatches(rec.distributor, u?.username)) selfField = 'distributor';
+    else if (UI.userMatches(rec.delegate, u?.username)) selfField = 'delegate';
+    // نیشانەی + لەدوای ناوی خۆی — ناوی ڕەسەن (بەبێ نیشانەی کۆن) دەپارێزرێت
+    const selfValue = selfField ? stripEditMark(rec[selfField]) : null;
+
+    const lockStyle = 'readonly style="background:var(--bg-2,#f5f5f5);color:var(--text-muted,#888);cursor:not-allowed"';
+
     const body = document.createElement('div');
     body.innerHTML = `
-      <p class="hint">دەتوانیت کاتەکانی ئەمڕۆی باری «${UI.esc(rec.zone || '')}» دەستکاری بکەیت، یان خانەیەک بەتاڵ بکەیتەوە ئەگەر پێویست بکات:</p>
+      <p class="hint">دەتوانیت کات و زانیارییەکانی ئەمڕۆی باری «${UI.esc(rec.zone || '')}» دەستکاری بکەیت. خانەی ناوی خۆت قفڵە (بە نیشانەی + نیشان دراوە) و کاتەکان دەتوانیت بەتاڵیان بکەیتەوە:</p>
       <form id="edit-times-form" novalidate>
         <div class="date-range-compact">
           <div class="field compact-field">
@@ -659,10 +716,63 @@ const DriverView = (() => {
             <input type="time" id="f-arrival" value="${rec.arrival_time || ''}">
           </div>
         </div>
+        <div class="date-range-compact">
+          <div class="field compact-field">
+            <label>شۆفێر *</label>
+            <input type="text" id="f-driver" value="${selfField === 'driver' ? UI.esc(selfValue) : UI.esc(rec.driver || '')}" ${selfField === 'driver' ? lockStyle : ''}>
+          </div>
+          <div class="field compact-field">
+            <label>دابەشکار *</label>
+            <input type="text" id="f-distributor" value="${selfField === 'distributor' ? UI.esc(selfValue) : UI.esc(rec.distributor || '')}" ${selfField === 'distributor' ? lockStyle : ''}>
+          </div>
+        </div>
+        <div class="date-range-compact">
+          <div class="field compact-field">
+            <label>مەندوب *</label>
+            <input type="text" id="f-delegate" value="${selfField === 'delegate' ? UI.esc(selfValue) : UI.esc(rec.delegate || '')}" ${selfField === 'delegate' ? lockStyle : ''}>
+          </div>
+          <div class="field compact-field">
+            <label>ناوچە / زۆن *</label>
+            <input type="text" id="f-zone" value="${UI.esc(rec.zone || '')}">
+          </div>
+        </div>
+        <div class="date-range-compact">
+          <div class="field compact-field">
+            <label>ژمارەی سەیارە *</label>
+            <input type="text" id="f-vehicle" value="${UI.esc(rec.vehicle || '')}">
+          </div>
+          <div class="field compact-field">
+            <label>کێشی بار (کگم) *</label>
+            <input type="number" id="f-weight" min="0" step="any" value="${Number(rec.cargo_weight || 0)}">
+          </div>
+        </div>
+        <div class="date-range-compact">
+          <div class="field compact-field">
+            <label>ژمارەی پارچەکان *</label>
+            <input type="number" id="f-pieces" min="0" step="1" value="${Number(rec.pieces_count || 0)}">
+          </div>
+          <div class="field compact-field">
+            <label>ژمارەی وەسڵ *</label>
+            <input type="number" id="f-receipt" min="0" step="1" value="${Number(rec.receipt_number || 0)}">
+          </div>
+        </div>
       </form>`;
 
+    // ئۆتۆکۆمپلیت و لیست بۆکس بۆ خانە ناوەکان (جگە لە خانە قفڵکراوەکە)
+    if (selfField !== 'driver') {
+      UI.autocomplete($('#f-driver', body), () => driversList);
+    }
+    if (selfField !== 'distributor') {
+      UI.autocomplete($('#f-distributor', body), () => distributors);
+    }
+    if (selfField !== 'delegate') {
+      UI.autocomplete($('#f-delegate', body), () => delegates);
+    }
+    UI.autocomplete($('#f-zone', body), () => zones);
+    UI.autocomplete($('#f-vehicle', body), () => vehicles);
+
     const { close } = UI.openModal({
-      title: '⏱️ دەستکاریکردنی کاتەکانی ئەمڕۆ',
+      title: '✏️ دەستکاریکردنی داتای ئەمڕۆ',
       body,
       actions: [
         { label: 'پاشگەزبوونەوە', className: 'btn-ghost', onClick: () => close() },
@@ -672,21 +782,91 @@ const DriverView = (() => {
           onClick: async (backdrop) => {
             const saveBtn = backdrop.querySelector('.modal-foot .btn-primary');
             const val = id => $(id, body).value.trim() || null;
+            const num = id => {
+              const raw = UI.toLatinDigits($(id, body).value.trim());
+              if (raw === '') return null;
+              const n = Number(raw);
+              return Number.isNaN(n) || n < 0 ? NaN : n;
+            };
+
+            const invalid = [];
+            const driver = val('#f-driver');
+            const distributor = val('#f-distributor');
+            const delegate = val('#f-delegate');
+            const zone = val('#f-zone');
+            const vehicle = val('#f-vehicle');
+            if (!driver) invalid.push('#f-driver');
+            if (!distributor) invalid.push('#f-distributor');
+            if (!delegate) invalid.push('#f-delegate');
+            if (!zone) invalid.push('#f-zone');
+            if (!vehicle) invalid.push('#f-vehicle');
+
+            const weight = num('#f-weight');
+            const pieces = num('#f-pieces');
+            const receipt = num('#f-receipt');
+            if (Number.isNaN(weight)) invalid.push('#f-weight');
+            if (Number.isNaN(pieces)) invalid.push('#f-pieces');
+            if (Number.isNaN(receipt)) invalid.push('#f-receipt');
+
+            if (invalid.length) {
+              invalid.forEach(id => $(id, body)?.classList.add('invalid'));
+              UI.toast('تکایە خانە ناوی و ژمارەییەکان بە دروستی پڕ بکەرەوە', 'warning');
+              return;
+            }
+
             const patch = {
               record_time: val('#f-rec-time'),
               in_zone_time: val('#f-in-zone'),
               out_zone_time: val('#f-out-zone'),
               arrival_time: val('#f-arrival'),
+              driver,
+              distributor,
+              delegate,
+              zone,
+              vehicle,
+              cargo_weight: weight,
+              pieces_count: pieces,
+              receipt_number: receipt,
             };
 
             UI.btnLoading(saveBtn, true, 'پاشەکەوت دەکرێت...');
             try {
               await API.Records.update(rec.id, patch);
-              UI.toast('کاتەکان بە سەرکەوتوویی نوێ کرانەوە ✓', 'success');
+
+              // تۆمارکردنی تەنها ئەو خانەیانەی کە بەڕاستی گۆڕدراون (بۆ نیشانەی ^ ی بەڕێوەبەر)
+              const sameVal = (a, b) => {
+                if (a === null && (b === null || b === undefined)) return true;
+                if (typeof a === 'number' || typeof b === 'number') return Number(a) === Number(b);
+                return UI.norm(stripEditMark(a)) === UI.norm(stripEditMark(b));
+              };
+              const changed = Object.keys(patch).filter(k => !sameVal(patch[k], rec[k]));
+              if (changed.length) addEditMarks(rec, changed);
+
+              // نۆتیفیکەیشن: تەنها بۆ خانەیەک کە پێشتر نرخێکی تۆمارکراوی هەبوو (نەک لە سفرەوە)
+              const FIELD_LABELS = {
+                record_time: 'کاتی دەرچوون', in_zone_time: 'کاتی ناو زۆن',
+                out_zone_time: 'کاتی دەرێی زۆن', arrival_time: 'کاتی گەشتنەوە',
+                driver: 'شۆفێر', distributor: 'دابەشکار', delegate: 'مەندوب',
+                zone: 'ناوچە/زۆن', vehicle: 'ژمارەی سەیارە',
+                cargo_weight: 'کێشی بار (کگم)', pieces_count: 'ژمارەی پارچەکان', receipt_number: 'ژمارەی وەسڵ',
+              };
+              const isEmptyVal = v => v === null || v === undefined || v === '' || Number(v) === 0;
+              const editorName = App.getUser()?.username || 'نەزانیرا';
+              changed.forEach(k => {
+                if (isEmptyVal(rec[k])) return; // لە سفرەوە تۆمارکراوە — نۆتیفیکەیشن نانێردرێت
+                const oldV = typeof rec[k] === 'number' ? UI.fmtNum(rec[k]) : stripEditMark(rec[k]);
+                const newV = typeof patch[k] === 'number' ? UI.fmtNum(patch[k]) : (patch[k] ?? '(بەتاڵ)');
+                const label = FIELD_LABELS[k] || k;
+                API.Notifications.send(
+                  `خانەی «${label}» لە «${oldV}» گۆڕا بۆ «${newV}» (لەلایەن ${editorName})`
+                ).catch(e => console.warn('هەڵە لە ناردنی نۆتیفیکەیشن:', e));
+              });
+
+              UI.toast('داتاکە بە سەرکەوتوویی نوێ کرانەوە ✓', 'success');
               close();
               await load({ silent: true });
             } catch (err) {
-              UI.toast('هەڵە لە نوێکردنەوەی کاتەکان: ' + err.message, 'error', 4200);
+              UI.toast('هەڵە لە نوێکردنەوەی داتاکە: ' + err.message, 'error', 4200);
             } finally {
               UI.btnLoading(saveBtn, false);
             }

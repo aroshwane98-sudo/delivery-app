@@ -254,9 +254,23 @@ const AdminView = (() => {
     $('#notif-bell-btn', el)?.addEventListener('click', openNotifPanel);
 
     NotifStore.init(); // نوێکردنەوەی بەلکەی نۆتیفیکەیشن
+    updateNotifBadge();
 
     loadData();
     start();
+  }
+
+  /* ژمارەی نۆتیفیکەیشنەکان لە سەب بەیس بۆ باجی زەنگەکە */
+  function updateNotifBadge() {
+    API.Notifications.list()
+      .then(rows => {
+        const badge = document.getElementById('notif-badge');
+        if (!badge) return;
+        const count = (rows || []).length;
+        badge.textContent = count > 99 ? '99+' : String(count);
+        badge.style.display = count > 0 ? '' : 'none';
+      })
+      .catch(() => {});
   }
 
 
@@ -281,17 +295,7 @@ const AdminView = (() => {
    *  پانێلی نۆتیفیکەیشنەکان
    * ========================================================= */
 
-  function openNotifPanel() {
-    const notifs = NotifStore.getAll();
-    NotifStore.markAllRead();
-
-    function fmtTs(ts) {
-      const d = new Date(ts);
-      const date = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-      const time = `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
-      return `${date} • ${time}`;
-    }
-
+  async function openNotifPanel() {
     const overlay = document.createElement('div');
     overlay.className = 'notif-panel-overlay';
     overlay.innerHTML = `
@@ -301,25 +305,46 @@ const AdminView = (() => {
           <h3>🔔 نۆتیفیکەیشنەکان</h3>
           <button class="btn btn-ghost btn-sm" id="notif-close-btn">✕ داخستن</button>
         </div>
-        <div class="notif-drawer-body">
-          ${!notifs.length
-            ? `<div class="notif-empty"><span class="notif-empty-ico">🔔</span>هیچ نۆتیفیکەیشنێک نییە</div>`
-            : notifs.map(n => `
-              <div class="notif-item ${n.read ? 'read' : ''}">
-                <div class="notif-item-meta">
-                  <span class="notif-item-who">👤 ${UI.esc(n.who || '—')}</span>
-                  <span>${UI.esc(fmtTs(n.ts))}</span>
-                </div>
-                <div class="notif-item-msg">${UI.esc(n.msg)}</div>
-              </div>`).join('')}
+        <div class="notif-drawer-body" id="notif-drawer-body">
+          <div class="notif-empty"><span class="notif-empty-ico">⏳</span>بارکردن...</div>
         </div>
       </div>`;
 
     document.body.appendChild(overlay);
-
     const close = () => overlay.remove();
     overlay.querySelector('.notif-panel-backdrop').addEventListener('click', close);
     overlay.querySelector('#notif-close-btn').addEventListener('click', close);
+
+    const bodyEl = overlay.querySelector('#notif-drawer-body');
+    let notifs = [];
+    try {
+      notifs = await API.Notifications.list() || [];
+    } catch (err) {
+      bodyEl.innerHTML = `<div class="notif-empty"><span class="notif-empty-ico">⚠️</span>هەڵە لە هێنانی نۆتیفیکەیشنەکان: ${UI.esc(err.message)}</div>`;
+      return;
+    }
+
+    if (!notifs.length) {
+      bodyEl.innerHTML = `<div class="notif-empty"><span class="notif-empty-ico">🔔</span>هیچ نۆتیفیکەیشنێک نییە</div>`;
+      return;
+    }
+
+    updateNotifBadge(); // نەرمکردنەوەی باجەکە دوای بینین
+
+    bodyEl.innerHTML = notifs.map(n => `
+      <div class="notif-item read">
+        <div class="notif-item-meta"><span>${UI.esc(fmtSupabaseTs(n.created_at))}</span></div>
+        <div class="notif-item-msg">${UI.esc(n.action || '')}</div>
+      </div>`).join('');
+  }
+
+  function fmtSupabaseTs(iso) {
+    if (!iso) return '—';
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return '—';
+    const date = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    const time = `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+    return `${date} • ${time}`;
   }
 
 
