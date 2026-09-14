@@ -170,13 +170,7 @@ const DriverView = (() => {
       </section>
 
       ${unrecordedTrips.length ? `
-        <div class="alert-pending-money">
-          <div class="alert-pending-money-text">
-            <strong>⚠️ پارەی هێنراوە قفڵ نەبووە — دەتوانیت تۆماری بکەیت</strong>
-            <p>باری ${unrecordedTrips.map(r => `«${UI.esc(r.zone || '')}»`).join('، ')} گەیشتووەتەوە بەڵام پارەی هێنراوەکەی تۆمار نەکراوە.</p>
-          </div>
-          <button type="button" class="btn btn-sm btn-primary btn-alert-record-money" data-id="${unrecordedTrips[0].id}">💰 تۆمارکردنی پارە</button>
-        </div>` : ''}
+        <button type="button" class="btn btn-primary btn-alert-record-money" data-id="${unrecordedTrips[0].id}">💰 تۆمارکردنی پارە${unrecordedTrips.length > 1 ? ` — ${UI.toLatinDigits(unrecordedTrips.length)} بار` : ''}</button>` : ''}
 
       <div id="drv-active"></div>
       <div id="drv-action"></div>
