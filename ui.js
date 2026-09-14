@@ -342,139 +342,42 @@ const UI = (() => {
     });
   }
 
-  /* ---------------- ویندۆی پڕ بە شاشەی وردەکاریی ڕیز ---------------- */
+  /* ---------------- ویندۆی پڕ بە شاشەی وردەکاریی ڕیز — تەنها دەق، بێ سکڕۆڵ ---------------- */
 
   function openRecordFullscreen(rec) {
     if (!rec) return;
 
     const isDone = !!rec.arrival_time;
-    const totalDuration = isDone ? calcDuration(rec.record_time, rec.arrival_time) : 'لە کاردایە...';
-
-    const cargoTitle = (rec.driver && rec.driver.endsWith(' دوو')) ? 'باری دووەم' :
-                       (rec.driver && rec.driver.endsWith(' سێ')) ? 'باری سێیەم' : 'باری یەکەم';
 
     const body = document.createElement('div');
     body.className = 'rec-fullscreen-body';
     body.innerHTML = `
-      <div class="fs-rec-header-banner">
-        <div class="fs-rec-badge-row">
-          <span class="fs-badge ${isDone ? 'done' : 'active'}">${isDone ? '✓ گەشت تەواوبوو' : '⏳ لە کاردایە (چالاک)'}</span>
-          <span class="fs-badge cargo">${esc(cargoTitle)}</span>
-          <span class="fs-badge date">📅 ${esc(rec.record_date || '—')}</span>
-        </div>
-        <h2 class="fs-rec-title">📍 ${esc(rec.zone || 'ناوچەی دیارینەکراو')}</h2>
-      </div>
-
-      <!-- قۆناغەکانی کات و تایملاین -->
-      <div class="fs-timeline-wrap card">
-        <h4 class="fs-card-title">⏱️ قۆناغەکانی کاتی گەشت</h4>
-        <div class="fs-stepper">
-          <div class="fs-step ${rec.record_time ? 'done' : ''}">
-            <div class="fs-step-icon">🚚</div>
-            <div class="fs-step-label">دەرچوون</div>
-            <div class="fs-step-time">${esc(rec.record_time || '—')}</div>
-          </div>
-          <div class="fs-step-connector ${rec.in_zone_time ? 'active' : ''}">
-            <span>${calcDuration(rec.record_time, rec.in_zone_time)}</span>
-          </div>
-          <div class="fs-step ${rec.in_zone_time ? 'done' : ''}">
-            <div class="fs-step-icon">📍</div>
-            <div class="fs-step-label">ناو زۆن</div>
-            <div class="fs-step-time">${esc(rec.in_zone_time || '—')}</div>
-          </div>
-          <div class="fs-step-connector ${rec.out_zone_time ? 'active' : ''}">
-            <span>${calcDuration(rec.in_zone_time, rec.out_zone_time)}</span>
-          </div>
-          <div class="fs-step ${rec.out_zone_time ? 'done' : ''}">
-            <div class="fs-step-icon">🚏</div>
-            <div class="fs-step-label">دەرێی زۆن</div>
-            <div class="fs-step-time">${esc(rec.out_zone_time || '—')}</div>
-          </div>
-          <div class="fs-step-connector ${rec.arrival_time ? 'active' : ''}">
-            <span>${calcDuration(rec.out_zone_time, rec.arrival_time)}</span>
-          </div>
-          <div class="fs-step ${rec.arrival_time ? 'done' : ''}">
-            <div class="fs-step-icon">🏁</div>
-            <div class="fs-step-label">گەشتنەوە</div>
-            <div class="fs-step-time">${esc(rec.arrival_time || '—')}</div>
-          </div>
-        </div>
-        <div class="fs-total-duration">
-          <span>کۆی کاتی خایەنراو:</span>
-          <b>${totalDuration}</b>
-        </div>
-      </div>
-
-      <!-- کارتی زانیارییەکان لە گرید -->
-      <div class="fs-cards-grid">
-        <!-- تیمی گەیاندن -->
-        <div class="card fs-card">
-          <h4 class="fs-card-title">👥 تیمی گەیاندن</h4>
-          <div class="fs-info-list">
-            <div class="fs-info-item">
-              <span class="lbl">شۆفێر (سایەق):</span>
-              <b class="val highlight">${esc(rec.driver || '—')}</b>
-            </div>
-            <div class="fs-info-item">
-              <span class="lbl">دابەشکار:</span>
-              <b class="val">${esc(rec.distributor || '—')}</b>
-            </div>
-            <div class="fs-info-item">
-              <span class="lbl">مەندوب:</span>
-              <b class="val">${esc(rec.delegate || '—')}</b>
-            </div>
-            <div class="fs-info-item">
-              <span class="lbl">ژمارەی سەیارە:</span>
-              <b class="val vehicle-val">🚗 ${esc(rec.vehicle || '—')}</b>
-            </div>
-          </div>
-        </div>
-
-        <!-- زانیاری بار و وەسڵ -->
-        <div class="card fs-card">
-          <h4 class="fs-card-title">📦 زانیاری بار و کاڵاکان</h4>
-          <div class="fs-info-list">
-            <div class="fs-info-item">
-              <span class="lbl">ناوچە / زۆن:</span>
-              <b class="val">${esc(rec.zone || '—')}</b>
-            </div>
-            <div class="fs-info-item">
-              <span class="lbl">کێشی بار:</span>
-              <b class="val">${fmtNum(rec.cargo_weight)} کگم</b>
-            </div>
-            <div class="fs-info-item">
-              <span class="lbl">ژمارەی پارچەکان:</span>
-              <b class="val">${fmtNum(rec.pieces_count)} پارچە</b>
-            </div>
-            <div class="fs-info-item">
-              <span class="lbl">ژمارەی وەسڵ:</span>
-              <b class="val">${fmtNum(rec.receipt_number)}</b>
-            </div>
-          </div>
-        </div>
-
-        <!-- بەشی پارەی هێنراوە -->
-        <div class="card fs-card fs-money-card">
-          <h4 class="fs-card-title">💰 دارایی و پارەی هێنراوە</h4>
-          <div class="fs-money-display">
-            <span class="fs-money-label">پارەی هێنراوەی گەشت</span>
-            <span class="fs-money-number">${fmtMoney(rec.collected_money)}</span>
-            <span class="fs-money-sub">${Number(rec.collected_money || 0) > 0 ? '✓ پارەکە بە تەواوی تۆمار کراوە' : '⚠️ هێشتا هیچ بڕە پارەیەک تۆمار نەکراوە'}</span>
-          </div>
-        </div>
+      <div class="fs-plain-list">
+        <div class="fs-plain-item"><span class="lbl">دۆخ</span><b class="val ${isDone ? 'ok' : 'warn'}">${isDone ? 'گەشت تەواوبوو' : 'لە کاردایە'}</b></div>
+        <div class="fs-plain-item"><span class="lbl">بەروار</span><b class="val">${esc(rec.record_date || '—')}</b></div>
+        <div class="fs-plain-item"><span class="lbl">ڕۆژی حەفتە</span><b class="val">${esc(weekdayKu(rec.record_date ? new Date(rec.record_date + 'T00:00:00') : new Date()))}</b></div>
+        <div class="fs-plain-item"><span class="lbl">ناوچە / زۆن</span><b class="val hl">${esc(rec.zone || '—')}</b></div>
+        <div class="fs-plain-item"><span class="lbl">شۆفێر</span><b class="val hl">${esc(rec.driver || '—')}</b></div>
+        <div class="fs-plain-item"><span class="lbl">دابەشکار</span><b class="val">${esc(rec.distributor || '—')}</b></div>
+        <div class="fs-plain-item"><span class="lbl">مەندوب</span><b class="val">${esc(rec.delegate || '—')}</b></div>
+        <div class="fs-plain-item"><span class="lbl">ژمارەی سەیارە</span><b class="val">${esc(rec.vehicle || '—')}</b></div>
+        <div class="fs-plain-item"><span class="lbl">کێشی بار</span><b class="val">${fmtNum(rec.cargo_weight)} کگم</b></div>
+        <div class="fs-plain-item"><span class="lbl">پارچەکان</span><b class="val">${fmtNum(rec.pieces_count)}</b></div>
+        <div class="fs-plain-item"><span class="lbl">ژمارەی وەسڵ</span><b class="val">${fmtNum(rec.receipt_number)}</b></div>
+        <div class="fs-plain-item"><span class="lbl">کاتی دەرچوون</span><b class="val">${esc(rec.record_time || '—')}</b></div>
+        <div class="fs-plain-item"><span class="lbl">کاتی ناو زۆن</span><b class="val">${esc(rec.in_zone_time || '—')}</b></div>
+        <div class="fs-plain-item"><span class="lbl">کاتی دەرێی زۆن</span><b class="val">${esc(rec.out_zone_time || '—')}</b></div>
+        <div class="fs-plain-item"><span class="lbl">کاتی گەشتنەوە</span><b class="val">${esc(rec.arrival_time || '—')}</b></div>
+        <div class="fs-plain-item"><span class="lbl">کاتی کارکردن</span><b class="val ${rec.work_time ? 'ok' : ''}">${rec.work_time ? esc(rec.work_time) : calcDuration(rec.record_time, rec.arrival_time)}</b></div>
+        <div class="fs-plain-item"><span class="lbl">پارەی هێنراوە</span><b class="val money">${fmtMoney(rec.collected_money)}</b></div>
       </div>
     `;
 
     openModal({
-      title: `🚚 وردەکاریی تەواوی تۆمار — ${rec.zone || 'گەشت'}`,
+      title: `وردەکاریی تۆمار — ${rec.zone || 'گەشت'}`,
       size: 'fullscreen',
       body,
       actions: [
-        {
-          label: '🖨️ چاپکردن',
-          className: 'btn-ghost',
-          onClick: () => window.print()
-        },
         {
           label: 'داخستن',
           className: 'btn-primary',

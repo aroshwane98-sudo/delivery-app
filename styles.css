@@ -1730,3 +1730,36 @@ input[type='date'], input[type='time'] { direction: ltr; text-align: right; }
   color: var(--muted);
 }
 
+
+/* ---------------- ویندۆی وردەکاریی تۆمار — لیستی دەقی پاک بێ سکڕۆڵ ---------------- */
+
+.rec-fullscreen-body { overflow: hidden; }
+
+.fs-plain-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.fs-plain-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 7px 4px;
+  border-bottom: 1px dashed var(--border);
+  font-size: 0.9rem;
+}
+.fs-plain-item:last-child { border-bottom: none; }
+
+.fs-plain-item .lbl { color: var(--muted); font-size: 0.82rem; flex-shrink: 0; }
+.fs-plain-item .val { text-align: left; font-weight: 700; min-width: 0; overflow-wrap: anywhere; }
+.fs-plain-item .val.hl { color: var(--accent); }
+.fs-plain-item .val.ok { color: var(--accent); }
+.fs-plain-item .val.warn { color: #f59e0b; }
+.fs-plain-item .val.money { color: var(--accent); direction: ltr; }
+
+@media (max-width: 520px) {
+  .fs-plain-item { padding: 6px 2px; font-size: 0.86rem; }
+  .fs-plain-item .lbl { font-size: 0.78rem; }
+}
