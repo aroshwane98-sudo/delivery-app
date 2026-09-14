@@ -58,6 +58,12 @@ const UI = (() => {
     return todayStr(d);
   }
 
+  /** ڕۆژەکانی حەفتە بە کوردی — بەپێی getDay() (یەکشەممە = ٠) */
+  const KU_WEEKDAYS = ['یەکشەممە', 'دووشەممە', 'سێشەممە', 'چوارشەممە', 'پێنجشەممە', 'هەینی', 'شەممە'];
+  function weekdayKu(d = new Date()) {
+    return KU_WEEKDAYS[d.getDay()] || '';
+  }
+
   /** بەروار بە شێوەی خوێندنی کوردی: ١٠ ئەیلوول ٢٠٢٦ */
   const KU_MONTHS = ['کانوونی دووەم', 'شوبات', 'ئازار', 'نیسان', 'ئایار', 'حوزەیران', 'تەمموز', 'ئاب', 'ئەیلوول', 'تشرینی یەکەم', 'تشرینی دووەم', 'کانوونی یەکەم'];
   function fmtDateHuman(dateStr) {
@@ -251,8 +257,243 @@ const UI = (() => {
     }
   }
 
+  /* ---------------- هاوتاکردن و نۆرمالایز ---------------- */
+
+  function norm(s) {
+    return toLatinDigits(String(s || ''))
+      .replace(/[أإآ]/g, 'ا')
+      .replace(/[ىي]/g, 'ی')
+      .replace(/[ك]/g, 'ک')
+      .replace(/[\u064B-\u065F]/g, '')
+      .replace(/\s+/g, ' ')
+      .trim()
+      .toLowerCase();
+  }
+
+  function userMatches(fieldValue, username) {
+    if (!fieldValue || !username) return false;
+    const fNorm = norm(fieldValue);
+    const target = norm(username);
+    if (fNorm === target) return true;
+    if (fNorm.replace(/\s*(دوو|سێ)$/, '').trim() === target.replace(/\s*(دوو|سێ)$/, '').trim()) return true;
+
+    const parts = String(fieldValue).split(/(?:\s+و\s+|\s*\(\s*و\s*\)\s*|\s*[,،&+/]\s*)/).filter(Boolean);
+    const targetParts = String(username).split(/(?:\s+و\s+|\s*\(\s*و\s*\)\s*|\s*[,،&+/]\s*)/).filter(Boolean);
+
+    return parts.some(p => {
+      const pNorm = norm(p);
+      const base = pNorm.replace(/\s*(دوو|سێ)$/, '').trim();
+      return targetParts.some(t => {
+        const tNorm = norm(t);
+        const tBase = tNorm.replace(/\s*(دوو|سێ)$/, '').trim();
+        return pNorm === tNorm || base === tNorm || pNorm === tBase || base === tBase;
+      });
+    });
+  }
+
+  function calcDuration(startTime, endTime) {
+    const m = durationMinutes(startTime, endTime);
+    if (m === null) return '—';
+    return fmtDuration(m);
+  }
+
+  /** جیاوازی دوو کات بە خولەک — null ئەگەر یەکێکیان نەبوو */
+  function durationMinutes(startTime, endTime) {
+    const s = timeToMinutes(startTime);
+    const e = timeToMinutes(endTime);
+    if (s === null || e === null) return null;
+    let diff = e - s;
+    if (diff < 0) diff += 24 * 60;
+    return diff;
+  }
+
+  /** خوێندنەوەی "8:30" وەک ماوە → خولەک */
+  function parseDurationMin(t) {
+    const m = /^(\d{1,3}):(\d{1,2})$/.exec(String(t || '').trim());
+    if (!m) return null;
+    return Number(m[1]) * 60 + Number(m[2]);
+  }
+
+  /** کاتی کارکردنی تۆمار — work_time ئەگەر دانراوە، ئەگینا دەرچوون → گەشتنەوە */
+  function recordDurationMinutes(r) {
+    if (!r) return null;
+    const w = parseDurationMin(r.work_time);
+    if (w !== null) return w;
+    return durationMinutes(r.record_time, r.arrival_time);
+  }
+
+  /** خولەک → "X کاتژمێر و Y خولەک" */
+  function fmtDuration(mins) {
+    if (mins === null || mins === undefined || Number.isNaN(mins)) return '—';
+    const h = Math.floor(mins / 60);
+    const m = mins % 60;
+    if (h > 0) return `${h} کاتژمێر و ${m} خولەک`;
+    return `${m} خولەک`;
+  }
+
+  /** ڕیزکردنی بەکارهێنەران بەپێی پیشە پاشان بەپێی ناو (ئەلفوبێ) */
+  function sortUsers(users) {
+    const order = [CONFIG.PROFESSION_DRIVER, CONFIG.PROFESSION_DISTRIBUTOR, CONFIG.PROFESSION_DELEGATE, CONFIG.PROFESSION_SUPERVISOR];
+    return [...(users || [])].sort((a, b) => {
+      const ia = order.indexOf(a.profession), ib = order.indexOf(b.profession);
+      const pa = ia === -1 ? 99 : ia, pb = ib === -1 ? 99 : ib;
+      if (pa !== pb) return pa - pb;
+      return String(a.username || '').localeCompare(String(b.username || ''), 'ckb');
+    });
+  }
+
+  /* ---------------- ویندۆی پڕ بە شاشەی وردەکاریی ڕیز ---------------- */
+
+  function openRecordFullscreen(rec) {
+    if (!rec) return;
+
+    const isDone = !!rec.arrival_time;
+    const totalDuration = isDone ? calcDuration(rec.record_time, rec.arrival_time) : 'لە کاردایە...';
+
+    const cargoTitle = (rec.driver && rec.driver.endsWith(' دوو')) ? 'باری دووەم' :
+                       (rec.driver && rec.driver.endsWith(' سێ')) ? 'باری سێیەم' : 'باری یەکەم';
+
+    const body = document.createElement('div');
+    body.className = 'rec-fullscreen-body';
+    body.innerHTML = `
+      <div class="fs-rec-header-banner">
+        <div class="fs-rec-badge-row">
+          <span class="fs-badge ${isDone ? 'done' : 'active'}">${isDone ? '✓ گەشت تەواوبوو' : '⏳ لە کاردایە (چالاک)'}</span>
+          <span class="fs-badge cargo">${esc(cargoTitle)}</span>
+          <span class="fs-badge date">📅 ${esc(rec.record_date || '—')}</span>
+        </div>
+        <h2 class="fs-rec-title">📍 ${esc(rec.zone || 'ناوچەی دیارینەکراو')}</h2>
+      </div>
+
+      <!-- قۆناغەکانی کات و تایملاین -->
+      <div class="fs-timeline-wrap card">
+        <h4 class="fs-card-title">⏱️ قۆناغەکانی کاتی گەشت</h4>
+        <div class="fs-stepper">
+          <div class="fs-step ${rec.record_time ? 'done' : ''}">
+            <div class="fs-step-icon">🚚</div>
+            <div class="fs-step-label">دەرچوون</div>
+            <div class="fs-step-time">${esc(rec.record_time || '—')}</div>
+          </div>
+          <div class="fs-step-connector ${rec.in_zone_time ? 'active' : ''}">
+            <span>${calcDuration(rec.record_time, rec.in_zone_time)}</span>
+          </div>
+          <div class="fs-step ${rec.in_zone_time ? 'done' : ''}">
+            <div class="fs-step-icon">📍</div>
+            <div class="fs-step-label">ناو زۆن</div>
+            <div class="fs-step-time">${esc(rec.in_zone_time || '—')}</div>
+          </div>
+          <div class="fs-step-connector ${rec.out_zone_time ? 'active' : ''}">
+            <span>${calcDuration(rec.in_zone_time, rec.out_zone_time)}</span>
+          </div>
+          <div class="fs-step ${rec.out_zone_time ? 'done' : ''}">
+            <div class="fs-step-icon">🚏</div>
+            <div class="fs-step-label">دەرێی زۆن</div>
+            <div class="fs-step-time">${esc(rec.out_zone_time || '—')}</div>
+          </div>
+          <div class="fs-step-connector ${rec.arrival_time ? 'active' : ''}">
+            <span>${calcDuration(rec.out_zone_time, rec.arrival_time)}</span>
+          </div>
+          <div class="fs-step ${rec.arrival_time ? 'done' : ''}">
+            <div class="fs-step-icon">🏁</div>
+            <div class="fs-step-label">گەشتنەوە</div>
+            <div class="fs-step-time">${esc(rec.arrival_time || '—')}</div>
+          </div>
+        </div>
+        <div class="fs-total-duration">
+          <span>کۆی کاتی خایەنراو:</span>
+          <b>${totalDuration}</b>
+        </div>
+      </div>
+
+      <!-- کارتی زانیارییەکان لە گرید -->
+      <div class="fs-cards-grid">
+        <!-- تیمی گەیاندن -->
+        <div class="card fs-card">
+          <h4 class="fs-card-title">👥 تیمی گەیاندن</h4>
+          <div class="fs-info-list">
+            <div class="fs-info-item">
+              <span class="lbl">شۆفێر (سایەق):</span>
+              <b class="val highlight">${esc(rec.driver || '—')}</b>
+            </div>
+            <div class="fs-info-item">
+              <span class="lbl">دابەشکار:</span>
+              <b class="val">${esc(rec.distributor || '—')}</b>
+            </div>
+            <div class="fs-info-item">
+              <span class="lbl">مەندوب:</span>
+              <b class="val">${esc(rec.delegate || '—')}</b>
+            </div>
+            <div class="fs-info-item">
+              <span class="lbl">ژمارەی سەیارە:</span>
+              <b class="val vehicle-val">🚗 ${esc(rec.vehicle || '—')}</b>
+            </div>
+          </div>
+        </div>
+
+        <!-- زانیاری بار و وەسڵ -->
+        <div class="card fs-card">
+          <h4 class="fs-card-title">📦 زانیاری بار و کاڵاکان</h4>
+          <div class="fs-info-list">
+            <div class="fs-info-item">
+              <span class="lbl">ناوچە / زۆن:</span>
+              <b class="val">${esc(rec.zone || '—')}</b>
+            </div>
+            <div class="fs-info-item">
+              <span class="lbl">کێشی بار:</span>
+              <b class="val">${fmtNum(rec.cargo_weight)} کگم</b>
+            </div>
+            <div class="fs-info-item">
+              <span class="lbl">ژمارەی پارچەکان:</span>
+              <b class="val">${fmtNum(rec.pieces_count)} پارچە</b>
+            </div>
+            <div class="fs-info-item">
+              <span class="lbl">ژمارەی وەسڵ:</span>
+              <b class="val">${fmtNum(rec.receipt_number)}</b>
+            </div>
+          </div>
+        </div>
+
+        <!-- بەشی پارەی هێنراوە -->
+        <div class="card fs-card fs-money-card">
+          <h4 class="fs-card-title">💰 دارایی و پارەی هێنراوە</h4>
+          <div class="fs-money-display">
+            <span class="fs-money-label">پارەی هێنراوەی گەشت</span>
+            <span class="fs-money-number">${fmtMoney(rec.collected_money)}</span>
+            <span class="fs-money-sub">${Number(rec.collected_money || 0) > 0 ? '✓ پارەکە بە تەواوی تۆمار کراوە' : '⚠️ هێشتا هیچ بڕە پارەیەک تۆمار نەکراوە'}</span>
+          </div>
+        </div>
+      </div>
+    `;
+
+    openModal({
+      title: `🚚 وردەکاریی تەواوی تۆمار — ${rec.zone || 'گەشت'}`,
+      size: 'fullscreen',
+      body,
+      actions: [
+        {
+          label: '🖨️ چاپکردن',
+          className: 'btn-ghost',
+          onClick: () => window.print()
+        },
+        {
+          label: 'داخستن',
+          className: 'btn-primary',
+          onClick: backdrop => {
+            backdrop.classList.remove('open');
+            setTimeout(() => backdrop.remove(), 220);
+          }
+        }
+      ]
+    });
+  }
+
   /** چاوەڕوانی ماکڕۆتاسک */
   function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 
-  return { esc, toLatinDigits, fmtNum, fmtMoney, todayStr, nowTime, timeToMinutes, daysAgoStr, fmtDateHuman, toast, openModal, confirmDialog, autocomplete, avatarHtml, setLoading, btnLoading, sleep };
+  return {
+    esc, toLatinDigits, fmtNum, fmtMoney, todayStr, nowTime, timeToMinutes, daysAgoStr, fmtDateHuman,
+    weekdayKu, toast, openModal, confirmDialog, autocomplete, avatarHtml, setLoading, btnLoading, sleep,
+    norm, userMatches, calcDuration, durationMinutes, parseDurationMin, recordDurationMinutes, fmtDuration,
+    sortUsers, openRecordFullscreen
+  };
 })();

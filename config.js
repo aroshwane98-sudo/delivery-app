@@ -16,6 +16,7 @@ const CONFIG = {
   LISTS_KEY: 'sb_publishable_BTTzGtfcBPzeX6Byx3tX1Q_eDVfGp12',
   USERS_TABLE: 'usersv2',
   ZONES_TABLE: 'zonesv2',
+  VEHICLES_TABLE: 'vehiclesv2',
 
   /* زانیاری بەکارهێنەر */
   PROFESSION_DRIVER: 'سایەق',

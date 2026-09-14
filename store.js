@@ -41,11 +41,11 @@ const Store = (() => {
   function getSettings() {
     try {
       return Object.assign(
-        { theme: 'dark', accent: CONFIG.DEFAULT_ACCENT },
+        { theme: 'dark', accent: CONFIG.DEFAULT_ACCENT, rowClickFullscreen: true },
         JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}')
       );
     } catch (_) {
-      return { theme: 'dark', accent: CONFIG.DEFAULT_ACCENT };
+      return { theme: 'dark', accent: CONFIG.DEFAULT_ACCENT, rowClickFullscreen: true };
     }
   }
 
@@ -64,7 +64,7 @@ const Store = (() => {
     if (meta) meta.content = s.theme === 'dark' ? '#0b1220' : '#eef2f9';
   }
 
-  /* ---------------- کاشی لیستەکان (بەکارهێنەران و زۆنەکان) ---------------- */
+  /* ---------------- کاشی لیستەکان (بەکارهێنەران و زۆنەکان و سەیارەکان) ---------------- */
 
   let memoryLists = null;
 
@@ -82,8 +82,15 @@ const Store = (() => {
       }
     } catch (_) { /* کاشی خراپ — پشتگوێ بخرێت */ }
 
-    const [users, zones] = await Promise.all([API.Lists.users(), API.Lists.zones()]);
-    memoryLists = { ts: Date.now(), users, zones };
+    const [users, zones, vehicles] = await Promise.all([
+      API.Lists.users(),
+      API.Lists.zones(),
+      API.Lists.vehicles().catch(err => {
+        console.warn('نەتوانرا لیستی سەیارەکان لە vehiclesv2 بهێنرێت:', err);
+        return [];
+      }),
+    ]);
+    memoryLists = { ts: Date.now(), users: UI.sortUsers(users), zones, vehicles: vehicles || [] };
     try { localStorage.setItem(LISTS_CACHE_KEY, JSON.stringify(memoryLists)); } catch (_) {}
     return memoryLists;
   }

@@ -80,11 +80,13 @@ const AdminView = (() => {
     to: '',
     recordSearch: '',
     selectedUser: '', // دانە بەدانەی یوسەرەکان
+    recSort: { key: 'record_date', dir: 'desc' }, // ڕیزکردنی خشتە بە داگرتن لەسەر سەرپەڕە
 
     // خشتەی بەکارهێنەران
     users: [],
     userSearch: '',
     userProfFilter: '',
+    showAllPass: false, // پشاندانی هەموو تێپەڕەوشەکان
 
     // خشتەی زۆنەکان
     zones: [],
@@ -97,13 +99,10 @@ const AdminView = (() => {
 
   function userMatchesRecord(username, r) {
     if (!username || !r) return false;
-    const u = String(username).trim();
-    const uVariants = CONFIG.CARGO_SUFFIXES.map(s => u + s);
     return (
-      uVariants.includes(r.driver) ||
-      r.driver === u ||
-      r.distributor === u ||
-      r.delegate === u
+      UI.userMatches(r.driver, username) ||
+      UI.userMatches(r.distributor, username) ||
+      UI.userMatches(r.delegate, username)
     );
   }
 
@@ -163,6 +162,19 @@ const AdminView = (() => {
           .some(v => norm(v).includes(q))
       );
     }
+
+    // ڕیزکردن بەپێی ستوونی هەڵبژێردراو (بە داگرتن لەسەر سەرپەڕە)
+    const s = state.recSort || { key: 'record_date', dir: 'desc' };
+    const dir = s.dir === 'asc' ? 1 : -1;
+    const numKeys = ['cargo_weight', 'pieces_count', 'receipt_number', 'collected_money'];
+    rows = [...rows].sort((a, b) => {
+      if (numKeys.includes(s.key)) {
+        return (Number(a[s.key] || 0) - Number(b[s.key] || 0)) * dir;
+      }
+      const c = String(a[s.key] || '').localeCompare(String(b[s.key] || ''), 'ckb');
+      if (c !== 0) return c * dir;
+      return (Number(a.id || 0) - Number(b.id || 0)) * dir;
+    });
     return rows;
   }
 
@@ -316,19 +328,51 @@ const AdminView = (() => {
     const rows = filteredRecords();
 
     // کۆیەکان
-    const totals = rows.reduce((a, r) => ({
-      weight: a.weight + Number(r.cargo_weight || 0),
-      pieces: a.pieces + Number(r.pieces_count || 0),
-      receipts: a.receipts + Number(r.receipt_number || 0),
-      money: a.money + Number(r.collected_money || 0),
-    }), { weight: 0, pieces: 0, receipts: 0, money: 0 });
+    const totals = rows.reduce((a, r) => {
+      const d = UI.recordDurationMinutes(r);
+      return {
+        weight: a.weight + Number(r.cargo_weight || 0),
+        pieces: a.pieces + Number(r.pieces_count || 0),
+        receipts: a.receipts + Number(r.receipt_number || 0),
+        money: a.money + Number(r.collected_money || 0),
+        workMins: a.workMins + (d === null ? 0 : d),
+        workCount: a.workCount + (d === null ? 0 : 1),
+      };
+    }, { weight: 0, pieces: 0, receipts: 0, money: 0, workMins: 0, workCount: 0 });
+
+    // ستوونەکانی خشتە — ئەوانەی key یان هەیە بە داگرتن سۆڕت دەکرێن
+    const COLS = [
+      { label: 'کردارەکان', key: null },
+      { label: 'بەروار', key: 'record_date' },
+      { label: 'شۆفێر', key: 'driver' },
+      { label: 'دابەشکار', key: 'distributor' },
+      { label: 'مەندوب', key: 'delegate' },
+      { label: 'زۆن', key: 'zone' },
+      { label: 'سەیارە', key: 'vehicle' },
+      { label: 'کێش', key: 'cargo_weight' },
+      { label: 'پارچە', key: 'pieces_count' },
+      { label: 'وەسڵ', key: 'receipt_number' },
+      { label: 'دەرچوون', key: 'record_time' },
+      { label: 'ناو زۆن', key: 'in_zone_time' },
+      { label: 'دەرێی زۆن', key: 'out_zone_time' },
+      { label: 'گەشتنەوە', key: 'arrival_time' },
+      { label: 'کاتی کارکردن', key: 'work_time' },
+      { label: 'پارەی هێنراوە', key: 'collected_money' },
+    ];
+
+    const thHtml = COLS.map(c => {
+      if (!c.key) return `<th class="actions-col">${c.label}</th>`;
+      const active = state.recSort.key === c.key;
+      const arrow = active ? (state.recSort.dir === 'asc' ? '▲' : '▼') : '↕';
+      return `<th class="sortable ${active ? 'sorted' : ''}" data-sort="${c.key}" title="بۆ ڕیزکردن داگرتنی بکە">${c.label}<span class="sort-arrow">${arrow}</span></th>`;
+    }).join('');
 
     wrap.innerHTML = `
       <section class="card filter-card">
         <div class="admin-header-row" style="margin-bottom:8px">
           <div>
             <h3 style="font-size:1.02rem;font-weight:800">🚚 تۆمارەکانی گەیاندن</h3>
-            <p class="muted" style="font-size:0.8rem">بینین، فلتەرکردن، پرێنتکردن و هەناردەی فرە-شیتی ئێکسڵ</p>
+            <p class="muted" style="font-size:0.8rem">بینین، فلتەرکردن، ڕیزکردن، پرێنتکردن و هەناردەی فرە-شیتی ئێکسڵ</p>
           </div>
           <div class="admin-actions-bar">
             <button type="button" class="btn btn-ghost btn-sm" id="admin-print-btn" title="پرێنتکردنی داتای فلتەرکراو">
@@ -372,34 +416,19 @@ const AdminView = (() => {
         <div class="total-card"><span class="total-val">${UI.fmtNum(totals.pieces)}</span><span class="total-lbl">کۆی پارچە</span></div>
         <div class="total-card"><span class="total-val">${UI.fmtNum(totals.receipts)}</span><span class="total-lbl">کۆی وەسڵ</span></div>
         <div class="total-card accent"><span class="total-val">${UI.fmtNum(totals.money)}</span><span class="total-lbl">کۆی پارە (د.ع)</span></div>
+        <div class="total-card"><span class="total-val" style="font-size:0.98rem">${UI.fmtDuration(totals.workCount ? totals.workMins : null)}</span><span class="total-lbl">کۆی کاتی کارکردن (${totals.workCount} گەشت)</span></div>
       </div>
 
       <div class="card table-card">
         <div class="table-scroll">
           <table class="data-table">
             <thead>
-              <tr>
-                <th class="actions-col">کردارەکان</th>
-                <th>بەروار</th>
-                <th>شۆفێر</th>
-                <th>دابەشکار</th>
-                <th>مەندوب</th>
-                <th>زۆن</th>
-                <th>سەیارە</th>
-                <th>کێش</th>
-                <th>پارچە</th>
-                <th>وەسڵ</th>
-                <th>دەرچوون</th>
-                <th>ناو زۆن</th>
-                <th>دەرێی زۆن</th>
-                <th>گەشتنەوە</th>
-                <th>پارەی هێنراوە</th>
-              </tr>
+              <tr>${thHtml}</tr>
             </thead>
             <tbody>
-              ${!rows.length ? `<tr><td colspan="15" style="text-align:center;padding:30px;color:var(--muted)">هیچ تۆمارێک بەردەست نییە.</td></tr>` :
+              ${!rows.length ? `<tr><td colspan="16" style="text-align:center;padding:30px;color:var(--muted)">هیچ تۆمارێک بەردەست نییە.</td></tr>` :
                 rows.map(r => `
-                  <tr>
+                  <tr class="clickable-row" data-id="${r.id}">
                     <td class="table-actions-cell">
                       <button type="button" class="btn-action-sm btn-edit adm-rec-edit" data-id="${r.id}" title="دەستکاری">✏️ دەستکاری</button>
                       <button type="button" class="btn-action-sm btn-del adm-rec-del" data-id="${r.id}" title="سڕینەوە">🗑️</button>
@@ -417,6 +446,7 @@ const AdminView = (() => {
                     <td>${UI.esc(r.in_zone_time || '—')}</td>
                     <td>${UI.esc(r.out_zone_time || '—')}</td>
                     <td>${UI.esc(r.arrival_time || '—')}</td>
+                    <td class="nowrap" style="${r.work_time ? 'color:var(--accent);font-weight:700' : ''}">${r.work_time ? UI.esc(r.work_time) : UI.calcDuration(r.record_time, r.arrival_time)}</td>
                     <td class="money-cell">${UI.fmtNum(r.collected_money)}</td>
                   </tr>`).join('')}
             </tbody>
@@ -433,8 +463,33 @@ const AdminView = (() => {
     $('#admin-excel-btn', wrap).addEventListener('click', () => openExcelExportModal());
     $('#admin-add-rec-btn', wrap).addEventListener('click', () => openRecordModal());
 
+    // ڕیزکردن بە داگرتن لەسەر ناوی ستوونەکان
+    wrap.querySelectorAll('th.sortable').forEach(th => {
+      th.addEventListener('click', () => {
+        const key = th.dataset.sort;
+        if (state.recSort.key === key) {
+          state.recSort.dir = state.recSort.dir === 'asc' ? 'desc' : 'asc';
+        } else {
+          state.recSort = { key, dir: 'asc' };
+        }
+        renderContent();
+      });
+    });
+
+    wrap.querySelectorAll('tbody tr.clickable-row').forEach(row => {
+      row.addEventListener('click', e => {
+        if (e.target.closest('.btn-action-sm') || e.target.closest('button')) return;
+        if (Store.getSettings().rowClickFullscreen !== false) {
+          const id = Number(row.dataset.id);
+          const r = state.records.find(x => x.id === id);
+          if (r) UI.openRecordFullscreen(r);
+        }
+      });
+    });
+
     wrap.querySelectorAll('.adm-rec-edit').forEach(btn => {
-      btn.addEventListener('click', () => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
         const id = Number(btn.dataset.id);
         const r = state.records.find(x => x.id === id);
         if (r) openRecordModal(r);
@@ -442,7 +497,8 @@ const AdminView = (() => {
     });
 
     wrap.querySelectorAll('.adm-rec-del').forEach(btn => {
-      btn.addEventListener('click', () => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
         const id = Number(btn.dataset.id);
         const r = state.records.find(x => x.id === id);
         if (r) deleteRecord(r);
@@ -456,13 +512,14 @@ const AdminView = (() => {
     const delegates = state.users.filter(u => u.profession === CONFIG.PROFESSION_DELEGATE).map(u => ({ label: u.username }));
     const drivers = state.users.filter(u => u.profession === CONFIG.PROFESSION_DRIVER).map(u => ({ label: u.username }));
     const zones = state.zones.map(z => ({ label: z.name }));
+    const vehicles = (Store.getSession() ? (window.Store && Store.getSettings ? [] : []) : []);
 
     const body = document.createElement('div');
     body.innerHTML = `
       <form id="adm-rec-form" novalidate>
         <div class="form-grid-2">
           <div class="field compact-field"><label>بەروار *</label><input type="date" id="m-rec-date" value="${rec ? rec.record_date : UI.todayStr()}"></div>
-          <div class="field compact-field"><label>سەیارە *</label><input type="text" id="m-rec-veh" value="${rec ? UI.esc(rec.vehicle || '') : ''}"></div>
+          <div class="field compact-field"><label>سەیارە *</label><input type="text" id="m-rec-veh" placeholder="ژمارەی سەیارە" value="${rec ? UI.esc(rec.vehicle || '') : ''}"></div>
         </div>
         <div class="form-grid-2">
           <div class="field"><label>ناوی شۆفێر *</label><input type="text" id="m-rec-drv" value="${rec ? UI.esc(rec.driver || '') : ''}"></div>
@@ -483,6 +540,11 @@ const AdminView = (() => {
           <div class="field compact-field"><label>🚏 کاتی دەرێی زۆن</label><input type="time" id="m-rec-tout" value="${rec ? rec.out_zone_time || '' : ''}"></div>
           <div class="field compact-field"><label>🏁 کاتی گەشتنەوە</label><input type="time" id="m-rec-tarr" value="${rec ? rec.arrival_time || '' : ''}"></div>
         </div>
+        <div class="field compact-field">
+          <label>⏱️ کاتی کارکردن (ئارەزوومەندانە — بۆ ڕۆژانی داهاتوو)</label>
+          <input type="text" id="m-rec-wtime" placeholder="کاتژمێر:خولەک — بۆ نموونە 8:30" value="${rec ? UI.esc(rec.work_time || '') : ''}">
+          <p class="hint" style="margin:4px 0 0">ئەگەر بۆ ڕۆژی داهاتوو کاتی کارکردن دابنێیت، پێویست ناکات کاتی گەشتنەوە تۆمار بکەیت — لە ستوونی «کاتی کارکردن»ی خشتەکەدا دەردەکەوێت.</p>
+        </div>
         <div class="field">
           <label>💰 پارەی هێنراوە (د.ع)</label>
           <input type="number" id="m-rec-mny" value="${rec ? rec.collected_money : 0}">
@@ -493,6 +555,14 @@ const AdminView = (() => {
     UI.autocomplete($('#m-rec-dist', body), () => distributors);
     UI.autocomplete($('#m-rec-del', body), () => delegates);
     UI.autocomplete($('#m-rec-zn', body), () => zones);
+
+    Store.loadLists().then(ls => {
+      const vList = (ls?.vehicles || []).map(v => {
+        const val = v.vehicle_number || v.plate_number || v.number || v.name || v.vehicle || v.plate || Object.values(v)[1] || Object.values(v)[0];
+        return { label: String(val).trim() };
+      }).filter(v => v.label && v.label !== '[object Object]');
+      UI.autocomplete($('#m-rec-veh', body), () => vList);
+    }).catch(() => {});
 
     const { close } = UI.openModal({
       title: isEdit ? '✏️ دەستکاریکردنی تۆماری گەیاندن' : '➕ زیادکردنی تۆماری نوێ',
@@ -522,6 +592,17 @@ const AdminView = (() => {
               arrival_time: val('#m-rec-tarr') || null,
               collected_money: Number(val('#m-rec-mny') || 0),
             };
+
+            const wtimeRaw = val('#m-rec-wtime');
+            if (wtimeRaw) {
+              if (UI.parseDurationMin(wtimeRaw) === null) {
+                UI.toast('کاتی کارکردن دەبێت بە شێوەی «کاتژمێر:خولەک» بێت — بۆ نموونە 8:30', 'warning', 4500);
+                return;
+              }
+              data.work_time = wtimeRaw;
+            } else {
+              data.work_time = null;
+            }
 
             if (!data.driver || !data.zone || !data.vehicle) {
               UI.toast('تکایە خانە سەرەکییەکان (شۆفێر، زۆن، سەیارە) پڕ بکەرەوە', 'warning');
@@ -559,12 +640,16 @@ const AdminView = (() => {
       return;
     }
 
-    const totals = rows.reduce((a, r) => ({
-      weight: a.weight + Number(r.cargo_weight || 0),
-      pieces: a.pieces + Number(r.pieces_count || 0),
-      receipts: a.receipts + Number(r.receipt_number || 0),
-      money: a.money + Number(r.collected_money || 0),
-    }), { weight: 0, pieces: 0, receipts: 0, money: 0 });
+    const totals = rows.reduce((a, r) => {
+      const d = UI.recordDurationMinutes(r);
+      return {
+        weight: a.weight + Number(r.cargo_weight || 0),
+        pieces: a.pieces + Number(r.pieces_count || 0),
+        receipts: a.receipts + Number(r.receipt_number || 0),
+        money: a.money + Number(r.collected_money || 0),
+        workMins: a.workMins + (d === null ? 0 : d),
+      };
+    }, { weight: 0, pieces: 0, receipts: 0, money: 0, workMins: 0 });
 
     const dateRangeText = (state.from && state.to)
       ? `لە ${state.from} بۆ ${state.to}`
@@ -616,7 +701,7 @@ const AdminView = (() => {
           .meta-item strong { color: #000; }
           .totals-bar {
             display: grid;
-            grid-template-columns: repeat(5, 1fr);
+            grid-template-columns: repeat(6, 1fr);
             gap: 8px;
             margin-bottom: 12px;
           }
@@ -683,6 +768,7 @@ const AdminView = (() => {
           <div class="total-box"><div class="val">${UI.fmtNum(totals.pieces)}</div><div class="lbl">کۆی پارچە</div></div>
           <div class="total-box"><div class="val">${UI.fmtNum(totals.receipts)}</div><div class="lbl">کۆی وەسڵ</div></div>
           <div class="total-box"><div class="val">${UI.fmtMoney(totals.money)}</div><div class="lbl">کۆی پارەی هێنراوە</div></div>
+          <div class="total-box"><div class="val" style="font-size:9.5pt">${UI.fmtDuration(totals.workMins || null)}</div><div class="lbl">کۆی کاتی کارکردن</div></div>
         </div>
 
         <table>
@@ -702,6 +788,7 @@ const AdminView = (() => {
               <th>ناو زۆن</th>
               <th>دەرێی زۆن</th>
               <th>گەشتنەوە</th>
+              <th>کاتی کارکردن</th>
               <th>پارەی هێنراوە</th>
             </tr>
           </thead>
@@ -722,6 +809,7 @@ const AdminView = (() => {
                 <td class="nowrap">${UI.esc(r.in_zone_time || '—')}</td>
                 <td class="nowrap">${UI.esc(r.out_zone_time || '—')}</td>
                 <td class="nowrap">${UI.esc(r.arrival_time || '—')}</td>
+                <td class="nowrap" style="white-space:nowrap">${r.work_time ? UI.esc(r.work_time) : UI.calcDuration(r.record_time, r.arrival_time)}</td>
                 <td class="money">${UI.fmtMoney(r.collected_money)}</td>
               </tr>`).join('')}
           </tbody>
@@ -731,7 +819,7 @@ const AdminView = (() => {
               <td>${UI.fmtNum(totals.weight)}</td>
               <td>${UI.fmtNum(totals.pieces)}</td>
               <td>${UI.fmtNum(totals.receipts)}</td>
-              <td colspan="4"></td>
+              <td colspan="5"></td>
               <td class="money">${UI.fmtMoney(totals.money)}</td>
             </tr>
           </tfoot>
@@ -1047,6 +1135,7 @@ const AdminView = (() => {
                     'کاتی ناو زۆن',
                     'کاتی دەرێی زۆن',
                     'کاتی گەشتنەوە',
+                    'کاتی کارکردن',
                     'پارەی هێنراوە (د.ع)'
                   ]
                 ];
@@ -1070,6 +1159,7 @@ const AdminView = (() => {
                       r.in_zone_time || '',
                       r.out_zone_time || '',
                       r.arrival_time || '',
+                      r.work_time || UI.calcDuration(r.record_time, r.arrival_time),
                       Number(r.collected_money || 0)
                     ]);
                   });
@@ -1089,6 +1179,10 @@ const AdminView = (() => {
                     '',
                     '',
                     '',
+                    UI.fmtDuration(uRecs.reduce((s, r) => {
+                      const d = UI.recordDurationMinutes(r);
+                      return s + (d === null ? 0 : d);
+                    }, 0) || null),
                     totalMoney
                   ]);
                 }
@@ -1110,13 +1204,14 @@ const AdminView = (() => {
                   { wch: 14 },
                   { wch: 14 },
                   { wch: 14 },
+                  { wch: 14 },
                   { wch: 20 }
                 ];
                 ws['!merges'] = [
-                  { s: { r: 0, c: 0 }, e: { r: 0, c: 14 } },
+                  { s: { r: 0, c: 0 }, e: { r: 0, c: 15 } },
                   { s: { r: 1, c: 1 }, e: { r: 1, c: 3 } },
                   { s: { r: 2, c: 1 }, e: { r: 2, c: 3 } },
-                  { s: { r: 3, c: 0 }, e: { r: 3, c: 14 } }
+                  { s: { r: 3, c: 0 }, e: { r: 3, c: 15 } }
                 ];
 
                 // ناوی شیتەکە دەبێت تا ٣١ پیت بێت و هێما نایاساییەکانی تێدا نەبێت
@@ -1185,7 +1280,6 @@ const AdminView = (() => {
    * ========================================================= */
 
   function renderUsersTab(wrap) {
-    const rows = filteredUsers();
     const professions = [
       CONFIG.PROFESSION_DRIVER,
       CONFIG.PROFESSION_DISTRIBUTOR,
@@ -1198,7 +1292,10 @@ const AdminView = (() => {
       <section class="card filter-card">
         <div class="admin-header-row" style="margin-bottom:6px">
           <h3 style="font-size:0.96rem">بەڕێوەبردنی بەکارهێنەران (خشتەی usersv2)</h3>
-          <button type="button" class="btn btn-primary btn-sm" id="admin-add-user-btn">➕ بەکارهێنەری نوێ</button>
+          <div style="display:flex;gap:8px">
+            <button type="button" class="btn btn-ghost btn-sm" id="adm-toggle-pass">👁️ پشاندانی هەموو پاسۆڕدەکان</button>
+            <button type="button" class="btn btn-primary btn-sm" id="admin-add-user-btn">➕ بەکارهێنەری نوێ</button>
+          </div>
         </div>
 
         <div class="field-row">
@@ -1217,66 +1314,87 @@ const AdminView = (() => {
         </div>
       </section>
 
-      <div class="user-cards-grid">
-        ${!rows.length ? `<div class="empty-state" style="grid-column:1/-1"><p>هیچ بەکارهێنەرێک نەدۆزرایەوە.</p></div>` :
-          rows.map(u => `
-            <div class="user-card">
-              <div class="user-card-top">
-                ${UI.avatarHtml(u, 46)}
-                <div class="user-card-info">
-                  <strong>${UI.esc(u.username)}</strong>
-                  <span class="chip">${UI.esc(u.profession || '—')}</span>
-                </div>
-              </div>
-              <div class="user-card-meta">
-                <span>تێپەڕەوشە (PIN):</span>
-                <span class="pin-code">${UI.esc(u.password || '••••')}</span>
-              </div>
-              <div class="user-card-actions">
-                <button type="button" class="btn btn-ghost btn-sm adm-usr-view" data-username="${UI.esc(u.username)}" title="بینینی کارەکان">📋 کارەکانی</button>
-                <button type="button" class="btn btn-ghost btn-sm adm-usr-edit" data-id="${u.id}">✏️ دەستکاری</button>
-                <button type="button" class="btn btn-danger btn-sm adm-usr-del" data-id="${u.id}">🗑️</button>
-              </div>
-            </div>`).join('')}
-      </div>`;
+      <div class="user-cards-grid" id="adm-user-cards-grid"></div>`;
 
-    // ئیڤێنتەکان
-    $('#adm-user-prof', wrap).addEventListener('change', e => { state.userProfFilter = e.target.value; renderContent(); });
-    $('#adm-user-search', wrap).addEventListener('input', e => { state.userSearch = e.target.value; renderContent(); });
-    $('#admin-add-user-btn', wrap).addEventListener('click', () => openUserModal());
+    function updateUserCardsGrid() {
+      const grid = $('#adm-user-cards-grid', wrap);
+      if (!grid) return;
+      grid.classList.toggle('show-all-pass', state.showAllPass);
+      const rows = filteredUsers();
+      grid.innerHTML = !rows.length ? `<div class="empty-state" style="grid-column:1/-1"><p>هیچ بەکارهێنەرێک نەدۆزرایەوە.</p></div>` :
+        rows.map(u => `
+          <div class="user-card">
+            <div class="user-card-top">
+              ${UI.avatarHtml(u, 46)}
+              <div class="user-card-info">
+                <strong>${UI.esc(u.username)}</strong>
+                <span class="chip">${UI.esc(u.profession || '—')}</span>
+              </div>
+            </div>
+            <div class="user-card-meta">
+              <span>تێپەڕەوشە (PIN):</span>
+              <span class="pin-code" title="بۆ پشاندان ماوس بهێنە سەر کارتەکە"><span class="pin-masked">••••</span><span class="pin-real">${UI.esc(u.password || '—')}</span></span>
+            </div>
+            <div class="user-card-actions">
+              <button type="button" class="btn btn-ghost btn-sm adm-usr-view" data-username="${UI.esc(u.username)}" title="بینینی کارەکان">📋 کارەکانی</button>
+              <button type="button" class="btn btn-ghost btn-sm adm-usr-edit" data-id="${u.id}">✏️ دەستکاری</button>
+              <button type="button" class="btn btn-danger btn-sm adm-usr-del" data-id="${u.id}">🗑️</button>
+            </div>
+          </div>`).join('');
 
-    // بینینی کارەکانی بەکارهێنەر ڕاستەوخۆ
-    wrap.querySelectorAll('.adm-usr-view').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const username = btn.dataset.username;
-        state.subtab = 'records';
-        state.selectedUser = username;
-        // ڕێکخستنی بەروارەکان بۆ هەموو کات بۆ ئەوەی داتاکانی بە تەواوی ببینرێت
-        state.from = '';
-        state.to = '';
-        container.querySelectorAll('.admin-tab-btn').forEach(x => x.classList.toggle('active', x.dataset.sub === 'records'));
-        loadData();
+      // بینینی کارەکانی بەکارهێنەر ڕاستەوخۆ
+      grid.querySelectorAll('.adm-usr-view').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const username = btn.dataset.username;
+          state.subtab = 'records';
+          state.selectedUser = username;
+          state.from = '';
+          state.to = '';
+          container.querySelectorAll('.admin-tab-btn').forEach(x => x.classList.toggle('active', x.dataset.sub === 'records'));
+          loadData();
+        });
       });
+
+      grid.querySelectorAll('.adm-usr-edit').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const id = Number(btn.dataset.id);
+          const u = state.users.find(x => x.id === id);
+          if (u) openUserModal(u, updateUserCardsGrid);
+        });
+      });
+
+      grid.querySelectorAll('.adm-usr-del').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const id = Number(btn.dataset.id);
+          const u = state.users.find(x => x.id === id);
+          if (u) deleteUser(u, updateUserCardsGrid);
+        });
+      });
+    }
+
+    // پشاندان/شاردنەوەی هەموو تێپەڕەوشەکان
+    $('#adm-toggle-pass', wrap).addEventListener('click', () => {
+      state.showAllPass = !state.showAllPass;
+      const btn = $('#adm-toggle-pass', wrap);
+      btn.textContent = state.showAllPass ? '🙈 شاردنەوەی هەموو پاسۆڕدەکان' : '👁️ پشاندانی هەموو پاسۆڕدەکان';
+      const grid = $('#adm-user-cards-grid', wrap);
+      if (grid) grid.classList.toggle('show-all-pass', state.showAllPass);
     });
 
-    wrap.querySelectorAll('.adm-usr-edit').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const id = Number(btn.dataset.id);
-        const u = state.users.find(x => x.id === id);
-        if (u) openUserModal(u);
-      });
+    $('#adm-user-prof', wrap).addEventListener('change', e => {
+      state.userProfFilter = e.target.value;
+      updateUserCardsGrid();
     });
+    $('#adm-user-search', wrap).addEventListener('input', e => {
+      state.userSearch = e.target.value;
+      updateUserCardsGrid();
+    });
+    $('#admin-add-user-btn', wrap).addEventListener('click', () => openUserModal(null, updateUserCardsGrid));
 
-    wrap.querySelectorAll('.adm-usr-del').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const id = Number(btn.dataset.id);
-        const u = state.users.find(x => x.id === id);
-        if (u) deleteUser(u);
-      });
-    });
+    updateUserCardsGrid();
   }
 
-  function openUserModal(user = null) {
+  function openUserModal(user = null, onSaved = null) {
     const isEdit = !!user;
     const body = document.createElement('div');
     body.innerHTML = `
@@ -1322,19 +1440,30 @@ const AdminView = (() => {
             if (!username) { UI.toast('تکایە ناوی بەکارهێنەر بنووسە', 'warning'); return; }
             if (!/^\d{4}$/.test(password)) { UI.toast('تێپەڕەوشە دەبێت ٤ ژمارە بێت', 'warning'); return; }
 
+            // پشکنینی ناوی دووبارە لە لیستی بەکارهێنەران
+            const exists = state.users.some(u => UI.norm(u.username) === UI.norm(username) && (!isEdit || u.id !== user.id));
+            if (exists) {
+              UI.toast('ئەم ناوی بەکارهێنەرە پێشتر تۆمارکراوە! تکایە ناوێکی جیاواز بنووسە.', 'warning', 4500);
+              return;
+            }
+
             UI.btnLoading(subBtn, true, 'پاشەکەوت دەکرێت...');
             try {
               if (isEdit) {
                 await API.Lists.updateUser(user.id, { username, profession, password });
+                const idx = state.users.findIndex(x => x.id === user.id);
+                if (idx !== -1) state.users[idx] = { ...state.users[idx], username, profession, password };
                 UI.toast('بەکارهێنەر نوێ کرایەوە ✓', 'success');
               } else {
-                await API.Lists.insertUser({ username, profession, password, avatar_url: null });
+                const inserted = await API.Lists.insertUser({ username, profession, password });
+                state.users.unshift(inserted || { id: Date.now(), username, profession, password });
                 UI.toast('بەکارهێنەری نوێ زیادکرا ✓', 'success');
               }
               close();
+              if (onSaved) onSaved();
               await loadData({ silent: true });
             } catch (err) {
-              UI.toast('هەڵە لە پاشەکەوتکردن: ' + err.message, 'error', 4200);
+              UI.toast('هەڵە لە پاشەکەوتکردن: ' + err.message, 'error', 4500);
             } finally {
               UI.btnLoading(subBtn, false);
             }
@@ -1344,7 +1473,7 @@ const AdminView = (() => {
     });
   }
 
-  async function deleteUser(user) {
+  async function deleteUser(user, onDeleted = null) {
     if (user.id === App.getUser().id) {
       UI.toast('ناتوانیت هەژماری خۆت بسڕیتەوە!', 'error');
       return;
@@ -1357,6 +1486,8 @@ const AdminView = (() => {
 
     try {
       await API.Lists.deleteUser(user.id);
+      state.users = state.users.filter(x => x.id !== user.id);
+      if (onDeleted) onDeleted();
       UI.toast('بەکارهێنەر سڕدرایەوە ✓', 'success');
       await loadData({ silent: true });
     } catch (err) {
@@ -1369,8 +1500,6 @@ const AdminView = (() => {
    * ========================================================= */
 
   function renderZonesTab(wrap) {
-    const rows = filteredZones();
-
     wrap.innerHTML = `
       <section class="card filter-card">
         <div class="admin-header-row" style="margin-bottom:6px">
@@ -1384,36 +1513,46 @@ const AdminView = (() => {
         </div>
       </section>
 
-      <div class="zone-cards-grid">
-        ${!rows.length ? `<div class="empty-state" style="grid-column:1/-1"><p>هیچ زۆنێک نەدۆزرایەوە.</p></div>` :
-          rows.map(z => `
-            <div class="zone-card">
-              <span class="zone-name">🗺️ ${UI.esc(z.name)}</span>
-              <div class="zone-actions">
-                <button type="button" class="btn-action-sm btn-edit adm-zn-edit" data-id="${z.id}">✏️</button>
-                <button type="button" class="btn-action-sm btn-del adm-zn-del" data-id="${z.id}">🗑️</button>
-              </div>
-            </div>`).join('')}
-      </div>`;
+      <div class="zone-cards-grid" id="adm-zone-cards-grid"></div>`;
 
-    $('#adm-zone-search', wrap).addEventListener('input', e => { state.zoneSearch = e.target.value; renderContent(); });
-    $('#admin-add-zone-btn', wrap).addEventListener('click', () => openZoneModal());
+    function updateZoneCardsGrid() {
+      const grid = $('#adm-zone-cards-grid', wrap);
+      if (!grid) return;
+      const rows = filteredZones();
+      grid.innerHTML = !rows.length ? `<div class="empty-state" style="grid-column:1/-1"><p>هیچ زۆنێک نەدۆزرایەوە.</p></div>` :
+        rows.map(z => `
+          <div class="zone-card">
+            <span class="zone-name">🗺️ ${UI.esc(z.name)}</span>
+            <div class="zone-actions">
+              <button type="button" class="btn-action-sm btn-edit adm-zn-edit" data-id="${z.id}">✏️</button>
+              <button type="button" class="btn-action-sm btn-del adm-zn-del" data-id="${z.id}">🗑️</button>
+            </div>
+          </div>`).join('');
 
-    wrap.querySelectorAll('.adm-zn-edit').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const id = Number(btn.dataset.id);
-        const z = state.zones.find(x => x.id === id);
-        if (z) openZoneModal(z);
+      grid.querySelectorAll('.adm-zn-edit').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const id = Number(btn.dataset.id);
+          const z = state.zones.find(x => x.id === id);
+          if (z) openZoneModal(z, updateZoneCardsGrid);
+        });
       });
-    });
 
-    wrap.querySelectorAll('.adm-zn-del').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const id = Number(btn.dataset.id);
-        const z = state.zones.find(x => x.id === id);
-        if (z) deleteZone(z);
+      grid.querySelectorAll('.adm-zn-del').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const id = Number(btn.dataset.id);
+          const z = state.zones.find(x => x.id === id);
+          if (z) deleteZone(z, updateZoneCardsGrid);
+        });
       });
+    }
+
+    $('#adm-zone-search', wrap).addEventListener('input', e => {
+      state.zoneSearch = e.target.value;
+      updateZoneCardsGrid();
     });
+    $('#admin-add-zone-btn', wrap).addEventListener('click', () => openZoneModal(null, updateZoneCardsGrid));
+
+    updateZoneCardsGrid();
   }
 
   function openZoneModal(zone = null) {

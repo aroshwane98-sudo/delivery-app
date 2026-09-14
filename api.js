@@ -4,7 +4,7 @@
 
 const API = (() => {
 
-  async function request(base, key, path, { method = 'GET', body = null, prefer = null } = {}) {
+  async function request(base, key, path, { method = 'GET', body = null, prefer = null, timeoutMs = 15000 } = {}) {
     const headers = {
       'apikey': key,
       'Authorization': `Bearer ${key}`,
@@ -12,14 +12,36 @@ const API = (() => {
     };
     if (prefer) headers['Prefer'] = prefer;
 
-    const res = await fetch(base + path, { method, headers, body: body ? JSON.stringify(body) : null });
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+
+    let res;
+    try {
+      res = await fetch(base + path, {
+        method,
+        headers,
+        body: body ? JSON.stringify(body) : null,
+        signal: controller.signal
+      });
+    } catch (netErr) {
+      clearTimeout(timer);
+      if (netErr.name === 'AbortError') {
+        throw new Error('کاتی پەیوەندی بەسەرچوو بەهۆی خاوی هێڵی ئینتەرنێت — تکایە دووبارە هەوڵبدەرەوە');
+      }
+      throw new Error('پەیوەندی بە سێرڤەرەوە نەکرا — تکایە هێڵی ئینتەرنێتەکەت پشکنین بکە');
+    } finally {
+      clearTimeout(timer);
+    }
 
     let data = null;
     const text = await res.text();
     if (text) { try { data = JSON.parse(text); } catch (_) { data = null; } }
 
     if (!res.ok) {
-      const msg = data && data.message ? data.message : `هەڵەیەکی ڕایەڵە ڕوویدا (${res.status})`;
+      let msg = data && data.message ? data.message : `هەڵەیەکی ڕایەڵە ڕوویدا (${res.status})`;
+      if (res.status === 409 || (data && data.code === '23505')) {
+        msg = 'ئەم تۆمارە یان بەکارهێنەرە پێشتر لە سیستەمدا بوونی هەیە (دووبارەیە)';
+      }
       const err = new Error(msg);
       err.code = data && data.code;
       err.status = res.status;
@@ -102,6 +124,11 @@ const API = (() => {
     async zones() {
       return request(CONFIG.LISTS_URL, CONFIG.LISTS_KEY,
         `/${CONFIG.ZONES_TABLE}?select=*&order=id`);
+    },
+
+    async vehicles() {
+      return request(CONFIG.LISTS_URL, CONFIG.LISTS_KEY,
+        `/${CONFIG.VEHICLES_TABLE}?select=*&order=id`);
     },
 
     async insertUser(row) {

@@ -15,6 +15,7 @@ const ReportsView = (() => {
     rows: [],
     lastUpdated: null,
     loading: false,
+    sort: { key: 'record_date', dir: 'desc' }, // ڕیزکردنی خشتە بە داگرتن لەسەر سەرپەڕە
   };
 
   const isSupervisor = u => u && (u.profession === CONFIG.PROFESSION_SUPERVISOR || u.profession === 'بەڕێوبەر' || u.profession === 'بەریوبەر');
@@ -25,33 +26,16 @@ const ReportsView = (() => {
     const u = App.getUser();
     if (isSupervisor(u)) return rows;
     if (u.profession === CONFIG.PROFESSION_DRIVER) {
-      const vars = CONFIG.CARGO_SUFFIXES.map(s => u.username + s);
-      return rows.filter(r => vars.includes(r.driver));
+      return rows.filter(r => UI.userMatches(r.driver, u.username));
     }
-    if (u.profession === CONFIG.PROFESSION_DISTRIBUTOR) return rows.filter(r => r.distributor === u.username);
-    if (u.profession === CONFIG.PROFESSION_DELEGATE) return rows.filter(r => r.delegate === u.username);
+    if (u.profession === CONFIG.PROFESSION_DISTRIBUTOR) {
+      return rows.filter(r => UI.userMatches(r.distributor, u.username));
+    }
+    if (u.profession === CONFIG.PROFESSION_DELEGATE) {
+      return rows.filter(r => UI.userMatches(r.delegate, u.username));
+    }
     return rows;
   }
-
-  /** چیپی ئاگادارکەرەوەی فلتەری خۆکار — بۆ ئەو پیشەیەنی خۆیان تەنها داتای خۆیان دەبینن */
-  function autofilterChipHtml() {
-    const u = App.getUser();
-    if (isSupervisor(u)) return ''; // بەریوبەر: هیچ فلتەرێکی زۆرەملە نییە
-    const by = {
-      [CONFIG.PROFESSION_DRIVER]: { field: 'شۆفێر', icon: '🚚' },
-      [CONFIG.PROFESSION_DISTRIBUTOR]: { field: 'دابەشکار', icon: '📦' },
-      [CONFIG.PROFESSION_DELEGATE]: { field: 'مەندوب', icon: '🧑‍💼' },
-    }[u.profession];
-    if (!by) return '';
-    return `
-      <div class="autofilter-note">
-        ${by.icon} <b>فلتەری خۆکار:</b> تەنها تۆمارەکانی ${UI.esc(by.field)} «${UI.esc(u.username)}» پیشان دەدرێت
-      </div>`;
-  }
-
-  const norm = s => UI.toLatinDigits(String(s || ''))
-    .replace(/[أإآ]/g, 'ا').replace(/ى/g, 'ی').replace(/ك/g, 'ک')
-    .replace(/\s+/g, ' ').trim().toLowerCase();
 
   function visibleRows() {
     let rows = roleFilter(state.rows);
@@ -60,10 +44,20 @@ const ReportsView = (() => {
       return base === state.driverFilter;
     });
     if (state.search) {
-      const q = norm(state.search);
+      const q = UI.norm(state.search);
       rows = rows.filter(r =>
-        [r.driver, r.distributor, r.delegate, r.zone, r.vehicle].some(v => norm(v).includes(q)));
+        [r.driver, r.distributor, r.delegate, r.zone, r.vehicle].some(v => UI.norm(v).includes(q)));
     }
+    // ڕیزکردن بەپێی ستوونی هەڵبژێردراو
+    const s = state.sort || { key: 'record_date', dir: 'desc' };
+    const dir = s.dir === 'asc' ? 1 : -1;
+    const numKeys = ['cargo_weight', 'pieces_count', 'receipt_number', 'collected_money'];
+    rows = [...rows].sort((a, b) => {
+      if (numKeys.includes(s.key)) return (Number(a[s.key] || 0) - Number(b[s.key] || 0)) * dir;
+      const c = String(a[s.key] || '').localeCompare(String(b[s.key] || ''), 'ckb');
+      if (c !== 0) return c * dir;
+      return (Number(a.id || 0) - Number(b.id || 0)) * dir;
+    });
     return rows;
   }
 
@@ -107,23 +101,15 @@ const ReportsView = (() => {
 
     el.innerHTML = `
       <section class="card filter-card">
-        ${autofilterChipHtml()}
         <div class="date-range-compact">
           <div class="field compact-field"><label>لە بەروار</label><input type="date" id="rep-from" value="${state.from}"></div>
           <div class="field compact-field"><label>بۆ بەروار</label><input type="date" id="rep-to" value="${state.to}"></div>
-        </div>
-        <div class="quick-chips">
-          <button class="chip-btn" data-quick="0">ئەمڕۆ</button>
-          <button class="chip-btn" data-quick="6">٧ ڕۆژی ڕابردوو</button>
-          <button class="chip-btn" data-quick="29">٣٠ ڕۆژی ڕابردوو</button>
-          <button class="chip-btn" data-quick="all">هەموو کاتەکان</button>
         </div>
         <div class="field-row">
           <div class="field"><label>گەڕان</label><input type="search" id="rep-search" placeholder="شۆفێر، زۆن، سەیارە..." value="${UI.esc(state.search)}"></div>
           ${sup ? `<div class="field"><label>شۆفێر</label><select id="rep-driver"><option value="">هەموو شۆفێرەکان</option></select></div>` : ''}
         </div>
-        <div class="filter-foot">
-          <span class="muted" id="rep-updated"></span>
+        <div class="filter-foot" style="justify-content:flex-end">
           <button class="btn btn-ghost btn-sm" id="rep-refresh">⟳ نوێکردنەوە</button>
         </div>
       </section>
@@ -170,12 +156,17 @@ const ReportsView = (() => {
     const sup = isSupervisor(App.getUser());
 
     /* — کۆیەکان — */
-    const t = rows.reduce((a, r) => ({
-      weight: a.weight + Number(r.cargo_weight || 0),
-      pieces: a.pieces + Number(r.pieces_count || 0),
-      receipts: a.receipts + Number(r.receipt_number || 0),
-      money: a.money + Number(r.collected_money || 0),
-    }), { weight: 0, pieces: 0, receipts: 0, money: 0 });
+    const t = rows.reduce((a, r) => {
+      const d = UI.recordDurationMinutes(r);
+      return {
+        weight: a.weight + Number(r.cargo_weight || 0),
+        pieces: a.pieces + Number(r.pieces_count || 0),
+        receipts: a.receipts + Number(r.receipt_number || 0),
+        money: a.money + Number(r.collected_money || 0),
+        workMins: a.workMins + (d === null ? 0 : d),
+        workCount: a.workCount + (d === null ? 0 : 1),
+      };
+    }, { weight: 0, pieces: 0, receipts: 0, money: 0, workMins: 0, workCount: 0 });
 
     const totalsEl = $('#rep-totals', container);
     if (totalsEl) {
@@ -185,6 +176,7 @@ const ReportsView = (() => {
         <div class="total-card"><span class="total-val">${UI.fmtNum(t.weight)}</span><span class="total-lbl">کۆی کێش (کگم)</span></div>
         <div class="total-card"><span class="total-val">${UI.fmtNum(t.pieces)}</span><span class="total-lbl">کۆی پارچە</span></div>
         <div class="total-card"><span class="total-val">${UI.fmtNum(t.receipts)}</span><span class="total-lbl">کۆی وەسڵ</span></div>
+        <div class="total-card"><span class="total-val" style="font-size:0.98rem">${UI.fmtDuration(t.workCount ? t.workMins : null)}</span><span class="total-lbl">کۆی کاتی کارکردن (${t.workCount} گەشت)</span></div>
         <div class="total-card accent"><span class="total-val">${UI.fmtNum(t.money)}</span><span class="total-lbl">کۆی پارەی هێنراوە (د.ع)</span></div>`;
     }
 
@@ -205,15 +197,34 @@ const ReportsView = (() => {
             <table class="data-table">
               <thead>
                 <tr>
-                  ${sup ? '<th>کردارەکان</th>' : ''}
-                  <th>بەروار</th><th>شۆفێر</th><th>دابەشکار</th><th>مەندوب</th><th>زۆن</th>
-                  <th>سەیارە</th><th>کێش (کگم)</th><th>پارچە</th><th>وەسڵ</th>
-                  <th>دەرچوون</th><th>ناو زۆن</th><th>دەرێی زۆن</th><th>گەشتنەوە</th><th>پارەی هێنراوە</th>
+                  ${[
+                    { label: 'کردارەکان', key: null },
+                    { label: 'بەروار', key: 'record_date' },
+                    { label: 'شۆفێر', key: 'driver' },
+                    { label: 'دابەشکار', key: 'distributor' },
+                    { label: 'مەندوب', key: 'delegate' },
+                    { label: 'زۆن', key: 'zone' },
+                    { label: 'سەیارە', key: 'vehicle' },
+                    { label: 'کێش (کگم)', key: 'cargo_weight' },
+                    { label: 'پارچە', key: 'pieces_count' },
+                    { label: 'وەسڵ', key: 'receipt_number' },
+                    { label: 'دەرچوون', key: 'record_time' },
+                    { label: 'ناو زۆن', key: 'in_zone_time' },
+                    { label: 'دەرێی زۆن', key: 'out_zone_time' },
+                    { label: 'گەشتنەوە', key: 'arrival_time' },
+                    { label: 'کاتی کارکردن', key: 'work_time' },
+                    { label: 'پارەی هێنراوە', key: 'collected_money' },
+                  ].map(c => {
+                    if (!c.key) return sup ? '<th>کردارەکان</th>' : '';
+                    const active = state.sort.key === c.key;
+                    const arrow = active ? (state.sort.dir === 'asc' ? '▲' : '▼') : '↕';
+                    return `<th class="sortable ${active ? 'sorted' : ''}" data-sort="${c.key}" title="بۆ ڕیزکردن داگرتنی بکە">${c.label}<span class="sort-arrow">${arrow}</span></th>`;
+                  }).join('')}
                 </tr>
               </thead>
               <tbody>
                 ${rows.map(r => `
-                  <tr>
+                  <tr class="clickable-row" data-id="${r.id}">
                     ${sup ? `
                     <td class="table-actions-cell">
                       <button type="button" class="btn-action-sm btn-edit rep-edit-btn" data-id="${r.id}" title="دەستکاری">✏️</button>
@@ -232,6 +243,7 @@ const ReportsView = (() => {
                     <td>${UI.esc(r.in_zone_time || '—')}</td>
                     <td>${UI.esc(r.out_zone_time || '—')}</td>
                     <td>${UI.esc(r.arrival_time || '—')}</td>
+                    <td class="nowrap" style="${r.work_time ? 'color:var(--accent);font-weight:700' : ''}">${r.work_time ? UI.esc(r.work_time) : UI.calcDuration(r.record_time, r.arrival_time)}</td>
                     <td class="money-cell">${UI.fmtNum(r.collected_money)}</td>
                   </tr>`).join('')}
               </tbody>
@@ -239,27 +251,47 @@ const ReportsView = (() => {
           </div>
         </section>`;
 
+      tableEl.querySelectorAll('th.sortable').forEach(th => {
+        th.addEventListener('click', () => {
+          const key = th.dataset.sort;
+          if (state.sort.key === key) {
+            state.sort.dir = state.sort.dir === 'asc' ? 'desc' : 'asc';
+          } else {
+            state.sort = { key, dir: 'asc' };
+          }
+          renderResults();
+        });
+      });
+
+      tableEl.querySelectorAll('tbody tr.clickable-row').forEach(row => {
+        row.addEventListener('click', e => {
+          if (e.target.closest('.btn-action-sm') || e.target.closest('button')) return;
+          if (Store.getSettings().rowClickFullscreen !== false) {
+            const id = Number(row.dataset.id);
+            const r = state.rows.find(x => x.id === id);
+            if (r) UI.openRecordFullscreen(r);
+          }
+        });
+      });
+
       if (sup) {
         tableEl.querySelectorAll('.rep-edit-btn').forEach(btn => {
-          btn.addEventListener('click', () => {
+          btn.addEventListener('click', (e) => {
+            e.stopPropagation();
             const id = Number(btn.dataset.id);
             const r = state.rows.find(x => x.id === id);
             if (r) openEditRecordModal(r);
           });
         });
         tableEl.querySelectorAll('.rep-del-btn').forEach(btn => {
-          btn.addEventListener('click', () => {
+          btn.addEventListener('click', (e) => {
+            e.stopPropagation();
             const id = Number(btn.dataset.id);
             const r = state.rows.find(x => x.id === id);
             if (r) deleteRecord(r);
           });
         });
       }
-    }
-
-    const upd = $('#rep-updated', container);
-    if (upd && state.lastUpdated) {
-      upd.textContent = `دوا نوێبوونەوە: ${UI.nowTime(state.lastUpdated)}`;
     }
   }
 
@@ -313,11 +345,23 @@ const ReportsView = (() => {
           <div class="field compact-field"><label>🚏 کاتی دەرێی زۆن</label><input type="time" id="ef-t-out" value="${rec.out_zone_time || ''}"></div>
           <div class="field compact-field"><label>🏁 کاتی گەشتنەوە</label><input type="time" id="ef-t-arr" value="${rec.arrival_time || ''}"></div>
         </div>
+        <div class="field compact-field">
+          <label>⏱️ کاتی کارکردن (ئارەزوومەندانە)</label>
+          <input type="text" id="ef-wtime" placeholder="کاتژمێر:خولەک — بۆ نموونە 8:30" value="${UI.esc(rec.work_time || '')}">
+        </div>
         <div class="field">
           <label>💰 پارەی هێنراوە (د.ع)</label>
           <input type="number" id="ef-money" value="${rec.collected_money ?? 0}">
         </div>
       </form>`;
+
+    Store.loadLists().then(ls => {
+      const vList = (ls?.vehicles || []).map(v => {
+        const val = v.vehicle_number || v.plate_number || v.number || v.name || v.vehicle || v.plate || Object.values(v)[1] || Object.values(v)[0];
+        return { label: String(val).trim() };
+      }).filter(v => v.label && v.label !== '[object Object]');
+      UI.autocomplete($('#ef-vehicle', body), () => vList);
+    }).catch(() => {});
 
     const { close } = UI.openModal({
       title: '✏️ دەستکاریکردنی تۆماری گەیاندن',
@@ -346,6 +390,17 @@ const ReportsView = (() => {
               arrival_time: val('#ef-t-arr') || null,
               collected_money: Number(val('#ef-money') || 0),
             };
+
+            const wtimeRaw = val('#ef-wtime');
+            if (wtimeRaw) {
+              if (UI.parseDurationMin(wtimeRaw) === null) {
+                UI.toast('کاتی کارکردن دەبێت بە شێوەی «کاتژمێر:خولەک» بێت — بۆ نموونە 8:30', 'warning', 4500);
+                return;
+              }
+              patch.work_time = wtimeRaw;
+            } else {
+              patch.work_time = null;
+            }
 
             UI.btnLoading(saveBtn, true, 'پاشەکەوت دەکرێت...');
             try {

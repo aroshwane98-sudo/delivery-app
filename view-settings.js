@@ -55,6 +55,15 @@ const SettingsView = (() => {
       </section>
 
       <section class="card">
+        <h3 class="section-title">🖥️ شێوازی پیشاندانی خشتەکان</h3>
+        <label class="check-row" style="cursor:pointer">
+          <input type="checkbox" id="set-row-click-fullscreen" ${s.rowClickFullscreen !== false ? 'checked' : ''}>
+          <span>پەڕەی زانیاریەکان</span>
+        </label>
+        <p class="hint">لەکاتی داگرتنی هەر ڕیزێکی زانیاریەکانت پڕبە شاشە زانیاریەکان دەبینیت</p>
+      </section>
+
+      <section class="card">
         <button class="btn btn-danger btn-block" id="settings-logout-btn" type="button">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/></svg>
           دەرچوون لە هەژمار
@@ -96,6 +105,12 @@ const SettingsView = (() => {
       render(container);
     }));
     $('#accent-custom', el).addEventListener('input', e => Store.saveSettings({ accent: e.target.value }));
+
+    /* — شێوازی پیشاندانی خشتە — */
+    $('#set-row-click-fullscreen', el)?.addEventListener('change', e => {
+      Store.saveSettings({ rowClickFullscreen: e.target.checked });
+      UI.toast(e.target.checked ? 'ئۆپشنی پیشاندانی پڕ بە شاشە چالاک کرا ✓' : 'ئۆپشنی پیشاندانی پڕ بە شاشە ناچالاک کرا', 'info');
+    });
   }
 
   /* ---------------- گۆڕینی تێپەڕەوشە ---------------- */

@@ -13,10 +13,35 @@ const DriverView = (() => {
 
   const isDistributor = () => App.getUser()?.profession === CONFIG.PROFESSION_DISTRIBUTOR;
 
-  const variants = () => {
-    const u = App.getUser();
-    if (!u) return [];
-    return CONFIG.CARGO_SUFFIXES.map(s => u.username + s);
+  const isCargoTwoOrThree = driverName => {
+    if (!driverName) return false;
+    const n = UI.norm(driverName);
+    return n.endsWith(' دوو') || n.endsWith(' سێ') || /\bدوو\b/.test(n) || /\bسێ\b/.test(n);
+  };
+
+  const driverBaseName = driverName => {
+    return UI.norm(driverName).replace(/\s*(دوو|سێ)$/, '').trim();
+  };
+
+  const areDuplicateDepartures = (r1, r2) => {
+    if (!r1 || !r2) return false;
+    if (r1.id && r2.id && r1.id === r2.id) return false;
+    if (r1.record_date !== r2.record_date) return false;
+
+    // تەنها ئەوکاتە نەبێت ئەگەر نوسرابوو سایەق دوو واتا پاشگریی دووی لەگەڵبوو ئەوە مەسڕەوە
+    if (isCargoTwoOrThree(r1.driver) || isCargoTwoOrThree(r2.driver)) {
+      return false;
+    }
+
+    if (driverBaseName(r1.driver) !== driverBaseName(r2.driver)) return false;
+    if (!UI.userMatches(r1.distributor, r2.distributor) && !UI.userMatches(r2.distributor, r1.distributor)) return false;
+    if (UI.norm(r1.vehicle) !== UI.norm(r2.vehicle)) return false;
+
+    const t1 = UI.timeToMinutes(r1.record_time);
+    const t2 = UI.timeToMinutes(r2.record_time);
+    if (t1 === null || t2 === null) return false;
+
+    return Math.abs(t1 - t2) <= 10;
   };
 
   const cargoIndex = rec => {
@@ -40,10 +65,36 @@ const DriverView = (() => {
         API.Records.list({ 'record_date': `eq.${today}` }),
       ]);
       lists = ls;
+
+      // سڕینەوەی دەرچوونی دووبارە لە هەمان ڕۆژ لە مەودای <= ١٠ خولەک (جگە لە سایەق دوو)
+      const toDeleteIds = new Set();
+      const rows = allToday || [];
+      for (let i = 0; i < rows.length; i++) {
+        const r1 = rows[i];
+        if (toDeleteIds.has(r1.id)) continue;
+        for (let j = i + 1; j < rows.length; j++) {
+          const r2 = rows[j];
+          if (toDeleteIds.has(r2.id)) continue;
+          if (areDuplicateDepartures(r1, r2)) {
+            const r1Progress = (r1.arrival_time ? 4 : (r1.out_zone_time ? 3 : (r1.in_zone_time ? 2 : 1)));
+            const r2Progress = (r2.arrival_time ? 4 : (r2.out_zone_time ? 3 : (r2.in_zone_time ? 2 : 1)));
+            const dupToRemove = r2Progress > r1Progress ? r1 : r2;
+            toDeleteIds.add(dupToRemove.id);
+            API.Records.remove(dupToRemove.id).catch(e => console.warn('هەڵە لە سڕینەوەی تۆماری دووبارە:', e));
+          }
+        }
+      }
+
+      const cleanedToday = rows.filter(r => !toDeleteIds.has(r.id));
+      if (toDeleteIds.size > 0 && !silent) {
+        UI.toast('دەرچوونی دووبارەی هەمان گەشت لە سیستەمدا بە خۆکاری سڕدرایەوە ✓', 'info', 4000);
+      }
+
+      // هاوتاکردنی پێشاندانی دەرچوون بۆ هەردوو پیشەی سایەق و دابەشکار
       if (isDistributor()) {
-        records = (allToday || []).filter(r => r.distributor === u.username);
+        records = cleanedToday.filter(r => UI.userMatches(r.distributor, u.username));
       } else {
-        records = (allToday || []).filter(r => variants().includes(r.driver) || r.driver === u.username);
+        records = cleanedToday.filter(r => UI.userMatches(r.driver, u.username));
       }
       renderAll();
     } catch (err) {
@@ -97,13 +148,16 @@ const DriverView = (() => {
     }), { weight: 0, pieces: 0, money: 0 });
 
     const unrecordedTrips = records.filter(r => r.arrival_time && (!r.collected_money || Number(r.collected_money) === 0));
+    const roleClass = { [CONFIG.PROFESSION_DRIVER]: 'chip-driver', [CONFIG.PROFESSION_DISTRIBUTOR]: 'chip-dist', [CONFIG.PROFESSION_DELEGATE]: 'chip-del', [CONFIG.PROFESSION_SUPERVISOR]: 'chip-sup' };
+    const u = App.getUser();
+    const today = UI.todayStr();
 
     container.innerHTML = `
       <section class="card hero-card">
         <div class="hero-top">
           <div>
-            <h2 class="hero-title">${UI.fmtDateHuman(UI.todayStr())}</h2>
-            <p class="hero-sub">کاتی ئێستا: <b id="drv-clock">${UI.nowTime()}</b> • پیشە: <b>${UI.esc(App.getUser()?.profession || '')}</b></p>
+            <h2 class="hero-title">📅 ${UI.weekdayKu(new Date(today + 'T00:00:00'))}</h2>
+            <p class="hero-sub"><span class="chip ${roleClass[u?.profession] || ''}" dir="ltr">${today}</span></p>
           </div>
           <button class="icon-btn" id="drv-refresh" title="نوێکردنەوە">⟳</button>
         </div>
@@ -148,8 +202,8 @@ const DriverView = (() => {
     if (!active) {
       el.innerHTML = `
         <div class="card idle-card">
-          <div class="idle-ico">🚚</div>
-          <p>${records.length ? 'هیچ باری چالاکێک نییە — لە خوارەوە بارێکی نوێ دەست پێبکە.' : 'هێشتا هیچ بارێک ئەمڕۆ تۆمار نەکراوە — سەرەوە دەست پێبکە.'}</p>
+          <div class="idle-ico"></div>
+          <p>${records.length ? 'هیچ باری چالاکێک نییە — لە خوارەوە بارێکی نوێ دەست پێبکە.' : ' هیچ بارێک تۆمار نەکراوە   .'}</p>
         </div>`;
       return;
     }
@@ -232,7 +286,7 @@ const DriverView = (() => {
       ${done.map(r => {
         const hasMoney = Number(r.collected_money || 0) > 0;
         return `
-        <div class="card hist-card">
+        <div class="card hist-card clickable-row" data-id="${r.id}">
           <div class="hist-top">
             <b>${UI.esc(CONFIG.CARGO_LABELS[cargoIndex(r)] || 'بار')} — ${UI.esc(r.zone || '—')}</b>
             <div style="display:flex;align-items:center;gap:6px">
@@ -266,8 +320,20 @@ const DriverView = (() => {
         </div>`;
       }).join('')}`;
 
+    el.querySelectorAll('.hist-card').forEach(card => {
+      card.addEventListener('click', e => {
+        if (e.target.closest('button')) return;
+        if (Store.getSettings().rowClickFullscreen !== false) {
+          const id = Number(card.dataset.id);
+          const r = records.find(x => x.id === id);
+          if (r) UI.openRecordFullscreen(r);
+        }
+      });
+    });
+
     el.querySelectorAll('.btn-hist-edit').forEach(b => {
-      b.addEventListener('click', () => {
+      b.addEventListener('click', (e) => {
+        e.stopPropagation();
         const id = Number(b.dataset.id);
         const r = records.find(x => x.id === id);
         if (r) openEditTimesModal(r);
@@ -275,7 +341,8 @@ const DriverView = (() => {
     });
 
     el.querySelectorAll('.btn-hist-money').forEach(b => {
-      b.addEventListener('click', () => {
+      b.addEventListener('click', (e) => {
+        e.stopPropagation();
         const id = Number(b.dataset.id);
         const r = records.find(x => x.id === id);
         if (r) openMoneyModal(r);
@@ -313,8 +380,6 @@ const DriverView = (() => {
   /* ---------------- مۆدالی دەرچوون ---------------- */
 
   function openExitModal() {
-    const count = records.length;
-    const cargoLabel = CONFIG.CARGO_LABELS[count] || 'باری نوێ';
     const u = App.getUser();
     const distrib = isDistributor();
 
@@ -322,19 +387,65 @@ const DriverView = (() => {
     const drivers     = (lists?.users || []).filter(x => x.profession === CONFIG.PROFESSION_DRIVER).map(x => ({ label: x.username }));
     const delegates   = (lists?.users || []).filter(x => x.profession === CONFIG.PROFESSION_DELEGATE).map(x => ({ label: x.username }));
     const zones       = (lists?.zones || []).map(z => ({ label: z.name }));
+    const vehicles    = (lists?.vehicles || []).map(v => {
+      const val = v.vehicle_number || v.plate_number || v.number || v.name || v.vehicle || v.plate || Object.values(v)[1] || Object.values(v)[0];
+      return { label: String(val).trim() };
+    }).filter(v => v.label && v.label !== '[object Object]');
+
+    const count = records.length;
+    const cargoLabel = CONFIG.CARGO_LABELS[count] || 'باری نوێ';
 
     const body = document.createElement('div');
     body.innerHTML = `
       <form id="exit-form" novalidate>
         ${distrib
           ? `<div class="field"><label>ناوی شۆفێر *</label><input id="f-driver-pick" type="text" placeholder="هەڵبژێرە یان بنووسە"></div>
-             <div class="field"><label>دابەشکار</label><input id="f-distributor" type="text" value="${UI.esc(u.username)}" readonly style="background:var(--bg-2,#f5f5f5);color:var(--text-muted,#888)"></div>`
-          : `<div class="field"><label>ناوی دابەشکار *</label><input id="f-distributor" type="text" placeholder="هەڵبژێرە یان بنووسە"></div>`
+             <div class="field">
+               <div class="field-label-row">
+                 <label>دابەشکار *</label>
+                 <button type="button" class="btn-field-add" id="btn-toggle-distrib2" title="زیادکردنی دابەشکاری دووەم">⊞</button>
+               </div>
+               <input id="f-distributor" type="text" value="${UI.esc(u.username)}" readonly style="background:var(--bg-2,#f5f5f5);color:var(--text-muted,#888)">
+             </div>`
+          : `<div class="field">
+               <div class="field-label-row">
+                 <label>ناوی دابەشکار *</label>
+                 <button type="button" class="btn-field-add" id="btn-toggle-distrib2" title="زیادکردنی دابەشکاری دووەم">⊞</button>
+               </div>
+               <input id="f-distributor" type="text" placeholder="هەڵبژێرە یان بنووسە">
+             </div>`
         }
-        <div class="field"><label>ناوی مەندوب *</label><input id="f-delegate" type="text" placeholder="هەڵبژێرە یان بنووسە"></div>
-        <div class="field"><label>ناوچە / زۆن *</label><input id="f-zone" type="text" placeholder="هەڵبژێرە یان بنووسە"></div>
+        <div class="field field-second" id="wrap-distrib2" style="display:none">
+          <label>دابەشکاری دووەم</label>
+          <input id="f-distributor-2" type="text" placeholder="هەڵبژێرە یان بنووسە">
+        </div>
+
+        <div class="field">
+          <div class="field-label-row">
+            <label>ناوی مەندوب *</label>
+            <button type="button" class="btn-field-add" id="btn-toggle-delegate2" title="زیادکردنی مەندوبی دووەم">⊞</button>
+          </div>
+          <input id="f-delegate" type="text" placeholder="هەڵبژێرە یان بنووسە">
+        </div>
+        <div class="field field-second" id="wrap-delegate2" style="display:none">
+          <label>مەندوبی دووەم</label>
+          <input id="f-delegate-2" type="text" placeholder="هەڵبژێرە یان بنووسە">
+        </div>
+
+        <div class="field">
+          <div class="field-label-row">
+            <label>ناوچە / زۆن *</label>
+            <button type="button" class="btn-field-add" id="btn-toggle-zone2" title="زیادکردنی زۆنی دووەم">⊞</button>
+          </div>
+          <input id="f-zone" type="text" placeholder="هەڵبژێرە یان بنووسە">
+        </div>
+        <div class="field field-second" id="wrap-zone2" style="display:none">
+          <label>ناوچە / زۆنی دووەم</label>
+          <input id="f-zone-2" type="text" placeholder="هەڵبژێرە یان بنووسە">
+        </div>
+
         <div class="field-row">
-          <div class="field"><label>ژمارەی سەیارە *</label><input id="f-vehicle" type="text" inputmode="numeric" placeholder="بۆ نموونە: 28756"></div>
+          <div class="field"><label>ژمارەی سەیارە *</label><input id="f-vehicle" type="text" placeholder="هەڵبژێرە یان بنووسە"></div>
           <div class="field"><label>کاتی دەرچوون *</label><input id="f-time" type="time" value="${UI.nowTime()}"></div>
         </div>
         <div class="field-row">
@@ -349,8 +460,30 @@ const DriverView = (() => {
     } else {
       UI.autocomplete($('#f-distributor', body), () => distributors);
     }
+    UI.autocomplete($('#f-distributor-2', body), () => distributors);
     UI.autocomplete($('#f-delegate', body), () => delegates);
+    UI.autocomplete($('#f-delegate-2', body), () => delegates);
     UI.autocomplete($('#f-zone', body), () => zones);
+    UI.autocomplete($('#f-zone-2', body), () => zones);
+    UI.autocomplete($('#f-vehicle', body), () => vehicles);
+
+    const setupToggle = (btnId, wrapId, inputId) => {
+      const btn = $(btnId, body);
+      const wrap = $(wrapId, body);
+      const inp = $(inputId, body);
+      if (!btn || !wrap) return;
+      btn.addEventListener('click', () => {
+        const isHidden = wrap.style.display === 'none';
+        wrap.style.display = isHidden ? '' : 'none';
+        btn.classList.toggle('active', isHidden);
+        btn.textContent = isHidden ? '✕' : '⊞';
+        if (isHidden && inp) inp.focus();
+        else if (!isHidden && inp) inp.value = '';
+      });
+    };
+    setupToggle('#btn-toggle-distrib2', '#wrap-distrib2', '#f-distributor-2');
+    setupToggle('#btn-toggle-delegate2', '#wrap-delegate2', '#f-delegate-2');
+    setupToggle('#btn-toggle-zone2', '#wrap-zone2', '#f-zone-2');
 
     const { close } = UI.openModal({
       title: `🚚 تۆمارکردنی دەرچوون — ${cargoLabel}`,
@@ -362,24 +495,40 @@ const DriverView = (() => {
             const submitBtn = backdrop.querySelector('.modal-foot .btn-primary');
             const val = id => $(id, body)?.value.trim() || '';
 
-            const driverBase    = distrib ? val('#f-driver-pick') : u.username;
-            const distributorVal = distrib ? u.username : val('#f-distributor');
+            const driverBase     = distrib ? val('#f-driver-pick') : u.username;
+            const dist1          = distrib ? u.username : val('#f-distributor');
+            const dist2          = val('#f-distributor-2');
+            const finalDistrib   = dist2 ? `${dist1} و ${dist2}` : dist1;
+
+            const del1           = val('#f-delegate');
+            const del2           = val('#f-delegate-2');
+            const finalDelegate  = del2 ? `${del1} و ${del2}` : del1;
+
+            const z1             = val('#f-zone');
+            const z2             = val('#f-zone-2');
+            const finalZone      = z2 ? `${z1} و ${z2}` : z1;
 
             const fields = {
-              distributor: distributorVal,
-              delegate:    val('#f-delegate'),
-              zone:        val('#f-zone'),
-              vehicle:     val('#f-vehicle'),
-              record_time: val('#f-time'),
+              distributor:    finalDistrib,
+              delegate:       finalDelegate,
+              zone:           finalZone,
+              vehicle:        val('#f-vehicle'),
+              record_time:    val('#f-time'),
               cargo_weight:   val('#f-weight'),
               pieces_count:   val('#f-pieces'),
               receipt_number: val('#f-receipt'),
             };
 
             const missingDriver = distrib && !driverBase;
-            const missing = Object.entries(fields).filter(([, v]) => v === '');
+            const missing = Object.entries(fields).filter(([k, v]) => {
+              if (k === 'distributor' && !dist1) return true;
+              if (k === 'delegate' && !del1) return true;
+              if (k === 'zone' && !z1) return true;
+              return v === '';
+            });
+
             if (missingDriver || missing.length) {
-              UI.toast('تکایە هەموو خانەکان پڕ بکەرەوە', 'warning');
+              UI.toast('تکایە هەموو خانە سەرەکییەکان پڕ بکەرەوە', 'warning');
               if (missingDriver) $('#f-driver-pick', body)?.classList.add('invalid');
               missing.forEach(([k]) => {
                 const map = {
@@ -393,10 +542,31 @@ const DriverView = (() => {
               return;
             }
 
+            // پشکنینی دەرچوونی دووبارە لە هەمان ڕۆژ پێش ناردن
+            const candidateRecord = {
+              record_date: UI.todayStr(),
+              driver: driverBase,
+              distributor: finalDistrib,
+              vehicle: fields.vehicle,
+              record_time: fields.record_time,
+            };
+            const hasDuplicate = records.some(r => areDuplicateDepartures(r, candidateRecord));
+            if (hasDuplicate) {
+              UI.toast('ئەم دەرچوونە پێشتر لە ئەمڕۆدا بە هەمان زانیاری لەم ماوەیەدا تۆمارکراوە! بۆ ڕێگری لە دووبارەبوونەوە دووبارە تۆمار نەکرا.', 'warning', 5000);
+              close();
+              await load({ silent: true });
+              return;
+            }
+
+            // دیاریکردنی بارەکانی شۆفێر بۆ باری یەکەم/دووەم/سێیەم
+            const driverTodayTrips = records.filter(r => UI.userMatches(r.driver, driverBase));
+            const finalCargoIndex = distrib ? driverTodayTrips.length : count;
+            const suffix = CONFIG.CARGO_SUFFIXES[finalCargoIndex] || '';
+
             UI.btnLoading(submitBtn, true, 'تۆمار دەکرێت...');
             try {
               await API.Records.insert({
-                driver: driverBase + (CONFIG.CARGO_SUFFIXES[count] || ''),
+                driver: driverBase + suffix,
                 ...fields,
                 record_date:    UI.todayStr(),
                 cargo_weight:   Number(fields.cargo_weight),
