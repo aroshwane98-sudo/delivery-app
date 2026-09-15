@@ -531,8 +531,11 @@ const AdminView = (() => {
     });
   }
 
-  function openRecordModal(rec = null) {
+  async function openRecordModal(rec = null) {
     const isEdit = !!rec;
+    // ستوونی work_time لە خشتەی ئێستادا نییە — خانەکەی تەنها کاتێک پیشان دەدرێت
+    // کە ستوونەکە لە داتابەیسەکەدا بێت (ئەگینا پاشەکەوتکردن بە PGRST204 شکست دەهێنێت)
+    const supportsWorkTime = await API.Records.hasColumn('work_time').catch(() => false);
     const distributors = state.users.filter(u => u.profession === CONFIG.PROFESSION_DISTRIBUTOR).map(u => ({ label: u.username }));
     const delegates = state.users.filter(u => u.profession === CONFIG.PROFESSION_DELEGATE).map(u => ({ label: u.username }));
     const drivers = state.users.filter(u => u.profession === CONFIG.PROFESSION_DRIVER).map(u => ({ label: u.username }));
@@ -565,11 +568,12 @@ const AdminView = (() => {
           <div class="field compact-field"><label>🚏 کاتی دەرێی زۆن</label><input type="time" id="m-rec-tout" value="${rec ? rec.out_zone_time || '' : ''}"></div>
           <div class="field compact-field"><label>🏁 کاتی گەشتنەوە</label><input type="time" id="m-rec-tarr" value="${rec ? rec.arrival_time || '' : ''}"></div>
         </div>
+        ${supportsWorkTime ? `
         <div class="field compact-field">
           <label>⏱️ کاتی کارکردن (ئارەزوومەندانە — بۆ ڕۆژانی داهاتوو)</label>
           <input type="text" id="m-rec-wtime" placeholder="کاتژمێر:خولەک — بۆ نموونە 8:30" value="${rec ? UI.esc(rec.work_time || '') : ''}">
           <p class="hint" style="margin:4px 0 0">ئەگەر بۆ ڕۆژی داهاتوو کاتی کارکردن دابنێیت، پێویست ناکات کاتی گەشتنەوە تۆمار بکەیت — لە ستوونی «کاتی کارکردن»ی خشتەکەدا دەردەکەوێت.</p>
-        </div>
+        </div>` : ''}
         <div class="field">
           <label>💰 پارەی هێنراوە (د.ع)</label>
           <input type="number" id="m-rec-mny" value="${rec ? rec.collected_money : 0}">
@@ -618,15 +622,18 @@ const AdminView = (() => {
               collected_money: Number(val('#m-rec-mny') || 0),
             };
 
-            const wtimeRaw = val('#m-rec-wtime');
-            if (wtimeRaw) {
-              if (UI.parseDurationMin(wtimeRaw) === null) {
-                UI.toast('کاتی کارکردن دەبێت بە شێوەی «کاتژمێر:خولەک» بێت — بۆ نموونە 8:30', 'warning', 4500);
-                return;
+            // کاتی کارکردن — تەنها ئەگەر ستوونەکە لە داتابەیسەکەدا بوونی هەبێت
+            if (supportsWorkTime) {
+              const wtimeRaw = val('#m-rec-wtime');
+              if (wtimeRaw) {
+                if (UI.parseDurationMin(wtimeRaw) === null) {
+                  UI.toast('کاتی کارکردن دەبێت بە شێوەی «کاتژمێر:خولەک» بێت — بۆ نموونە 8:30', 'warning', 4500);
+                  return;
+                }
+                data.work_time = wtimeRaw;
+              } else {
+                data.work_time = null;
               }
-              data.work_time = wtimeRaw;
-            } else {
-              data.work_time = null;
             }
 
             if (!data.driver || !data.zone || !data.vehicle) {

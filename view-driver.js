@@ -57,6 +57,23 @@ const DriverView = (() => {
 
   const activeRecord = () => records.find(r => !r.arrival_time) || null;
 
+  /* ---------------- دوگمەی ⊞ — زیادکردنی خانەی دووەم (هاوبەش لە نێوان فۆڕمی دەرچوون و دەستکاری) ---------------- */
+
+  const setupSecondFieldToggle = (root, btnId, wrapId, inputId) => {
+    const btn = $(btnId, root);
+    const wrap = $(wrapId, root);
+    const inp = $(inputId, root);
+    if (!btn || !wrap) return;
+    btn.addEventListener('click', () => {
+      const isHidden = wrap.style.display === 'none';
+      wrap.style.display = isHidden ? '' : 'none';
+      btn.classList.toggle('active', isHidden);
+      btn.textContent = isHidden ? '✕' : '⊞';
+      if (isHidden && inp) inp.focus();
+      else if (!isHidden && inp) inp.value = '';
+    });
+  };
+
   /* ---------------- نیشانەی گۆڕانکاری (^) — تەنها بۆ بەڕێوەبەر ---------------- */
 
   const MARKS_KEY = 'drv_edit_marks';
@@ -497,23 +514,9 @@ const DriverView = (() => {
     UI.autocomplete($('#f-zone-2', body), () => zones);
     UI.autocomplete($('#f-vehicle', body), () => vehicles);
 
-    const setupToggle = (btnId, wrapId, inputId) => {
-      const btn = $(btnId, body);
-      const wrap = $(wrapId, body);
-      const inp = $(inputId, body);
-      if (!btn || !wrap) return;
-      btn.addEventListener('click', () => {
-        const isHidden = wrap.style.display === 'none';
-        wrap.style.display = isHidden ? '' : 'none';
-        btn.classList.toggle('active', isHidden);
-        btn.textContent = isHidden ? '✕' : '⊞';
-        if (isHidden && inp) inp.focus();
-        else if (!isHidden && inp) inp.value = '';
-      });
-    };
-    setupToggle('#btn-toggle-distrib2', '#wrap-distrib2', '#f-distributor-2');
-    setupToggle('#btn-toggle-delegate2', '#wrap-delegate2', '#f-delegate-2');
-    setupToggle('#btn-toggle-zone2', '#wrap-zone2', '#f-zone-2');
+    setupSecondFieldToggle(body, '#btn-toggle-distrib2', '#wrap-distrib2', '#f-distributor-2');
+    setupSecondFieldToggle(body, '#btn-toggle-delegate2', '#wrap-delegate2', '#f-delegate-2');
+    setupSecondFieldToggle(body, '#btn-toggle-zone2', '#wrap-zone2', '#f-zone-2');
 
     const { close } = UI.openModal({
       title: `🚚 تۆمارکردنی دەرچوون — ${cargoLabel}`,
@@ -662,7 +665,7 @@ const DriverView = (() => {
     $('#f-money', body).focus();
   }
 
-  /* ---------------- مۆدالی دەستکاریکردنی داتا (تەنها ئەمڕۆ) ---------------- */
+  /* ---------------- مۆدالی دەستکاریکردنی داتا (تەنها ئەمڕۆ) — هەمان فۆرماتی تۆمارکردنی دەرچوون ---------------- */
 
   function openEditDataModal(rec) {
     if (!rec) return;
@@ -672,6 +675,7 @@ const DriverView = (() => {
     }
 
     const u = App.getUser();
+    const distrib = isDistributor();
     const listsNow = lists || { users: [], zones: [], vehicles: [] };
     const distributors = (listsNow.users || []).filter(x => x.profession === CONFIG.PROFESSION_DISTRIBUTOR).map(x => ({ label: x.username }));
     const driversList  = (listsNow.users || []).filter(x => x.profession === CONFIG.PROFESSION_DRIVER).map(x => ({ label: x.username }));
@@ -682,94 +686,120 @@ const DriverView = (() => {
       return { label: String(val).trim() };
     }).filter(v => v.label && v.label !== '[object Object]');
 
-    // دیاریکردنی خانەی ناوی خۆی — قفڵ دەکرێت و نیشانەی + لەدوای ناوەکەی دادەنرێت
+    // دیاریکردنی خانەی ناوی خۆی — قفڵ دەکرێت وەک فۆڕمی تۆمارکردنی دەرچوون
     let selfField = null;
     if (UI.userMatches(rec.driver, u?.username) && !isDistributor()) selfField = 'driver';
     else if (UI.userMatches(rec.distributor, u?.username)) selfField = 'distributor';
     else if (UI.userMatches(rec.delegate, u?.username)) selfField = 'delegate';
-    // نیشانەی + لەدوای ناوی خۆی — ناوی ڕەسەن (بەبێ نیشانەی کۆن) دەپارێزرێت
-    const selfValue = selfField ? stripEditMark(rec[selfField]) : null;
+
+    // جیاکردنەوەی بەهای «X و Y» بۆ یەکەم + دووەم — وەک فۆڕمی دەرچوون.
+    // ئەگەر یەکێک لە بەشەکان ناوی خۆی بێت، ناوی خۆی دەبێتە پێشەوە (چونکە خانە قفڵە)
+    const splitCombined = (value, selfName) => {
+      const raw = stripEditMark(value);
+      const parts = String(raw || '').split(/\s+و\s+/).filter(Boolean);
+      if (parts.length <= 1) return { first: raw || '', second: '' };
+      if (selfName) {
+        const idx = parts.findIndex(p => UI.userMatches(p, selfName));
+        if (idx > 0) {
+          const me = parts.splice(idx, 1)[0];
+          return { first: me, second: parts.join(' و ') };
+        }
+        if (idx === -1) return { first: parts.join(' و '), second: '' };
+      }
+      return { first: parts[0], second: parts.slice(1).join(' و ') };
+    };
+
+    const distParts = splitCombined(rec.distributor, selfField === 'distributor' ? u?.username : null);
+    const delParts  = splitCombined(rec.delegate, selfField === 'delegate' ? u?.username : null);
+    const zoneParts = splitCombined(rec.zone, null);
 
     const lockStyle = 'readonly style="background:var(--bg-2,#f5f5f5);color:var(--text-muted,#888);cursor:not-allowed"';
+    const secAttrs = p => p.second ? '' : 'style="display:none"';
 
     const body = document.createElement('div');
     body.innerHTML = `
-      <p class="hint">دەتوانیت کات و زانیارییەکانی ئەمڕۆی باری «${UI.esc(rec.zone || '')}» دەستکاری بکەیت. خانەی ناوی خۆت قفڵە (بە نیشانەی + نیشان دراوە) و کاتەکان دەتوانیت بەتاڵیان بکەیتەوە:</p>
+      <p class="hint">دەتوانیت کات و زانیارییەکانی ئەمڕۆی باری «${UI.esc(rec.zone || '')}» دەستکاری بکەیت. خانەی ناوی خۆت قفڵە و کاتەکان دەتوانیت بەتاڵیان بکەیتەوە:</p>
       <form id="edit-times-form" novalidate>
-        <div class="date-range-compact">
-          <div class="field compact-field">
-            <label>🚚 کاتی دەرچوون</label>
-            <input type="time" id="f-rec-time" value="${rec.record_time || ''}">
+        ${distrib
+          ? `<div class="field"><label>ناوی شۆفێر *</label><input id="f-driver-pick" type="text" placeholder="هەڵبژێرە یان بنووسە" value="${UI.esc(stripEditMark(rec.driver || ''))}"></div>`
+          : `<div class="field"><label>شۆفێر *</label><input id="f-driver-locked" type="text" value="${UI.esc(stripEditMark(rec.driver || ''))}" ${lockStyle}></div>`
+        }
+
+        <div class="field">
+          <div class="field-label-row">
+            <label>${distrib ? 'دابەشکار *' : 'ناوی دابەشکار *'}</label>
+            <button type="button" class="btn-field-add ${distParts.second ? 'active' : ''}" id="btn-toggle-distrib2" title="زیادکردنی دابەشکاری دووەم">${distParts.second ? '✕' : '⊞'}</button>
           </div>
-          <div class="field compact-field">
-            <label>📍 کاتی ناو زۆن</label>
-            <input type="time" id="f-in-zone" value="${rec.in_zone_time || ''}">
-          </div>
+          <input id="f-distributor" type="text" placeholder="هەڵبژێرە یان بنووسە" value="${UI.esc(distParts.first)}" ${selfField === 'distributor' ? lockStyle : ''}>
         </div>
-        <div class="date-range-compact">
-          <div class="field compact-field">
-            <label>🚏 کاتی دەرێی زۆن</label>
-            <input type="time" id="f-out-zone" value="${rec.out_zone_time || ''}">
-          </div>
-          <div class="field compact-field">
-            <label>🏁 کاتی گەشتنەوە</label>
-            <input type="time" id="f-arrival" value="${rec.arrival_time || ''}">
-          </div>
+        <div class="field field-second" id="wrap-distrib2" ${secAttrs(distParts)}>
+          <label>دابەشکاری دووەم</label>
+          <input id="f-distributor-2" type="text" placeholder="هەڵبژێرە یان بنووسە" value="${UI.esc(distParts.second)}">
         </div>
-        <div class="date-range-compact">
-          <div class="field compact-field">
-            <label>شۆفێر *</label>
-            <input type="text" id="f-driver" value="${selfField === 'driver' ? UI.esc(selfValue) : UI.esc(rec.driver || '')}" ${selfField === 'driver' ? lockStyle : ''}>
+
+        <div class="field">
+          <div class="field-label-row">
+            <label>ناوی مەندوب *</label>
+            <button type="button" class="btn-field-add ${delParts.second ? 'active' : ''}" id="btn-toggle-delegate2" title="زیادکردنی مەندوبی دووەم">${delParts.second ? '✕' : '⊞'}</button>
           </div>
-          <div class="field compact-field">
-            <label>دابەشکار *</label>
-            <input type="text" id="f-distributor" value="${selfField === 'distributor' ? UI.esc(selfValue) : UI.esc(rec.distributor || '')}" ${selfField === 'distributor' ? lockStyle : ''}>
-          </div>
+          <input id="f-delegate" type="text" placeholder="هەڵبژێرە یان بنووسە" value="${UI.esc(delParts.first)}" ${selfField === 'delegate' ? lockStyle : ''}>
         </div>
-        <div class="date-range-compact">
-          <div class="field compact-field">
-            <label>مەندوب *</label>
-            <input type="text" id="f-delegate" value="${selfField === 'delegate' ? UI.esc(selfValue) : UI.esc(rec.delegate || '')}" ${selfField === 'delegate' ? lockStyle : ''}>
-          </div>
-          <div class="field compact-field">
+        <div class="field field-second" id="wrap-delegate2" ${secAttrs(delParts)}>
+          <label>مەندوبی دووەم</label>
+          <input id="f-delegate-2" type="text" placeholder="هەڵبژێرە یان بنووسە" value="${UI.esc(delParts.second)}">
+        </div>
+
+        <div class="field">
+          <div class="field-label-row">
             <label>ناوچە / زۆن *</label>
-            <input type="text" id="f-zone" value="${UI.esc(rec.zone || '')}">
+            <button type="button" class="btn-field-add ${zoneParts.second ? 'active' : ''}" id="btn-toggle-zone2" title="زیادکردنی زۆنی دووەم">${zoneParts.second ? '✕' : '⊞'}</button>
           </div>
+          <input id="f-zone" type="text" placeholder="هەڵبژێرە یان بنووسە" value="${UI.esc(zoneParts.first)}">
+        </div>
+        <div class="field field-second" id="wrap-zone2" ${secAttrs(zoneParts)}>
+          <label>ناوچە / زۆنی دووەم</label>
+          <input id="f-zone-2" type="text" placeholder="هەڵبژێرە یان بنووسە" value="${UI.esc(zoneParts.second)}">
+        </div>
+
+        <div class="field-row">
+          <div class="field"><label>ژمارەی سەیارە *</label><input id="f-vehicle" type="text" placeholder="هەڵبژێرە یان بنووسە" value="${UI.esc(rec.vehicle || '')}"></div>
+          <div class="field"><label>کاتی دەرچوون *</label><input id="f-time" type="time" value="${rec.record_time || ''}"></div>
+        </div>
+        <div class="field-row">
+          <div class="field"><label>کێشی بار (کگم) *</label><input id="f-weight" type="number" min="0" step="any" value="${Number(rec.cargo_weight || 0)}"></div>
+          <div class="field"><label>ژمارەی پارچەکان *</label><input id="f-pieces" type="number" min="0" step="1" value="${Number(rec.pieces_count || 0)}"></div>
+        </div>
+        <div class="field"><label>ژمارەی وەسڵ *</label><input id="f-receipt" type="number" min="0" step="1" value="${Number(rec.receipt_number || 0)}"></div>
+
+        <div class="date-range-compact" style="margin-top:10px">
+          <div class="field compact-field"><label>📍 کاتی ناو زۆن</label><input type="time" id="f-in-zone" value="${rec.in_zone_time || ''}"></div>
+          <div class="field compact-field"><label>🚏 کاتی دەرێی زۆن</label><input type="time" id="f-out-zone" value="${rec.out_zone_time || ''}"></div>
         </div>
         <div class="date-range-compact">
-          <div class="field compact-field">
-            <label>ژمارەی سەیارە *</label>
-            <input type="text" id="f-vehicle" value="${UI.esc(rec.vehicle || '')}">
-          </div>
-          <div class="field compact-field">
-            <label>کێشی بار (کگم) *</label>
-            <input type="number" id="f-weight" min="0" step="any" value="${Number(rec.cargo_weight || 0)}">
-          </div>
-        </div>
-        <div class="date-range-compact">
-          <div class="field compact-field">
-            <label>ژمارەی پارچەکان *</label>
-            <input type="number" id="f-pieces" min="0" step="1" value="${Number(rec.pieces_count || 0)}">
-          </div>
-          <div class="field compact-field">
-            <label>ژمارەی وەسڵ *</label>
-            <input type="number" id="f-receipt" min="0" step="1" value="${Number(rec.receipt_number || 0)}">
-          </div>
+          <div class="field compact-field"><label>🏁 کاتی گەشتنەوە</label><input type="time" id="f-arrival" value="${rec.arrival_time || ''}"></div>
+          <div class="field compact-field"></div>
         </div>
       </form>`;
 
-    // ئۆتۆکۆمپلیت و لیست بۆکس بۆ خانە ناوەکان (جگە لە خانە قفڵکراوەکە)
-    if (selfField !== 'driver') {
-      UI.autocomplete($('#f-driver', body), () => driversList);
+    // ئۆتۆکۆمپلیت — هەمان لیستی فۆڕمی تۆمارکردنی دەرچوون (خانە قفڵکراوەکان بەتاڵن)
+    if (distrib) {
+      UI.autocomplete($('#f-driver-pick', body), () => driversList);
     }
     if (selfField !== 'distributor') {
       UI.autocomplete($('#f-distributor', body), () => distributors);
     }
+    UI.autocomplete($('#f-distributor-2', body), () => distributors);
     if (selfField !== 'delegate') {
       UI.autocomplete($('#f-delegate', body), () => delegates);
     }
+    UI.autocomplete($('#f-delegate-2', body), () => delegates);
     UI.autocomplete($('#f-zone', body), () => zones);
+    UI.autocomplete($('#f-zone-2', body), () => zones);
     UI.autocomplete($('#f-vehicle', body), () => vehicles);
+
+    setupSecondFieldToggle(body, '#btn-toggle-distrib2', '#wrap-distrib2', '#f-distributor-2');
+    setupSecondFieldToggle(body, '#btn-toggle-delegate2', '#wrap-delegate2', '#f-delegate-2');
+    setupSecondFieldToggle(body, '#btn-toggle-zone2', '#wrap-zone2', '#f-zone-2');
 
     const { close } = UI.openModal({
       title: '✏️ دەستکاریکردنی داتای ئەمڕۆ',
@@ -789,16 +819,24 @@ const DriverView = (() => {
               return Number.isNaN(n) || n < 0 ? NaN : n;
             };
 
+            // بەهای کۆتایی — پێکەوەنانەوەی دووەمەکان بە «و» هەروەک فۆڕمی تۆمارکردنی دەرچوون
+            const joinSecond = (first, second) => second ? `${first} و ${second}` : first;
+
+            const driverVal = distrib ? val('#f-driver-pick') : val('#f-driver-locked');
+            const dist1     = val('#f-distributor');
+            const dist2     = val('#f-distributor-2');
+            const del1      = val('#f-delegate');
+            const del2      = val('#f-delegate-2');
+            const z1        = val('#f-zone');
+            const z2        = val('#f-zone-2');
+
             const invalid = [];
-            const driver = val('#f-driver');
-            const distributor = val('#f-distributor');
-            const delegate = val('#f-delegate');
-            const zone = val('#f-zone');
+            if (!driverVal) invalid.push(distrib ? '#f-driver-pick' : '#f-driver-locked');
+            if (!dist1) invalid.push('#f-distributor');
+            if (!del1) invalid.push('#f-delegate');
+            if (!z1) invalid.push('#f-zone');
+
             const vehicle = val('#f-vehicle');
-            if (!driver) invalid.push('#f-driver');
-            if (!distributor) invalid.push('#f-distributor');
-            if (!delegate) invalid.push('#f-delegate');
-            if (!zone) invalid.push('#f-zone');
             if (!vehicle) invalid.push('#f-vehicle');
 
             const weight = num('#f-weight');
@@ -815,14 +853,14 @@ const DriverView = (() => {
             }
 
             const patch = {
-              record_time: val('#f-rec-time'),
+              record_time: val('#f-time'),
               in_zone_time: val('#f-in-zone'),
               out_zone_time: val('#f-out-zone'),
               arrival_time: val('#f-arrival'),
-              driver,
-              distributor,
-              delegate,
-              zone,
+              driver: driverVal,
+              distributor: joinSecond(dist1, dist2),
+              delegate: joinSecond(del1, del2),
+              zone: joinSecond(z1, z2),
               vehicle,
               cargo_weight: weight,
               pieces_count: pieces,
