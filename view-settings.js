@@ -38,7 +38,7 @@ const SettingsView = (() => {
       </section>
 
       <section class="card">
-        <h3 class="section-title">🔒 گۆڕینی تێپەڕەوشە</h3>
+        <h3 class="section-title"><span class="sec-icon">${UI.icon('lock')}</span> گۆڕینی تێپەڕەوشە</h3>
         <form id="pass-form" autocomplete="off" novalidate>
           <div class="field"><label>تێپەڕەوشەی ئێستا</label><input id="p-current" type="password" inputmode="numeric" maxlength="4" placeholder="••••" autocomplete="new-password"></div>
           <div class="field-row">
@@ -51,7 +51,7 @@ const SettingsView = (() => {
       </section>
 
       <section class="card">
-        <h3 class="section-title">🎨 ڕووکار</h3>
+        <h3 class="section-title"><span class="sec-icon">${UI.icon('palette')}</span> ڕووکار</h3>
         <div class="seg" id="theme-seg">
           <button type="button" data-theme="dark" class="${s.theme === 'dark' ? 'active' : ''}">🌙 تاریک</button>
           <button type="button" data-theme="light" class="${s.theme === 'light' ? 'active' : ''}">☀ ڕوون</button>
@@ -71,6 +71,13 @@ const SettingsView = (() => {
           <button type="button" id="border-color-reset" class="btn btn-sm btn-ghost" style="margin-inline-start:auto">⟲ بنەڕەت</button>
         </div>
 
+        <label class="set-row" for="set-show-icons" style="margin-top:14px;border-bottom:none">
+          <input type="checkbox" id="set-show-icons" ${s.showIcons !== false ? 'checked' : ''}>
+          <span class="set-row-txt">
+            <span class="set-row-title">پشاندانی ئایکۆنەکان</span>
+            <span class="set-row-hint">ئایکۆنە مۆدێرنەکانی سەر تایتڵ و بەشەکان پیشان دەدرێن — بە ناچالاککردنی ئەمە هەموویان دەشاردرێنەوە.</span>
+          </span>
+        </label>
         <label class="set-row" for="set-glow" style="margin-top:14px;border-bottom:none">
           <input type="checkbox" id="set-glow" ${s.glow ? 'checked' : ''}>
           <span class="set-row-txt">
@@ -86,7 +93,7 @@ const SettingsView = (() => {
       </section>
 
       <section class="card">
-        <h3 class="section-title">🖥️ شێوازی پیشاندانی خشتەکان</h3>
+        <h3 class="section-title"><span class="sec-icon">${UI.icon('monitor')}</span> شێوازی پیشاندانی خشتەکان</h3>
         <div class="set-rows">
           <label class="set-row">
             <input type="checkbox" id="set-row-click-fullscreen" ${s.rowClickFullscreen !== false ? 'checked' : ''}>
@@ -121,7 +128,7 @@ const SettingsView = (() => {
 
       ${Perms.canView(u, 'set_keypad') ? `
       <section class="card">
-        <h3 class="section-title">⌨️ کیبۆردی تایبەتی سیستەم</h3>
+        <h3 class="section-title"><span class="sec-icon">${UI.icon('keyboard')}</span> کیبۆردی تایبەتی سیستەم</h3>
         <div class="set-rows">
           <label class="set-row">
             <input type="checkbox" id="set-custom-keypad-text" ${s.customKeypadText ? 'checked' : ''}>
@@ -141,7 +148,7 @@ const SettingsView = (() => {
       </section>` : ''}
 
       <section class="card">
-        <h3 class="section-title">📊 پیشاندان/شاردنەوەی ستوونەکان و کۆیەکان</h3>
+        <h3 class="section-title"><span class="sec-icon">${UI.icon('columns')}</span> پیشاندان/شاردنەوەی ستوونەکان و کۆیەکان</h3>
         <p class="hint">دانە دانە دیاری بکە کام ستوونی خشتە و کام کارتی تۆتاڵ پیشان بدرێت یان بشاردرێتەوە — لە هەردوو بەشی ڕاپۆرت و تۆمارەکانی بەڕێوبەر جێبەجێ دەبێت.</p>
 
         <div class="vis-group">
@@ -181,7 +188,7 @@ const SettingsView = (() => {
 
       ${Perms.canView(u, 'set_lockscreen') ? `
       <section class="card">
-        <h3 class="section-title">📱 کردارەکان لەسەر شاشەی قفڵ (Lock Screen)</h3>
+        <h3 class="section-title"><span class="sec-icon">${UI.icon('smartphone')}</span> کردارەکان لەسەر شاشەی قفڵ (Lock Screen)</h3>
         <div class="set-rows">
           <label class="set-row">
             <input type="checkbox" id="set-lock-screen-actions" ${s.lockScreenActions ? 'checked' : ''}>
@@ -199,7 +206,7 @@ const SettingsView = (() => {
 
       ${Perms.canView(u, 'set_notif') ? `
       <section class="card">
-        <h3 class="section-title">🔔 نۆتیفیکەیشنەکانی گۆڕانکاری</h3>
+        <h3 class="section-title"><span class="sec-icon">${UI.icon('bell')}</span> نۆتیفیکەیشنەکانی گۆڕانکاری</h3>
         <div class="field-row">
           <div class="field">
             <label>سڕینەوەی نۆتیفیکەیشنەکان دوای (ڕۆژ)</label>
@@ -215,7 +222,7 @@ const SettingsView = (() => {
 
       ${Perms.canView(u, 'set_print') ? `
       <section class="card">
-        <h3 class="section-title">🖨️ ناوەڕۆکی پرێنتکردن</h3>
+        <h3 class="section-title"><span class="sec-icon">${UI.icon('printer')}</span> ناوەڕۆکی پرێنتکردن</h3>
         <p class="hint">ئەمە شێوەی ڕاستەقینەی پرێنتکردنە. کلیک لەسەر هەر دەقێک بکە و بیگۆڕە، و بە دوگمەی 👁 هەر بەشێک بشارەوە یان پیشانی بدە — دواتر «پاشەکەوتکردن» دابگرە.</p>
 
         <div class="print-preview-wrap">
@@ -289,7 +296,7 @@ const SettingsView = (() => {
 
       ${Perms.canView(u, 'set_font') ? `
       <section class="card">
-        <h3 class="section-title">🔠 فۆنت و قەبارەی نووسین</h3>
+        <h3 class="section-title"><span class="sec-icon">${UI.icon('type')}</span> فۆنت و قەبارەی نووسین</h3>
         <div class="font-ctl">
           <div class="font-ctl-info">
             <b>فۆنتی سیستەم</b>
@@ -335,7 +342,7 @@ const SettingsView = (() => {
 
       ${Perms.canView(u, 'set_backup') ? `
       <section class="card">
-        <h3 class="section-title">💾 باک ئەپ (پاشەکەوتکردنی خۆکار)</h3>
+        <h3 class="section-title"><span class="sec-icon">${UI.icon('database')}</span> باک ئەپ (پاشەکەوتکردنی خۆکار)</h3>
         <p class="hint">
           سیستەم ڕۆژانە (هەر ٦ کاتژمێر جارێک) داتاکانی ئەمڕۆ بە فایلی ئێکسڵ باک ئەپ دەکات.
           <br>ناوی فایل = بەرواری ئەو ڕۆژەی باک ئەپ دەکرێت.
@@ -378,7 +385,7 @@ const SettingsView = (() => {
       </section>
 
       <section class="card about-card">
-        <h3 class="section-title">ℹ دەربارەی سیستەم</h3>
+        <h3 class="section-title"><span class="sec-icon">${UI.icon('info')}</span> دەربارەی سیستەم</h3>
         <p class="hint">${UI.esc(CONFIG.APP_NAME)} — نسخە ${CONFIG.APP_VERSION}<br>
         پلاتفۆرمی ڕێکخستن، بەدواداچوون و تۆمارکردنی پرۆسەکانی گەیاندن بۆ شۆفێر، دابەشکار و مەندوب.
         دروستکراوە لەلایان (احمد ڕەمەزان) .</p>
@@ -436,6 +443,12 @@ const SettingsView = (() => {
     $('#border-color-reset', el)?.addEventListener('click', () => {
       Store.saveSettings({ borderColor: null });
       render(container);
+    });
+
+    /* — پشاندان/شاردنەوەی ئایکۆنەکان — */
+    $('#set-show-icons', el)?.addEventListener('change', e => {
+      Store.saveSettings({ showIcons: e.target.checked });
+      UI.toast(e.target.checked ? 'ئایکۆنەکان پیشان دەدرێن ✓' : 'ئایکۆنەکان شاردراونەوە', 'info');
     });
 
     /* — گڵۆپ: لایتێکی سوڕاو لەسەر چوارچێوەی کارت و ویندۆیەکان — */

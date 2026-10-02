@@ -449,7 +449,7 @@ const DriverView = (() => {
     if (!done.length) { el.innerHTML = ''; return; }
     const canEditData = Perms.canAct(App.getUser(), 'act_edit_data');
     el.innerHTML = `
-      <h3 class="section-title">بارە تەواوبووەکانی ئەمڕۆ</h3>
+      <h3 class="section-title"><span class="sec-icon">${UI.icon('package')}</span> بارە تەواوبووەکانی ئەمڕۆ</h3>
       ${done.map(r => {
         const hasMoney = Number(r.collected_money || 0) > 0;
         return `

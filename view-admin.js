@@ -200,7 +200,7 @@ const AdminView = (() => {
       <section class="card" style="padding:14px 18px 12px">
         <div class="admin-header-row">
           <div>
-            <h2 class="hero-title">🛡️ پانێلی بەڕێوەبردن</h2>
+            <h2 class="hero-title"><span class="sec-icon">${UI.icon('shield', 20)}</span> پانێلی بەڕێوەبردن</h2>
             <p class="hero-sub">تەواوی داتاکانی هەر دوو پڕۆژەی Supabase و کۆنتڕۆڵی CRUD</p>
           </div>
           <div style="display:flex;align-items:center;gap:8px">
@@ -214,19 +214,19 @@ const AdminView = (() => {
         <div class="admin-tabs" id="admin-subtabs">
           ${Perms.canView(App.getUser(), 'admin_records') ? `
           <button type="button" class="admin-tab-btn ${state.subtab === 'records' ? 'active' : ''}" data-sub="records">
-            <span>🚚</span> تۆمارەکان <span class="badge-count" id="badge-records-count">${state.records.length}</span>
+            <span class="sec-icon">${UI.icon('truck', 15)}</span> تۆمارەکان <span class="badge-count" id="badge-records-count">${state.records.length}</span>
           </button>` : ''}
           ${Perms.canView(App.getUser(), 'admin_users') ? `
           <button type="button" class="admin-tab-btn ${state.subtab === 'users' ? 'active' : ''}" data-sub="users">
-            <span>👥</span> بەکارهێنەران <span class="badge-count" id="badge-users-count">${state.users.length}</span>
+            <span class="sec-icon">${UI.icon('users', 15)}</span> بەکارهێنەران <span class="badge-count" id="badge-users-count">${state.users.length}</span>
           </button>` : ''}
           ${Perms.canView(App.getUser(), 'admin_zones') ? `
           <button type="button" class="admin-tab-btn ${state.subtab === 'zones' ? 'active' : ''}" data-sub="zones">
-            <span>🗺️</span> زۆنەکان <span class="badge-count" id="badge-zones-count">${state.zones.length}</span>
+            <span class="sec-icon">${UI.icon('map', 15)}</span> زۆنەکان <span class="badge-count" id="badge-zones-count">${state.zones.length}</span>
           </button>` : ''}
           <!-- فۆڕمی پیشە — تەنها لە مۆبایل لێرە دەردەکەوێت (لە دیسکتۆپ لە باڕی خوارەوەیە) -->
           <button type="button" class="admin-tab-btn admin-mobile-only" id="admin-professions-btn" title="فۆڕمی پیشە و دەسەڵاتەکان">
-            <span>👔</span> پیشەکان
+            <span class="sec-icon">${UI.icon('badge', 15)}</span> پیشەکان
           </button>
         </div>
       </section>
@@ -304,7 +304,7 @@ const AdminView = (() => {
       <section class="card filter-card">
         <div class="admin-header-row" style="margin-bottom:8px">
           <div>
-            <h3 style="font-size:1.02rem;font-weight:800">🚚 تۆمارەکانی گەیاندن</h3>
+            <h3 style="font-size:1.02rem;font-weight:800"><span class="sec-icon">${UI.icon('truck')}</span> تۆمارەکانی گەیاندن</h3>
             <p class="muted" style="font-size:0.8rem">بینین، فلتەرکردن، ڕیزکردن، پرێنتکردن و هەناردەی فرە-شیتی ئێکسڵ</p>
           </div>
           <div class="admin-actions-bar">
@@ -1519,7 +1519,7 @@ const AdminView = (() => {
     wrap.innerHTML = `
       <section class="card filter-card">
         <div class="admin-header-row" style="margin-bottom:6px">
-          <h3 style="font-size:0.96rem">بەڕێوەبردنی بەکارهێنەران (خشتەی usersv2)</h3>
+          <h3 style="font-size:0.96rem"><span class="sec-icon">${UI.icon('users')}</span> بەڕێوەبردنی بەکارهێنەران (خشتەی usersv2)</h3>
           <div style="display:flex;gap:8px">
             <button type="button" class="btn btn-ghost btn-sm" id="adm-toggle-pass">👁️ پشاندانی هەموو پاسۆڕدەکان</button>
             <button type="button" class="btn btn-primary btn-sm" id="admin-add-user-btn">➕ بەکارهێنەری نوێ</button>
@@ -1810,7 +1810,7 @@ const AdminView = (() => {
     wrap.innerHTML = `
       <section class="card filter-card">
         <div class="admin-header-row" style="margin-bottom:6px">
-          <h3 style="font-size:0.96rem">بەڕێوەبردنی زۆنەکان (خشتەی zonesv2)</h3>
+          <h3 style="font-size:0.96rem"><span class="sec-icon">${UI.icon('map')}</span> بەڕێوەبردنی زۆنەکان (خشتەی zonesv2)</h3>
           <button type="button" class="btn btn-primary btn-sm" id="admin-add-zone-btn">➕ زۆنی نوێ</button>
         </div>
 

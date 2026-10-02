@@ -366,6 +366,15 @@ html.glow-on .login-card::before {
 }
 
 .section-title { font-size: 1rem; font-weight: 700; margin-bottom: 12px; }
+
+/* — ئایکۆنی مۆدێرنی تایتڵەکان (SVG) — ڕەنگەکەی لە ڕەنگی سەرەکی سیستەم دەگرێت — */
+.sec-icon {
+  display: inline-flex; vertical-align: -3px;
+  margin-inline-end: 7px; color: var(--accent);
+}
+.sec-icon svg { display: block; }
+html.hide-icons .sec-icon { display: none !important; }
+
 .hint { color: var(--muted); font-size: 0.82rem; margin: 6px 0 12px; }
 
 /* — کارتی هیرۆ — */

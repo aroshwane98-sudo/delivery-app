@@ -40,7 +40,7 @@ const ContactsView = (() => {
       <div class="settings-view">
         <section class="card filter-card">
           <div class="admin-header-row" style="margin-bottom:6px">
-            <h3 style="font-size:0.96rem">📞 پەیوەندییەکان</h3>
+            <h3 style="font-size:0.96rem"><span class="sec-icon">${UI.icon('phone')}</span> پەیوەندییەکان</h3>
             <button type="button" class="btn btn-ghost btn-sm" id="ct-refresh" title="نوێکردنەوەی لیست">⟲ نوێکردنەوە</button>
           </div>
           <div class="field" style="margin-bottom:0">

@@ -71,7 +71,7 @@ const Store = (() => {
   };
 
   function getSettings() {
-    const defaults = { theme: 'dark', accent: CONFIG.DEFAULT_ACCENT, borderColor: null, rowClickFullscreen: true, reportCardLayout: true, cellTitles: false, showHints: true, glow: false, glowColor: '#10b981', glowLen: 20, glowSpeed: 4, notifDays: 1, lockScreenActions: false, customKeypadText: false, customKeypadNum: false, hiddenCols: [], hiddenTotals: [], ...FONT_DEFAULTS, ...PRINT_DEFAULTS };
+    const defaults = { theme: 'dark', accent: CONFIG.DEFAULT_ACCENT, borderColor: null, rowClickFullscreen: true, reportCardLayout: true, cellTitles: false, showHints: true, showIcons: true, glow: false, glowColor: '#10b981', glowLen: 20, glowSpeed: 4, notifDays: 1, lockScreenActions: false, customKeypadText: false, customKeypadNum: false, hiddenCols: [], hiddenTotals: [], ...FONT_DEFAULTS, ...PRINT_DEFAULTS };
     try {
       const s = Object.assign(defaults, JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}'));
       /* کۆچکردن: ڕێکخستنی کۆنی customKeypad دابەش دەکرێت بۆ دوو ڕێکخستنی جیا */
@@ -111,6 +111,9 @@ const Store = (() => {
     document.documentElement.classList.toggle('cell-titles', !!s.cellTitles);
     // پشاندان/شاردنەوەی سەرجەم تێبینی و ڕوونکردنەوەکان
     document.documentElement.classList.toggle('hide-hints', s.showHints === false);
+
+    // پشاندان/شاردنەوەی ئایکۆنەکانی تایتڵەکان
+    document.documentElement.classList.toggle('hide-icons', s.showIcons === false);
 
     // گڵۆپ — لایتێکی سوڕاو لەسەر چوارچێوەی کارت و ویندۆیەکان
     // glowSpeed: ١-١٠ (بەرزتر = خێراتر) → ماوەی یەک سوڕ ب چرکە

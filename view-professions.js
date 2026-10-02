@@ -27,7 +27,7 @@ const ProfessionsView = (() => {
       <section class="card" style="padding:14px 18px 12px">
         <div class="admin-header-row">
           <div>
-            <h2 class="hero-title">👔 پیشەکان و دەسەڵاتەکان</h2>
+            <h2 class="hero-title"><span class="sec-icon">${UI.icon('badge', 20)}</span> پیشەکان و دەسەڵاتەکان</h2>
             <p class="hero-sub">دروستکردنی پیشەی نوێ و دیاریکردنی ئەوەی هەر پیشەیەک و هەر یوسەرێک چی ببینێت و چ ئەنجام بدات</p>
           </div>
           <button class="btn btn-ghost btn-sm" id="prf-refresh">⟳ نوێکردنەوە</button>
@@ -35,10 +35,10 @@ const ProfessionsView = (() => {
 
         <div class="admin-tabs" id="prf-subtabs">
           <button type="button" class="admin-tab-btn ${state.subtab === 'professions' ? 'active' : ''}" data-sub="professions">
-            <span>👔</span> پیشەکان
+            <span class="sec-icon">${UI.icon('badge', 15)}</span> پیشەکان
           </button>
           <button type="button" class="admin-tab-btn ${state.subtab === 'users' ? 'active' : ''}" data-sub="users">
-            <span>👤</span> یوسەرەکان
+            <span class="sec-icon">${UI.icon('user', 15)}</span> یوسەرەکان
           </button>
         </div>
       </section>
@@ -96,7 +96,7 @@ const ProfessionsView = (() => {
     wrap.innerHTML = `
       <section class="card" style="padding:14px 18px 12px">
         <div class="admin-header-row" style="margin-bottom:4px">
-          <h3 style="font-size:0.96rem">لیستی پیشەکان</h3>
+          <h3 style="font-size:0.96rem"><span class="sec-icon">${UI.icon('badge')}</span> لیستی پیشەکان</h3>
           <button type="button" class="btn btn-primary btn-sm" id="prf-add-btn">➕ پیشەی نوێ</button>
         </div>
         <p class="hint" style="margin:0">کلیک لەسەر «دەسەڵاتەکان» بکە بۆ دیاریکردنی ئەوەی ئەم پیشەیە چی ببینێت و چ کردار ئەنجام بدات. بە دوگمەی 🗑 پیشەیەک دەسڕدرێتەوە یان دەشاردرێتەوە — بە هەمان ناو لە «پیشەی نوێ» دەگەڕێتەوە. گۆڕانکارییەکان بۆ هەموو مۆبایلەکان جێبەجێ دەبن پاش نوێبوونەوەی سیستەم.</p>
@@ -235,7 +235,7 @@ const ProfessionsView = (() => {
 
     wrap.innerHTML = `
       <section class="card" style="padding:14px 18px 12px">
-        <h3 style="font-size:0.96rem;margin-bottom:8px">یوسەرەکان</h3>
+        <h3 style="font-size:0.96rem;margin-bottom:8px"><span class="sec-icon">${UI.icon('users')}</span> یوسەرەکان</h3>
         <div class="field" style="margin-bottom:0">
           <input type="search" id="prf-user-search" placeholder="گەڕان بۆ ناو یان پیشە..." value="${UI.esc(state.userSearch)}" autocomplete="off">
         </div>
