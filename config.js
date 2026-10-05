@@ -18,6 +18,12 @@ const CONFIG = {
   ZONES_TABLE: 'zonesv2',
   VEHICLES_TABLE: 'vehiclesv2',
 
+  /* دەروازەی پارێزراو — Supabase Edge Function کە هەموو داتاکان بە ئەوەوە تێپەڕ دەبن.
+   * پاش جێبەجێکردنی فەنکشنەکە (سەیری SECURITY-GUIDE.md بکە) ئەم بەستانە دابنێ:
+   * 'https://gyxfgtoedunvkduslhld.supabase.co/functions/v1/gateway'
+   * بەتاڵ بێت = ڕێگای ڕاستەوخۆی کۆن (بێ پاراستنی سێرڤەر) */
+  GATEWAY_URL: 'https://gyxfgtoedunvkduslhld.supabase.co/functions/v1/gateway',
+
   /* زانیاری بەکارهێنەر */
   PROFESSION_DRIVER: 'سایەق',
   PROFESSION_DISTRIBUTOR: 'دابەشکار',

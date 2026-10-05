@@ -337,9 +337,20 @@ const App = (() => {
 
     UI.btnLoading(btn, true, 'چاوەڕوان بە...');
     try {
+      const selectedId = String($('#login-username').value || '');
+
+      // مۆدی دەروازەی پارێزراو — پشکنینی تێپەڕەوشە لە سێرڤەر دەکرێت و تۆکن وەردەگیرێت
+      if (CONFIG.GATEWAY_URL) {
+        const res = await API.login(selectedId, password);
+        Store.setSession({ ...res.user, token: res.token }, remember);
+        UI.toast(`بەخێربێیت ${res.user.username} 👋`, 'success');
+        enterApp();
+        return;
+      }
+
+      // ڕێگای ڕاستەوخۆی کۆن (بێ دەروازە) — پشکنینی تێپەڕەوشە لە کڵایەنت
       const { users } = await Store.loadLists();
       // هەڵبژاردن بە ئایدی usersv2 — نەک ناو، چونکە دوو بەکارهێنەر دەتوانن ناوی هاوشێوە هەبن
-      const selectedId = String($('#login-username').value || '');
       const user = (users || []).find(u => String(u.id) === selectedId);
       if (!user) { UI.toast('ئەم بەکارهێنەرە نییە لە سیستەمدا', 'error'); return; }
       if (String(user.password) !== password) { UI.toast('تێپەڕەوشە هەڵەیە', 'error'); return; }
@@ -351,7 +362,11 @@ const App = (() => {
       UI.toast(`بەخێربێیت ${user.username} 👋`, 'success');
       enterApp();
     } catch (err) {
-      UI.toast('پەیوەندی بە ڕایەڵەوە نەکرا: ' + err.message, 'error', 4200);
+      if (err.code === 'BAD_CREDENTIALS') {
+        UI.toast('ناو یان تێپەڕەوشە هەڵەیە', 'error');
+      } else {
+        UI.toast('پەیوەندی بە ڕایەڵەوە نەکرا: ' + err.message, 'error', 4200);
+      }
     } finally {
       UI.btnLoading(btn, false);
     }
@@ -392,7 +407,13 @@ const App = (() => {
 
   function initLoginSelect() {
     const sel = $('#login-username');
-    Store.loadLists()
+    // مۆدی دەروازە: لیستی سووک (بێ تێپەڕەوشە و تەلەفۆن) لە سێرڤەرەوە —
+    // چونکە پێش چوونەژوورەوە هیچ داتایەکی هەستیار نابێت بگەڕێتەوە
+    const usersPromise = CONFIG.GATEWAY_URL
+      ? API.loginOptions().then(rows => ({ users: rows || [] }))
+      : Store.loadLists();
+
+    usersPromise
       .then(({ users }) => {
         // ژماردنی ناوە دووبارەکان — بۆ نیشاندانی جیاوازی لە لیستەکەدا
         const nameCounts = {};

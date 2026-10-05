@@ -773,6 +773,14 @@ const SettingsView = (() => {
     const subBtn = $('#pass-form button[type="submit"]', container);
     UI.btnLoading(subBtn, true, 'نوێ دەکرێتەوە...');
     try {
+      // مۆدی دەروازە — پشکنینی تێپەڕەوشەی ئێستا لە سێرڤەر دەکرێت
+      if (CONFIG.GATEWAY_URL) {
+        await API.changeOwnPin(cur, nw);
+        UI.toast('تێپەڕەوشە بە سەرکەوتوویی گۆڕدرا ✓', 'success');
+        $('#pass-form', container).reset();
+        return;
+      }
+
       const users = await API.Lists.users();
       const me = users.find(x => x.id === App.getUser().id);
       if (!me) { UI.toast('بەکارهێنەر نەدۆزرایەوە', 'error'); return; }
@@ -782,7 +790,7 @@ const SettingsView = (() => {
       UI.toast('تێپەڕەوشە بە سەرکەوتوویی گۆڕدرا ✓', 'success');
       $('#pass-form', container).reset();
     } catch (err) {
-      UI.toast('هەڵە لە گۆڕینی تێپەڕەوشە: ' + err.message, 'error', 4200);
+      UI.toast(err.code === 'WRONG_PIN' ? 'تێپەڕەوشەی ئێستا هەڵەیە' : ('هەڵە لە گۆڕینی تێپەڕەوشە: ' + err.message), 'error', 4200);
     } finally {
       UI.btnLoading(subBtn, false);
     }

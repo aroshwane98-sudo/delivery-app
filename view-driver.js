@@ -263,28 +263,33 @@ const DriverView = (() => {
       lists = ls;
 
       // سڕینەوەی دەرچوونی دووبارە لە هەمان ڕۆژ لە مەودای <= ١٠ خولەک (جگە لە سایەق دوو)
-      const toDeleteIds = new Set();
-      const rows = allToday || [];
-      for (let i = 0; i < rows.length; i++) {
-        const r1 = rows[i];
-        if (toDeleteIds.has(r1.id)) continue;
-        for (let j = i + 1; j < rows.length; j++) {
-          const r2 = rows[j];
-          if (toDeleteIds.has(r2.id)) continue;
-          if (areDuplicateDepartures(r1, r2)) {
-            const r1Progress = (r1.arrival_time ? 4 : (r1.out_zone_time ? 3 : (r1.in_zone_time ? 2 : 1)));
-            const r2Progress = (r2.arrival_time ? 4 : (r2.out_zone_time ? 3 : (r2.in_zone_time ? 2 : 1)));
-            const dupToRemove = r2Progress > r1Progress ? r1 : r2;
-            toDeleteIds.add(dupToRemove.id);
-            API.Records.remove(dupToRemove.id).catch(e => console.warn('هەڵە لە سڕینەوەی تۆماری دووبارە:', e));
+      // تەنها بۆ ئەوانەی دەسەڵاتی سڕینەوەیان هەیە — لە مۆدی دەروازەدا سێرڤەر ڕێگە نادات بە سڕینەوەی داتای کەسانی تر
+      if (Perms.canAct(App.getUser(), 'rep_delete')) {
+        const toDeleteIds = new Set();
+        const rows = allToday || [];
+        for (let i = 0; i < rows.length; i++) {
+          const r1 = rows[i];
+          if (toDeleteIds.has(r1.id)) continue;
+          for (let j = i + 1; j < rows.length; j++) {
+            const r2 = rows[j];
+            if (toDeleteIds.has(r2.id)) continue;
+            if (areDuplicateDepartures(r1, r2)) {
+              const r1Progress = (r1.arrival_time ? 4 : (r1.out_zone_time ? 3 : (r1.in_zone_time ? 2 : 1)));
+              const r2Progress = (r2.arrival_time ? 4 : (r2.out_zone_time ? 3 : (r2.in_zone_time ? 2 : 1)));
+              const dupToRemove = r2Progress > r1Progress ? r1 : r2;
+              toDeleteIds.add(dupToRemove.id);
+              API.Records.remove(dupToRemove.id).catch(e => console.warn('هەڵە لە سڕینەوەی تۆماری دووبارە:', e));
+            }
           }
         }
-      }
 
-      const cleanedToday = rows.filter(r => !toDeleteIds.has(r.id));
-      allTodayRecords = cleanedToday;
-      if (toDeleteIds.size > 0 && !silent) {
-        UI.toast('دەرچوونی دووبارەی هەمان گەشت لە سیستەمدا بە خۆکاری سڕدرایەوە ✓', 'info', 4000);
+        const cleanedToday = rows.filter(r => !toDeleteIds.has(r.id));
+        allTodayRecords = cleanedToday;
+        if (toDeleteIds.size > 0 && !silent) {
+          UI.toast('دەرچوونی دووبارەی هەمان گەشت لە سیستەمدا بە خۆکاری سڕدرایەوە ✓', 'info', 4000);
+        }
+      } else {
+        allTodayRecords = (allToday || []).slice();
       }
 
       // هاوتاکردنی پێشاندانی دەرچوون بۆ هەردوو پیشەی سایەق و دابەشکار —
