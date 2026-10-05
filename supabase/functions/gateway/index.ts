@@ -411,8 +411,13 @@ Deno.serve(async (req: Request) => {
       }
 
       // قفڵی خانەکان — خانە قفڵکراوەکان لە پاکێجەکە لادەبرێن
+      // تێبینی: کاتەکانی گەشت (in_zone_time, out_zone_time, arrival_time) هەرگیز قفڵ ناکرێن —
+      // لە کڵایەنتدا دووگمەکانی هەنگاوی گەشت قفڵیان پێکار ناکەوێت و خۆیان بە act_* پارێزراون
       if (!sup && !may('act_bypass_field_lock') && (cfg.fieldLock?.enabled ?? false) && lockDue(cfg.fieldLock!, rec)) {
-        lockFieldsFor(cfg, prof, uid).forEach(f => { delete patch[f]; });
+        const TRIP_TIME_FIELDS = ['in_zone_time', 'out_zone_time', 'arrival_time'];
+        lockFieldsFor(cfg, prof, uid)
+          .filter(f => !TRIP_TIME_FIELDS.includes(f))
+          .forEach(f => { delete patch[f]; });
       }
 
       patch = sanitizeRow(patch, await recordsColumns());
