@@ -373,7 +373,22 @@ html.glow-on .login-card::before {
   margin-inline-end: 7px; color: var(--accent);
 }
 .sec-icon svg { display: block; }
-html.hide-icons .sec-icon { display: none !important; }
+/* — ئایکۆنی ئیمۆجییە گۆڕدراوەکان (inline) — لەگەڵ دەقەکە هاوقەبارە و هاوڕەنگ — */
+.lic-inline { display: inline-block; width: 1.15em; height: 1.15em; vertical-align: -0.2em; flex: none; }
+.empty-ico .lic-inline, .notif-empty-ico .lic-inline { width: 2.4rem; height: 2.4rem; opacity: 0.75; }
+.step-dot .lic-inline { width: 1.2em; height: 1.2em; vertical-align: middle; }
+
+/* — «پشاندانی ئایکۆنەکان» ناچالاک: هەموو ئایکۆنە ڕازێنەرەکان (SVG و ئیمۆجی) دەشاردرێنەوە —
+ * تەنها ئەوانە دەمێننەوە کە دووگمەی بێ دەقن (داخستن، زیادکردن، سڕینەوە، کیبۆرد...) چونکە بەبێ ئەوان کار ناکەن */
+html.hide-icons .sec-icon,
+html.hide-icons .lic { display: none !important; }
+html.hide-icons .lic.lic-keep,
+html.hide-icons .icon-btn .lic,
+html.hide-icons .modal-close .lic,
+html.hide-icons .btn-field-add .lic,
+html.hide-icons .step-dot .lic,
+html.hide-icons .toast-ico .lic,
+html.hide-icons .num-keypad .lic { display: inline-block !important; }
 
 .hint { color: var(--muted); font-size: 0.82rem; margin: 6px 0 12px; }
 
@@ -2151,42 +2166,66 @@ html.hide-icons .sec-icon { display: none !important; }
 }
 
 /* =========================================================
- *  کیبۆردی ژمارەی تایبەتی سیستەم (Custom Numeric Keypad)
+ *  کیبۆردی تایبەتی سیستەم (ژمارە + پیتی کوردی)
  * ========================================================= */
 
 .num-keypad {
   position: fixed; bottom: 0; inset-inline: 0; z-index: 95;
   display: block; direction: ltr;
-  padding: 10px 12px calc(10px + env(safe-area-inset-bottom));
-  background: var(--nav-bg);
-  backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+  padding: 10px 10px calc(10px + env(safe-area-inset-bottom));
+  background: color-mix(in srgb, var(--nav-bg) 94%, transparent);
+  backdrop-filter: blur(18px) saturate(1.2); -webkit-backdrop-filter: blur(18px) saturate(1.2);
   border-top: 1px solid var(--border);
+  border-radius: 20px 20px 0 0;
+  box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.22);
   transform: translateY(110%);
-  transition: transform 0.18s ease;
+  transition: transform 0.2s cubic-bezier(.2, .8, .2, 1);
   pointer-events: none;
   touch-action: manipulation;
+  user-select: none; -webkit-user-select: none;
+  -webkit-touch-callout: none;
 }
 .num-keypad.open { transform: translateY(0); pointer-events: auto; }
-.num-keypad .kp-number-layout { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 7px; }
-.num-keypad .kp-text-layout { display: grid; gap: 5px; }
+.num-keypad::before {           /* دەستگرەی بچووک — تەنها ڕەنگدانەوەی دیزاینە */
+  content: ''; display: block; width: 38px; height: 4px; border-radius: 4px;
+  background: var(--border); margin: -2px auto 9px; opacity: 0.9;
+}
+.num-keypad .kp-number-layout { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+.num-keypad .kp-text-layout { display: grid; gap: 6px; }
 .num-keypad .kp-row { display: grid; grid-template-columns: repeat(9, minmax(0, 1fr)); gap: 5px; }
-.num-keypad .kp-controls { grid-template-columns: 2.5fr 1fr 1fr; }
-.num-keypad .kp-zero { grid-column: span 2; }
+.num-keypad .kp-controls { grid-template-columns: 1.3fr 3fr 1.3fr 1.3fr 1.3fr; gap: 6px; }
 
 .num-keypad button {
-  min-width: 0; height: 50px; border-radius: 12px;
-  border: 1px solid var(--border);
+  min-width: 0; height: 54px; border-radius: 14px;
+  border: 0;
   background: var(--surface-2); color: var(--text);
-  font-family: inherit; font-size: 1.3rem; font-weight: 700;
+  box-shadow: inset 0 0 0 1px var(--border), 0 2px 0 rgba(0, 0, 0, 0.18);
+  font-family: inherit; font-size: 1.35rem; font-weight: 600;
+  display: inline-flex; align-items: center; justify-content: center;
   cursor: pointer; user-select: none; -webkit-user-select: none;
-  transition: background 0.1s ease, color 0.1s ease;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 0.06s ease, background 0.12s ease, box-shadow 0.06s ease;
 }
-.num-keypad[data-layout="text"] button { height: 44px; font-size: 1.05rem; }
-.num-keypad button:active { background: var(--accent); color: #fff; }
-.num-keypad .kp-op { color: var(--accent); font-size: 1.5rem; }
-.num-keypad .kp-del, .num-keypad .kp-clear { font-size: 1.05rem; color: var(--muted); }
-.num-keypad .kp-space { direction: rtl; font-size: 0.9rem !important; }
-.num-keypad .kp-done { background: var(--accent); color: #fff; border-color: transparent; font-size: 1.35rem; }
+.num-keypad[data-layout="text"] button { height: 46px; font-size: 1.1rem; }
+.num-keypad button.pressed,
+.num-keypad button:active {
+  transform: translateY(1px) scale(0.95);
+  background: color-mix(in srgb, var(--accent) 30%, var(--surface-2));
+  box-shadow: inset 0 0 0 1px var(--accent);
+}
+.num-keypad .lic { width: 22px; height: 22px; stroke-width: 2; }
+.num-keypad .kp-op { color: var(--accent); }
+.num-keypad .kp-del, .num-keypad .kp-clear, .num-keypad .kp-next { color: var(--muted); }
+.num-keypad .kp-fn { font-size: 0.95rem; color: var(--accent); background: color-mix(in srgb, var(--accent) 12%, var(--surface-2)); }
+.num-keypad .kp-space { direction: rtl; font-size: 0.9rem !important; color: var(--muted); }
+.num-keypad .kp-done {
+  background: var(--accent); color: #fff;
+  box-shadow: 0 2px 0 color-mix(in srgb, var(--accent) 60%, #000);
+}
+.num-keypad .kp-done.pressed, .num-keypad .kp-done:active { background: color-mix(in srgb, var(--accent) 82%, #000); }
+@media (prefers-reduced-motion: reduce) {
+  .num-keypad, .num-keypad button { transition: none; }
+}
 
 /* ---- کاتێک کیبۆردی سیستەم کراوەیە: خانە هەڵبژێردراوەکە نەکەوێتە ژێر کیبۆردەکە ---- */
 
@@ -2697,6 +2736,23 @@ body.keypad-open .modal-fullscreen {
   display: inline-block; width: 20px; text-align: center;
   opacity: 0.75; font-size: 0.8rem;
 }
+
+/* — قفڵی خانەکان لە فۆڕمی دەسەڵاتەکان (دانە بە دانە بۆ پیشە/یوسەر) — */
+.plf-fields-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 6px;
+}
+.plf-field-item {
+  display: flex; align-items: center; gap: 6px;
+  padding: 7px 9px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.78rem;
+}
+.plf-field-item:hover { background: color-mix(in srgb, var(--accent) 8%, transparent); }
+.plf-field-item input[type="checkbox"] { width: 15px; height: 15px; accent-color: var(--accent); flex-shrink: 0; }
 
 /* — پیشاندانی وێنەی یوسەر بە پڕی شاشە (lightbox) — */
 .avatar-lightbox {

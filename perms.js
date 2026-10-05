@@ -25,7 +25,8 @@ const Perms = (() => {
     { group: 'trip', key: 'act_out_zone',  icon: '🚏', label: 'کرداری دەرچوون لە زۆن',   type: 'act' },
     { group: 'trip', key: 'act_arrival',   icon: '🏁', label: 'کرداری گەشتنەوە',        type: 'act' },
     { group: 'trip', key: 'act_money',     icon: '💰', label: 'تۆمارکردنی پارەی هێنراوە', type: 'act' },
-    { group: 'trip', key: 'act_edit_data', icon: '✏️', label: 'دەستکاریکردنی داتاکان',   type: 'act' },
+    { group: 'trip', key: 'act_edit_data',           icon: '✏️', label: 'دەستکاریکردنی داتاکان',                           type: 'act' },
+    { group: 'trip', key: 'act_bypass_field_lock',   icon: '🔓', label: 'تێپەڕاندنی قفڵی خانەکان (دەستکاری داتا دوای قفڵبوون)', type: 'act' },
 
     // ڕاپۆرت
     { group: 'reports', key: 'rep_view_all',       icon: '🗂', label: 'بینینی هەموو تۆمارەکان (نەک تەنها تۆمارەکانی خۆی)', type: 'view' },
@@ -144,5 +145,73 @@ const Perms = (() => {
   /** ئیمزای دەسەڵاتەکانی یوسەرێک — بۆ دۆزینەوەی ئەوەی ئایا دەسەڵاتەکانی گۆڕاون */
   const signatureFor = u => FEATURES.map(f => (can(u, f.type, f.key) ? 1 : 0)).join('');
 
-  return { FEATURES, GROUPS, isSup, canView, canAct, can, defaultsFor, effective, allProfessions, getDeletedProfessions, signatureFor, NEW_DEFAULT };
+  /* ---------------- خانەکانی فۆڕمی دەرچوون — بۆ قفڵکردنی دانە بە دانە ---------------- */
+
+  const FIELD_LOCK_FIELDS = [
+    { key: 'driver',          label: 'ناوی سایەق',       icon: '🚚' },
+    { key: 'distributor',     label: 'ناوی دابەشکار',     icon: '🧑‍💼' },
+    { key: 'delegate',        label: 'ناوی مەندوب',       icon: '🙋' },
+    { key: 'zone',            label: 'ناوچە / زۆن',       icon: '🗺️' },
+    { key: 'vehicle',         label: 'ژمارەی سەیارە',     icon: '🚐' },
+    { key: 'record_time',     label: 'کاتی دەرچوون',      icon: '🕐' },
+    { key: 'in_zone_time',    label: 'کاتی ناو زۆن',      icon: '📍' },
+    { key: 'out_zone_time',   label: 'کاتی دەرێی زۆن',    icon: '🚏' },
+    { key: 'arrival_time',    label: 'کاتی گەشتنەوە',     icon: '🏁' },
+    { key: 'cargo_weight',    label: 'کێشی بار (کگم)',    icon: '⚖️' },
+    { key: 'pieces_count',    label: 'ژمارەی پارچەکان',   icon: '📦' },
+    { key: 'receipt_number',  label: 'ژمارەی وەسڵ',       icon: '🧾' },
+    { key: 'collected_money', label: 'پارەی هێنراوە',     icon: '💰' },
+  ];
+
+  /** لیستی خانە قفڵکراوەکان بۆ پیشەیەک/یوسەرێک — بەبێ پشکنینی کات (بۆ فۆڕمی دەسەڵاتەکان)
+   *  ڕیزبەندی: یوسەر override ← پیشە override ← ڕێکخستنی گشتی (fieldLock.fields) */
+  function lockFieldsFor(prof, userId) {
+    const cfg = Store.getPermsConfig();
+    const allKeys = FIELD_LOCK_FIELDS.map(f => f.key);
+    const valid = arr => arr.filter(k => allKeys.includes(k));
+    if (userId !== undefined && userId !== null) {
+      const uc = cfg.users && cfg.users[String(userId)];
+      if (uc && Array.isArray(uc.lockFields)) return { source: 'user', fields: valid(uc.lockFields) };
+    }
+    const pc = cfg.professions && cfg.professions[prof];
+    if (pc && Array.isArray(pc.lockFields)) return { source: 'profession', fields: valid(pc.lockFields) };
+    const flc = cfg.fieldLock || {};
+    // کۆنفیگی کۆن (بێ لیستی خانەکان) → هەموو خانەکان قفڵن
+    const g = Array.isArray(flc.fields) ? valid(flc.fields) : allKeys;
+    return { source: 'global', fields: g };
+  }
+
+  /** ئایا کاتی قفڵبوون گەیشتووە؟ (بەپێی جۆری قفڵ: یەکسەر یان دوای خولەک) */
+  function lockDue(flc, rec) {
+    if (flc.type === 'immediate') return true;
+    if (flc.type === 'timed') {
+      const mins = Number(flc.minutes) || 0;
+      if (!mins || !rec || !rec.record_time || !rec.record_date) return false;
+      // کاتی تۆمارکردن: record_date + record_time
+      const [hh, mm] = String(rec.record_time).split(':').map(Number);
+      const savedAt = new Date(rec.record_date + 'T' + String(hh || 0).padStart(2, '0') + ':' + String(mm || 0).padStart(2, '0') + ':00');
+      const elapsedMin = (Date.now() - savedAt.getTime()) / 60000;
+      return elapsedMin >= mins;
+    }
+    return false;
+  }
+
+  /** لیستی خانە قفڵکراوەکانی تۆمارێک بۆ یوسەرێکی دیاریکراو — کات + دابەشکردنی خانەکان بەپێی پیشە/یوسەر */
+  function lockedFieldsOf(rec, user) {
+    const cfg = Store.getPermsConfig();
+    const flc = cfg && cfg.fieldLock;
+    if (!flc || !flc.enabled) return [];
+    if (user && isSup(user)) return [];
+    if (!lockDue(flc, rec)) return [];
+    return lockFieldsFor(user ? user.profession : undefined, user ? user.id : null).fields.slice();
+  }
+
+  /** پشکنینی قفڵبوونی تۆمارێک — بە ناوی خانە: تەنها ئەو خانەیە؛ بەبێ ناوی خانە: ئەگەر هەر خانەیەک قفڵبێت */
+  function isRecordLocked(rec, field, user) {
+    const locked = lockedFieldsOf(rec, user);
+    if (field !== undefined && field !== null) return locked.includes(field);
+    return locked.length > 0;
+  }
+
+  return { FEATURES, GROUPS, isSup, canView, canAct, can, defaultsFor, effective, allProfessions, getDeletedProfessions, signatureFor, NEW_DEFAULT, FIELD_LOCK_FIELDS, lockFieldsFor, lockedFieldsOf, isRecordLocked };
 })();

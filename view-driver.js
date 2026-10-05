@@ -110,6 +110,7 @@ const DriverView = (() => {
     const max = opts.max || 4;
     const lockedFirst = !!opts.lockedFirst;
     const lockedValue = opts.lockedValue || '';
+    const lockedAll = !!opts.lockedAll; // قفڵی تەواوی گرووپ — بەپێی ڕێکخستنی قفڵی خانەکان
     const addTitle = opts.addTitle || 'زیادکردنی خانەی تر';
 
     const el = document.createElement('div');
@@ -123,7 +124,7 @@ const DriverView = (() => {
     addBtn.textContent = '⊞';
     addBtn.title = addTitle;
 
-    const refreshAdd = () => { addBtn.style.display = rows.length >= max ? 'none' : ''; };
+    const refreshAdd = () => { addBtn.style.display = (rows.length >= max || lockedAll) ? 'none' : ''; };
 
     const makeRow = (value, isFirst) => {
       const row = document.createElement('div');
@@ -147,13 +148,13 @@ const DriverView = (() => {
       rows.push(rowObj);
       el.appendChild(row);
 
-      if (isFirst && lockedFirst) {
+      if (lockedAll || (isFirst && lockedFirst)) {
         inp.readOnly = true;
-        inp.value = lockedValue;
+        if (isFirst && lockedFirst) inp.value = lockedValue;
         inp.style.background = 'var(--bg-2,#f5f5f5)';
         inp.style.color = 'var(--text-muted,#888)';
         inp.style.cursor = 'not-allowed';
-        btns.appendChild(addBtn);
+        if (isFirst) btns.appendChild(addBtn);
       } else {
         UI.autocomplete(inp, items);
         if (isFirst) {
@@ -390,7 +391,11 @@ const DriverView = (() => {
         </div>
         ${canEditData ? `
         <div class="active-time-edit-bar">
-          <button type="button" class="btn-edit-times btn-edit-big" id="active-edit-times-btn">✏️ دەستکاری داتا</button>
+          ${(() => {
+            const u2 = App.getUser();
+            const locked = !isSupervisor() && !Perms.canAct(u2, 'act_bypass_field_lock') && Perms.isRecordLocked(active, null, u2);
+            return `<button type="button" class="btn-edit-times btn-edit-big" id="active-edit-times-btn">${locked ? '🔒' : '✏️'} دەستکاری داتا${locked ? ' (قفڵکراوە)' : ''}</button>`;
+          })()}
         </div>` : ''}
         <div class="stepper">${stepsHtml}</div>
         <div class="detail-grid">
@@ -457,7 +462,11 @@ const DriverView = (() => {
           <div class="hist-top">
             <b>${UI.esc(CONFIG.CARGO_LABELS[cargoIndex(r)] || 'بار')} — ${UI.esc(r.zone || '—')}</b>
             <div style="display:flex;align-items:center;gap:6px">
-              ${canEditData ? `<button type="button" class="btn-edit-times btn-edit-big btn-hist-edit" data-id="${r.id}" title="دەستکاریکردنی داتا و پارەی ئەم بارە">✏️ دەستکاری داتا</button>` : ''}
+              ${canEditData ? (() => {
+                const uHist = App.getUser();
+                const lockedHist = !isSupervisor() && !Perms.canAct(uHist, 'act_bypass_field_lock') && Perms.isRecordLocked(r, null, uHist);
+                return `<button type="button" class="btn-edit-times btn-edit-big btn-hist-edit" data-id="${r.id}" title="دەستکاریکردنی داتا و پارەی ئەم بارە">${lockedHist ? '🔒' : '✏️'} دەستکاری داتا${lockedHist ? ' (قفڵکراوە)' : ''}</button>`;
+              })() : ''}
             </div>
           </div>
           <div class="hist-meta">
@@ -871,6 +880,12 @@ const DriverView = (() => {
   /* ---------------- مۆدالی پارەی هێنراوە — دوگمەی جیاوە، دوای تۆمارکردن ون دەبێت ---------------- */
 
   function openMoneyModal(active) {
+    // قفڵی خانەی پارەی هێنراوە — ئەگەر قفڵکراوە، تۆمارکردن/گۆڕین ڕێگەپێدراو نییە
+    const uMoney = App.getUser();
+    if (!isSupervisor() && !Perms.canAct(uMoney, 'act_bypass_field_lock') && Perms.isRecordLocked(active, 'collected_money', uMoney)) {
+      UI.toast('🔒 خانەی «پارەی هێنراوە» قفڵکراوە — ناتوانیت بیگۆڕیت', 'warning', 5000);
+      return;
+    }
     const body = document.createElement('div');
     body.innerHTML = `
       <p class="confirm-msg">بڕی پارەی کۆمکراوی ئەم بارە بنووسە (بە دیناری عێراقی):</p>
@@ -921,6 +936,20 @@ const DriverView = (() => {
     if (!rec) return;
     const u = App.getUser();
     const sup = isSupervisor();
+
+    // پشکنینی قفڵی خانەکان — خانەکان دانە بە دانە قفڵ دەبن بەپێی ڕێکخستن
+    // تەنها کاتێک مۆدال دەخرێتەوە کە هەموو خانەکانی فۆڕم قفڵکراون
+    const canBypassLock = sup || Perms.canAct(u, 'act_bypass_field_lock');
+    const lockedFields = canBypassLock ? [] : Perms.lockedFieldsOf(rec, u);
+    if (!canBypassLock && Perms.FIELD_LOCK_FIELDS.every(f => lockedFields.includes(f.key))) {
+      const flc = (Store.getPermsConfig() || {}).fieldLock || {};
+      const reason = flc.type === 'timed'
+        ? `دوای ${UI.esc(String(flc.minutes || 0))} خولەک لە تۆمارکردنەوە`
+        : 'دوای تۆمارکردن';
+      UI.toast(`🔒 هەموو خانەکانی ئەم تۆمارە قفڵکراون (${reason}) — چیتر ناتوانیت داتاکانی دەستکاری بکەیت`, 'warning', 5000);
+      return;
+    }
+
     if (!sup && rec.record_date !== UI.todayStr()) {
       UI.toast('ئاگاداری: تەنها دەستکاریکردنی داتای ئەمڕۆ ڕێگەپێدراوە', 'warning');
       return;
@@ -1014,6 +1043,7 @@ const DriverView = (() => {
       initial: driverParts,
       lockedFirst: selfField === 'driver',
       lockedValue: selfField === 'driver' ? (driverParts[0] || u?.username || '') : '',
+      lockedAll: lockedFields.includes('driver'),
       addTitle: 'زیادکردنی سایەقی تر',
     });
     const distribGroup = createNameGroup({
@@ -1023,6 +1053,7 @@ const DriverView = (() => {
       initial: distParts,
       lockedFirst: selfField === 'distributor',
       lockedValue: selfField === 'distributor' ? (distParts[0] || u?.username || '') : '',
+      lockedAll: lockedFields.includes('distributor'),
       addTitle: 'زیادکردنی دابەشکاری تر',
     });
     const delegateGroup = createNameGroup({
@@ -1032,6 +1063,7 @@ const DriverView = (() => {
       initial: delParts,
       lockedFirst: selfField === 'delegate',
       lockedValue: selfField === 'delegate' ? (delParts[0] || u?.username || '') : '',
+      lockedAll: lockedFields.includes('delegate'),
       addTitle: 'زیادکردنی مەندوبی تر',
     });
     const zoneGroup = createNameGroup({
@@ -1039,6 +1071,7 @@ const DriverView = (() => {
       items: () => zones,
       max: 4,
       initial: zoneParts,
+      lockedAll: lockedFields.includes('zone'),
       addTitle: 'زیادکردنی زۆنی تر',
     });
 
@@ -1047,7 +1080,25 @@ const DriverView = (() => {
     $('#grp-delegate', body).appendChild(delegateGroup.el);
     $('#grp-zone', body).appendChild(zoneGroup.el);
 
-    UI.autocomplete($('#f-vehicle', body), () => vehicles);
+    // قفڵکردنی خانە ساکارەکان — تەنها ئەوانەی لە ڕێکخستنی قفڵدا هەڵبژێردران
+    const lockSimpleField = (el, key) => {
+      if (!el || !lockedFields.includes(key)) return;
+      el.readOnly = true;
+      el.style.background = 'var(--bg-2,#f5f5f5)';
+      el.style.color = 'var(--text-muted,#888)';
+      el.style.cursor = 'not-allowed';
+    };
+    lockSimpleField($('#f-vehicle', body), 'vehicle');
+    lockSimpleField($('#f-time', body), 'record_time');
+    lockSimpleField($('#f-weight', body), 'cargo_weight');
+    lockSimpleField($('#f-pieces', body), 'pieces_count');
+    lockSimpleField($('#f-receipt', body), 'receipt_number');
+    lockSimpleField($('#f-money', body), 'collected_money');
+    lockSimpleField($('#f-in-zone', body), 'in_zone_time');
+    lockSimpleField($('#f-out-zone', body), 'out_zone_time');
+    lockSimpleField($('#f-arrival', body), 'arrival_time');
+
+    if (!lockedFields.includes('vehicle')) UI.autocomplete($('#f-vehicle', body), () => vehicles);
     ['#f-weight', '#f-pieces', '#f-receipt'].forEach(id => wireExprField($(id, body)));
 
     const { close } = UI.openModal({
@@ -1072,27 +1123,30 @@ const DriverView = (() => {
             const delegateVals = delegateGroup.getValues();
             const zoneVals     = zoneGroup.getValues();
 
-            if (!driverVals.length)   driverGroup.markFirstInvalid();
-            if (!distribVals.length)  distribGroup.markFirstInvalid();
-            if (!delegateVals.length) delegateGroup.markFirstInvalid();
-            if (!zoneVals.length)     zoneGroup.markFirstInvalid();
+            if (!driverVals.length && !lockedFields.includes('driver'))       driverGroup.markFirstInvalid();
+            if (!distribVals.length && !lockedFields.includes('distributor')) distribGroup.markFirstInvalid();
+            if (!delegateVals.length && !lockedFields.includes('delegate'))   delegateGroup.markFirstInvalid();
+            if (!zoneVals.length && !lockedFields.includes('zone'))           zoneGroup.markFirstInvalid();
 
             const invalid = [];
             const vehicle = val('#f-vehicle');
-            if (!vehicle) invalid.push('#f-vehicle');
+            if (!vehicle && !lockedFields.includes('vehicle')) invalid.push('#f-vehicle');
 
             const weightRaw  = exprValue($('#f-weight', body));
             const piecesRaw  = exprValue($('#f-pieces', body));
             const receiptRaw = exprValue($('#f-receipt', body));
-            if (weightRaw === '' || UI.cleanInt(weightRaw) < 0) invalid.push('#f-weight');
-            if (piecesRaw === '' || UI.cleanInt(piecesRaw) < 0) invalid.push('#f-pieces');
-            if (receiptRaw === '' || UI.cleanInt(receiptRaw) < 0) invalid.push('#f-receipt');
+            if (!lockedFields.includes('cargo_weight') && (weightRaw === '' || UI.cleanInt(weightRaw) < 0)) invalid.push('#f-weight');
+            if (!lockedFields.includes('pieces_count') && (piecesRaw === '' || UI.cleanInt(piecesRaw) < 0)) invalid.push('#f-pieces');
+            if (!lockedFields.includes('receipt_number') && (receiptRaw === '' || UI.cleanInt(receiptRaw) < 0)) invalid.push('#f-receipt');
 
             // پارەی هێنراوە — بەتاڵ واتە ٠
             const moneyRaw = $('#f-money', body).value.trim();
             const money = moneyRaw === '' ? 0 : UI.cleanInt(moneyRaw);
 
-            const missingName = !driverVals.length || !distribVals.length || !delegateVals.length || !zoneVals.length;
+            const missingName = (!driverVals.length && !lockedFields.includes('driver'))
+              || (!distribVals.length && !lockedFields.includes('distributor'))
+              || (!delegateVals.length && !lockedFields.includes('delegate'))
+              || (!zoneVals.length && !lockedFields.includes('zone'));
             if (invalid.length || missingName) {
               invalid.forEach(id => $(id, body)?.classList.add('invalid'));
               UI.toast('تکایە خانە ناوی و ژمارەییەکان بە دروستی پڕ بکەرەوە', 'warning');
@@ -1126,6 +1180,9 @@ const DriverView = (() => {
             // کاتی کارکردن — دووبارە حیساب دەکرێت لەگەڵ کاتی دەستپێک (بۆ هەر ڕۆژێک) و کۆگا دەکرێت
             const wtStart = Store.getBaseTime() || patch.record_time || rec.record_time;
             patch.average_time = patch.arrival_time ? UI.durationToHMM(UI.durationMinutes(wtStart, patch.arrival_time)) : null;
+
+            // خانە قفڵکراوەکان لە پاشەکەوتکردن دەردەبرێن — بەهای کۆنیان دەمێنێتەوە
+            lockedFields.forEach(k => delete patch[k]);
 
             UI.btnLoading(saveBtn, true, 'پاشەکەوت دەکرێت...');
             try {

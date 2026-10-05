@@ -89,12 +89,27 @@ const App = (() => {
     return out;
   }
 
+  /* دوگمەی گەڕانەوەی مووبایل لە هەر تابێکی تر → دەگەڕێتەوە بۆ فۆڕمی سەرەکی (یەکەم تابی ڕیزبەندیەکە) */
+  let tabBackUnreg = null;
+  const homeTabId = () => (orderedTabs()[0] || {}).id;
+
+  function syncTabBack(id) {
+    if (id !== homeTabId()) {
+      if (!tabBackUnreg) {
+        tabBackUnreg = UI.backRegister(() => { tabBackUnreg = null; switchTab(homeTabId()); });
+      }
+    } else if (tabBackUnreg) {
+      const u = tabBackUnreg; tabBackUnreg = null; u();
+    }
+  }
+
   function switchTab(id) {
     const tab = visibleTabs().find(t => t.id === id);
     if (!tab) return;
     if (currentTab && currentTab.onDeactivate) currentTab.onDeactivate();
     currentTab = tab;
     if (currentUser) Store.saveTabState(currentUser.id, { last: id });
+    syncTabBack(id);
 
     const page = $('#page');
     page.className = 'page' + (id === 'admin' ? ' page-admin' : '');
@@ -345,6 +360,7 @@ const App = (() => {
   async function logout() {
     const ok = await UI.confirmDialog('دڵنیاییت لە دەرچوون لە هەژمار؟', { danger: true, okLabel: 'بەڵێ، دەربچم', cancelLabel: 'پاشگەزبوونەوە' });
     if (!ok) return;
+    if (tabBackUnreg) { const u = tabBackUnreg; tabBackUnreg = null; u(); }
     ['driver', 'reports', 'contacts', 'admin', 'settings', 'professions'].forEach(id => {
       try {
         const t = TABS.find(x => x.id === id);
@@ -474,6 +490,9 @@ const App = (() => {
     });
 
     if (Store.getSession()) enterApp(); else showLogin();
+
+    // کرۆم: State ی مێژوو بێ tap ی بەکارهێنەر تۆمار ناکرێت — لە یەکەم tap دووبارە دەسەلمێنرێت
+    document.addEventListener('pointerdown', () => { if (currentTab) syncTabBack(currentTab.id); }, { capture: true, once: true });
 
     // PWA — تەنها لەسەر http/https کار دەکات
     if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {

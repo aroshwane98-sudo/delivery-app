@@ -129,7 +129,8 @@ const UI = (() => {
 
   /* ---------------- ئاگادارکردنەوە (Toast) ---------------- */
 
-  const TOAST_ICONS = { success: '✓', error: '✕', info: 'ℹ', warning: '!' };
+  /* ناوی ئایکۆنەکان تەنها — SVG لە کاتی پیشاندان دروست دەکرێت (ICON_PATHS دواتر ڕادەگەیەندرێت، بۆیە لێرە بانگ ناکرێت) */
+  const TOAST_ICON_NAMES = { success: 'check', error: 'x', info: 'info', warning: 'alert' };
 
   function toast(message, type = 'success', duration = 3200) {
     let wrap = document.getElementById('toast-wrap');
@@ -141,7 +142,7 @@ const UI = (() => {
     }
     const el = document.createElement('div');
     el.className = `toast toast-${type}`;
-    el.innerHTML = `<span class="toast-ico">${TOAST_ICONS[type] || 'ℹ'}</span><span class="toast-msg">${esc(message)}</span>`;
+    el.innerHTML = `<span class="toast-ico">${TOAST_ICON_NAMES[type] ? icon(TOAST_ICON_NAMES[type], 14) : icon('info', 14)}</span><span class="toast-msg">${esc(message)}</span>`;
     wrap.appendChild(el);
     requestAnimationFrame(() => el.classList.add('show'));
     setTimeout(() => {
@@ -150,17 +151,89 @@ const UI = (() => {
     }, duration);
   }
 
+  /* ---------------- دوگمەی گەڕانەوەی مووبایل ----------------
+   *  هەر ویندۆ/ئۆڤەرلەێک (مۆدال، کیبۆردی تایبەت، نۆتیفیکەیشن، وێنەی گەورە، تابی ناوەکی...)
+   *  یەک State لە مێژووی براوسەردا دەگرێت — بۆ ئەوەی دوگمەی گەڕانەوەی مووبایل
+   *  ئەو چینە دابخات نەک ئەپەکە دەربکات.
+   *
+   *  armedDepth  = ژمارەی State ـەکانی ئێمە لە مێژوودا
+   *  pendingBack = ژمارەی history.back() ـە خۆکارەکان کە popstateـیان هێشتا نەهاتووە (پشتگوێ دەخرێن) */
+
+  const backLayers = [];   // LIFO — { close }
+  let armedDepth = 0;
+  let pendingBack = 0;
+  let popClosing = false;  // true کاتێک چینێک بە دوگمەی گەڕانەوەی بەکارهێنەر دادەخرێت (State ـەکەی پێشتر بردراوە)
+  let reconcileTimer = null;
+
+  function backArm() {
+    try { history.pushState({ dlvLayer: true }, ''); armedDepth++; } catch (_) {}
+  }
+
+  /* State ی زیادە (چینەکە داخراوە) دوای ساتێک لە مێژوو دەسڕدرێتەوە — نەک یەکسەر.
+   * history.back() ئامانجی ڕەهای هەیە، بۆیە ئەگەر لەو ساتەدا ویندۆیەکی نوێ بکرێتەوە (confirm → مۆدالی داهاتوو)
+   * مێژووەکە تێک دەچوو. ئێستا ویندۆی نوێ هەمان State ی زیادە بەکاردەهێنێت. */
+  function scheduleReconcile() {
+    clearTimeout(reconcileTimer);
+    reconcileTimer = setTimeout(() => {
+      const extra = armedDepth - backLayers.length;
+      if (extra <= 0) return;
+      armedDepth -= extra;
+      pendingBack++;
+      try { history.go(-extra); } catch (_) { pendingBack--; }
+    }, 40);
+  }
+
+  /** تۆمارکردنی چینێکی گەڕانەوە — closeFn دابخەری چینەکەیە؛ unregister ی دەگەڕێنێت */
+  function backRegister(closeFn) {
+    const layer = { close: closeFn };
+    backLayers.push(layer);
+    if (armedDepth < backLayers.length) backArm();   // State ی زیادەی چینێکی تازە-داخراو دووبارە بەکاردێت
+    let done = false;
+    return function unregister() {
+      if (done) return;
+      done = true;
+      const i = backLayers.indexOf(layer);
+      if (i !== -1) backLayers.splice(i, 1);
+      // کاتێک بە دوگمەی گەڕانەوە دادەخرێت State ـەکەی خۆی چووە؛ لە دۆخی تردا دواتر دەیسڕینەوە
+      if (!popClosing) scheduleReconcile();
+    };
+  }
+
+  window.addEventListener('popstate', () => {
+    if (pendingBack > 0) { pendingBack--; return; }  // گەڕانەوەی خۆکار — پشتگوێ
+    const hadSpare = armedDepth > backLayers.length; // State ی زیادە هەبوو — بەکارهێنەر ئەوەی خواردووە، چینێک دانەخرێت
+    if (armedDepth > 0) armedDepth--;
+    if (hadSpare) return;
+    const top = backLayers.pop();
+    if (!top) return;                                 // هیچ چینێک نەماوە — گەڕانەوەی ئاسایی
+    popClosing = true;
+    try { top.close(); } finally { popClosing = false; }
+  });
+
+  /* Escape — تەنها سەرووترین چین دادەخات */
+  document.addEventListener('keydown', e => {
+    if (e.key !== 'Escape' || e.defaultPrevented || !backLayers.length) return;
+    if (document.querySelector('.ac-list.open')) return; // Escape ی ئۆتۆکۆمپلیت
+    try { history.back(); } catch (_) {}
+  });
+
+  /* دوای هەڵبژاردنی ناو لە لیستی <select> — خانەکە لە focus دەرچێت (هێڵی هەڵبژاردن نەمێنێت) */
+  document.addEventListener('change', e => {
+    const t = e.target;
+    if (t instanceof HTMLSelectElement) setTimeout(() => { try { t.blur(); } catch (_) {} }, 0);
+  });
+
   /* ---------------- مۆدال ---------------- */
 
-  function openModal({ title, body, actions = [], wide = false, size = '', onClose = null }) {
+  function openModal({ title, titleHtml, body, actions = [], wide = false, size = '', onClose = null }) {
     const backdrop = document.createElement('div');
     backdrop.className = 'modal-backdrop';
     const sizeClass = size ? `modal-${size}` : (wide ? 'modal-wide' : '');
     backdrop.innerHTML = `
       <div class="modal ${sizeClass}" role="dialog" aria-modal="true">
         <div class="modal-head">
-          <h3>${esc(title)}</h3>
-          <button class="icon-btn modal-close" type="button" aria-label="داخستن">✕</button>
+          <h3>${titleHtml ? titleHtml : esc(title)}</h3>
+          <button class="icon-btn modal-close" type="button" aria-label="داخستن">${icon('x', 18)}</button>
         </div>
         <div class="modal-body"></div>
         ${actions.length ? '<div class="modal-foot"></div>' : ''}
@@ -179,15 +252,26 @@ const UI = (() => {
       foot.appendChild(btn);
     });
 
+    let unregisterBack = null;
+    let closed = false;
     const close = () => {
+      if (closed) return;
+      closed = true;
+      if (unregisterBack) { const u = unregisterBack; unregisterBack = null; u(); }
       backdrop.classList.remove('open');
       setTimeout(() => backdrop.remove(), 220);
       if (onClose) onClose();
     };
+    unregisterBack = backRegister(close);
     backdrop.querySelector('.modal-close').addEventListener('click', close);
-    backdrop.addEventListener('mousedown', e => { if (e.target === backdrop) close(); });
-    document.addEventListener('keydown', function onKey(e) {
-      if (e.key === 'Escape') { close(); document.removeEventListener('keydown', onKey); }
+    /* داخستن بە کلیک لەسەر پشتەوە — تەنها ئەگەر پەنجە/ماوس لەسەر پشتەوە دابەزیبێت و هەر لەوێش هەڵگیرابێتەوە.
+       (پێشتر mousedown ی دروستکراوی دوای tap کاتێک کیبۆرد دەکرایەوە و ویندۆکە دەجوڵا، فۆڕمەکەی دادەخست) */
+    let downOnBackdrop = false;
+    backdrop.addEventListener('pointerdown', e => { downOnBackdrop = e.target === backdrop; });
+    backdrop.addEventListener('click', e => {
+      const ok = downOnBackdrop && e.target === backdrop;
+      downOnBackdrop = false;
+      if (ok) close();
     });
 
     document.body.appendChild(backdrop);
@@ -256,6 +340,9 @@ const UI = (() => {
       if (!it) return;
       inputEl.value = it.label;
       hide();
+      /* دوای هەڵبژاردن خانەکە لە focus دەردەچێت — هێڵی سلێکت/کەرێتەکە و کیبۆردەکەش نامێنن */
+      try { window.getSelection && window.getSelection().removeAllRanges(); } catch (_) {}
+      inputEl.blur();
       if (onSelect) onSelect(it);
     }
 
@@ -421,14 +508,14 @@ const UI = (() => {
         <img src="${esc(user.avatar_url)}" alt="${esc(user.username || '')}">
         ${user.username ? `<div class="avatar-lightbox-name">${esc(user.username)}</div>` : ''}
       </div>`;
+    let unregLb = null;
     const closeLb = () => {
+      if (unregLb) { const u = unregLb; unregLb = null; u(); }
       wrap.classList.remove('open');
       setTimeout(() => wrap.remove(), 200);
-      document.removeEventListener('keydown', onKey);
     };
-    const onKey = e => { if (e.key === 'Escape') closeLb(); };
     wrap.addEventListener('click', closeLb);
-    document.addEventListener('keydown', onKey);
+    unregLb = backRegister(closeLb);
     document.body.appendChild(wrap);
     requestAnimationFrame(() => wrap.classList.add('open'));
   }
@@ -642,12 +729,54 @@ const UI = (() => {
     package: '<path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/>',
     bulb: '<path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/>',
     columns: '<rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><line x1="12" x2="12" y1="3" y2="21"/>',
+    /* — ئایکۆنە زیادەکان — هەموو ئایکۆنەکانی سیستەم بە یەک ستایل (SVG) — */
+    pin: '<path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/>',
+    logout: '<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/>',
+    flag: '<path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" x2="4" y1="22" y2="15"/>',
+    money: '<rect width="20" height="12" x="2" y="6" rx="2"/><circle cx="12" cy="12" r="2"/><path d="M6 12h.01"/><path d="M18 12h.01"/>',
+    edit: '<path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"/><path d="m15 5 4 4"/>',
+    plus: '<path d="M5 12h14"/><path d="M12 5v14"/>',
+    minus: '<path d="M5 12h14"/>',
+    alert: '<path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/>',
+    x: '<path d="M18 6 6 18"/><path d="m6 6 12 12"/>',
+    check: '<path d="M20 6 9 17l-5-5"/>',
+    checkCircle: '<circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/>',
+    trash: '<path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/>',
+    save: '<path d="M15.2 3a2 2 0 0 1 1.4.6l3.8 3.8a2 2 0 0 1 .6 1.4V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/><path d="M17 21v-7a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v7"/><path d="M7 3v4a1 1 0 0 0 1 1h7"/>',
+    link: '<path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>',
+    download: '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/>',
+    folder: '<path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/>',
+    image: '<rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/>',
+    clipboard: '<rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/>',
+    zap: '<path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z"/>',
+    moon: '<path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>',
+    sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/>',
+    ruler: '<path d="M21.3 15.3a2.4 2.4 0 0 1 0 3.4l-2.6 2.6a2.4 2.4 0 0 1-3.4 0L2.7 8.7a2.41 2.41 0 0 1 0-3.4l2.6-2.6a2.41 2.41 0 0 1 3.4 0Z"/><path d="m14.5 12.5 2-2"/><path d="m11.5 9.5 2-2"/><path d="m8.5 6.5 2-2"/><path d="m17.5 15.5 2-2"/>',
+    type: '<polyline points="4 7 4 4 20 4 20 7"/><line x1="9" x2="15" y1="20" y2="20"/><line x1="12" x2="12" y1="4" y2="20"/>',
+    phoneOff: '<path d="M10.68 13.31a16 16 0 0 0 3.41 2.6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.42 19.42 0 0 1-3.33-2.67m-2.67-3.34a19.79 19.79 0 0 1-3.07-8.63A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91"/><line x1="22" x2="2" y1="2" y2="22"/>',
+    inbox: '<polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/>',
+    eyeOff: '<path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/><line x1="2" x2="22" y1="2" y2="22"/>',
+    rotate: '<path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/>',
+    clock: '<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>',
+    camera: '<path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/>',
+    backspace: '<path d="M20 5H9l-7 7 7 7h11a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2Z"/><line x1="18" x2="12" y1="9" y2="15"/><line x1="12" x2="18" y1="9" y2="15"/>',
+    arrowRight: '<path d="M5 12h14"/><path d="m12 5 7 7-7 7"/>',
+    signpost: '<path d="M12 13v8"/><path d="M12 3v3"/><path d="M18 6a2 2 0 0 1 1.387.56l2.307 2.22a1 1 0 0 1 0 1.44l-2.307 2.22A2 2 0 0 1 18 13H6a2 2 0 0 1-1.387-.56l-2.306-2.22a1 1 0 0 1 0-1.44l2.306-2.22A2 2 0 0 1 6 6z"/>',
+    plusSquare: '<rect width="18" height="18" x="3" y="3" rx="2"/><path d="M8 12h8"/><path d="M12 8v8"/>',
+    sort: '<path d="m21 16-4 4-4-4"/><path d="M17 20V4"/><path d="m3 8 4-4 4 4"/><path d="M7 4v16"/>',
+    sparkles: '<path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"/><path d="M20 3v4"/><path d="M22 5h-4"/><path d="M4 17v2"/><path d="M5 18H3"/>',
+    smile: '<circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" x2="9.01" y1="9" y2="9"/><line x1="15" x2="15.01" y1="9" y2="9"/>',
+    hourglass: '<path d="M5 22h14"/><path d="M5 2h14"/><path d="M17 22v-4.172a2 2 0 0 0-.586-1.414L12 12l-4.414 4.414A2 2 0 0 0 7 17.828V22"/><path d="M7 2v4.172a2 2 0 0 0 .586 1.414L12 12l4.414-4.414A2 2 0 0 0 17 6.172V2"/>',
+    play: '<polygon points="6 3 20 12 6 21 6 3"/>',
+    compass: '<circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/>',
+    search: '<circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>',
   };
 
-  /** ئایکۆنی SVG بە ناو — بۆ تایتڵ و دووگمەکان؛ ڕەنگەکەی لە دەقی دەوروبەری دەگرێت */
+  /** ئایکۆنی SVG بە ناو — بۆ تایتڵ و دووگمەکان؛ ڕەنگەکەی لە دەقی دەوروبەری دەگرێت
+   *  کلاسی lic — بۆ ئەوەی ئۆپشنی «پشاندانی ئایکۆنەکان» هەموویان بە یەکجار بشارێتەوە */
   function icon(name, size = 17) {
     const p = ICON_PATHS[name] || ICON_PATHS.info;
-    return `<svg viewBox="0 0 24 24" width="${size}" height="${size}" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
+    return `<svg class="lic" viewBox="0 0 24 24" width="${size}" height="${size}" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
   }
 
   function norm(s) {
@@ -898,9 +1027,12 @@ const UI = (() => {
     }
   }, true);
 
-  /* ---------------- کیبۆردی تایبەتی سیستەم ---------------- */
+  /* ---------------- کیبۆردی تایبەتی سیستەم ----------------
+   *  - بە inputmode="none" کیبۆردی ڕەسەنی مۆبایل ناکرێتەوە (بێ readOnly — کەرێت و هەڵبژاردن وەک خۆیان دەمێننەوە)
+   *  - تەنها بە tap (focus/click) دەکرێتەوە — دەست لێدان بۆ سکڕۆڵکردن نە دەیکاتەوە نە دەیشارێتەوە
+   *  - دوگمەی گەڕانەوەی مووبایل پێش هەموو شتێک کیبۆردەکە دادەخات (backRegister) */
 
-  const keypad = { el: null, input: null, layout: null };
+  const keypad = { el: null, input: null, layout: null, forceNum: false, unreg: null, repeatT: null, repeatI: null };
   const KURDISH_KEY_ROWS = [
     ['ئ', 'ا', 'ب', 'پ', 'ت', 'ج', 'چ', 'ح', 'خ'],
     ['د', 'ر', 'ڕ', 'ز', 'ژ', 'س', 'ش', 'ع', 'غ'],
@@ -909,6 +1041,13 @@ const UI = (() => {
   ];
 
   const coarsePointer = () => window.matchMedia('(pointer: coarse)').matches;
+
+  /* inputmode ی ڕەسەن — دوای ئەوەی خۆمان کردمانە "none" لە dataset دەمێنێتەوە */
+  const originalInputMode = t => (t.dataset.kpIm !== undefined ? t.dataset.kpIm : (t.getAttribute('inputmode') || ''));
+
+  const isNumericKeypadField = t =>
+    t instanceof HTMLInputElement &&
+    (t.type === 'number' || ['numeric', 'decimal', 'tel'].includes(originalInputMode(t)) || t.classList.contains('num-only'));
 
   /* هەر جۆرێکی کیبۆرد ڕێکخستنی جیای خۆی هەیە — پیت و ژمارە بە جیا ئۆن/ئۆف دەکرێن */
   const keypadEnabledFor = t => {
@@ -919,14 +1058,28 @@ const UI = (() => {
     } catch (_) { return false; }
   };
 
-  const isNumericKeypadField = t =>
-    t instanceof HTMLInputElement && (t.type === 'number' || t.inputMode === 'numeric' || t.classList.contains('num-only'));
-
   const isKeypadField = t => {
-    if (!(t instanceof HTMLInputElement || t instanceof HTMLTextAreaElement) || t.disabled) return false;
+    if (!(t instanceof HTMLInputElement || t instanceof HTMLTextAreaElement) || t.disabled || t.readOnly) return false;
     if (t instanceof HTMLInputElement && ['button', 'checkbox', 'color', 'date', 'datetime-local', 'file', 'hidden', 'image', 'month', 'radio', 'range', 'reset', 'submit', 'time', 'week'].includes(t.type)) return false;
-    return !t.readOnly || t.dataset.kpReadonly === '1';
+    return true;
   };
+
+  const isActiveKeypadField = t => isKeypadField(t) && keypadEnabledFor(t);
+
+  /* پێش focus — کیبۆردی ڕەسەنی مۆبایل دەکوژێنێتەوە */
+  function prepareField(t) {
+    if (!isActiveKeypadField(t)) return;
+    if (t.dataset.kpIm === undefined) t.dataset.kpIm = t.getAttribute('inputmode') || '';
+    t.setAttribute('inputmode', 'none');
+  }
+
+  /* دوای blur — inputmode ی ڕەسەن دەگەڕێتەوە */
+  function restoreField(t) {
+    if (!t || !t.dataset || t.dataset.kpIm === undefined) return;
+    const v = t.dataset.kpIm;
+    delete t.dataset.kpIm;
+    if (v === '') t.removeAttribute('inputmode'); else t.setAttribute('inputmode', v);
+  }
 
   function updateKeypadInput(inp, value, caret) {
     inp.value = value;
@@ -937,6 +1090,8 @@ const UI = (() => {
   function insertKeypadText(inp, text) {
     const start = inp.selectionStart ?? inp.value.length;
     const end = inp.selectionEnd ?? start;
+    const max = inp.maxLength > 0 ? inp.maxLength : Infinity;
+    if (start === end && inp.value.length + text.length > max) return;
     updateKeypadInput(inp, inp.value.slice(0, start) + text + inp.value.slice(end), start + text.length);
   }
 
@@ -947,34 +1102,38 @@ const UI = (() => {
     else if (start > 0) updateKeypadInput(inp, inp.value.slice(0, start - 1) + inp.value.slice(end), start - 1);
   }
 
-  function keypadMarkup(layout) {
+  function keypadMarkup(layout, canToggle) {
     const key = (k, label, cls = '') => `<button type="button" class="${cls}" data-k="${k}" tabindex="-1">${label}</button>`;
     const charKey = char => `<button type="button" class="kp-letter" data-k="char" data-char="${char}" tabindex="-1">${char}</button>`;
+    const icoDel = icon('backspace', 22), icoDone = icon('check', 24), icoNext = icon('arrowRight', 22);
+
     /* کیبۆردی پیت — تەنها بۆ خانەکانی دەق */
     if (layout === 'text') {
       return `
         <div class="kp-text-layout">
           ${KURDISH_KEY_ROWS.map(row => `<div class="kp-row">${row.map(charKey).join('')}</div>`).join('')}
           <div class="kp-row kp-controls">
-            ${key('space', 'بۆشایی', 'kp-space')}${key('del', '⌫', 'kp-del')}${key('done', '✓', 'kp-done')}
+            ${key('num', '123', 'kp-fn')}${key('space', 'بۆشایی', 'kp-space')}${key('del', icoDel, 'kp-del')}${key('next', icoNext, 'kp-next')}${key('done', icoDone, 'kp-done')}
           </div>
         </div>`;
     }
     /* کیبۆردی ژمارە — + و − تێدایە چونکە کیبۆردی ڕەسەنی iOS لە کاتی نووسینی ژمارەدا پیشانی نادات */
     return `
       <div class="kp-number-layout">
-        ${key('7', '7')}${key('8', '8')}${key('9', '9')}${key('del', '⌫', 'kp-del')}
-        ${key('4', '4')}${key('5', '5')}${key('6', '6')}${key('+', '+', 'kp-op')}
-        ${key('1', '1')}${key('2', '2')}${key('3', '3')}${key('minus', '−', 'kp-op')}
-        ${key('0', '0', 'kp-zero')}${key('clear', 'C', 'kp-clear')}${key('done', '✓', 'kp-done')}
+        ${key('7', '7')}${key('8', '8')}${key('9', '9')}${key('del', icoDel, 'kp-del')}
+        ${key('4', '4')}${key('5', '5')}${key('6', '6')}${key('+', icon('plus', 22), 'kp-op')}
+        ${key('1', '1')}${key('2', '2')}${key('3', '3')}${key('minus', icon('minus', 22), 'kp-op')}
+        ${key('0', '0')}${canToggle ? key('num', 'ابج', 'kp-fn') : key('clear', 'C', 'kp-clear')}${key('next', icoNext, 'kp-next')}${key('done', icoDone, 'kp-done')}
       </div>`;
   }
 
-  function renderKeypad(layout) {
-    if (!keypad.el) return;
+  function renderKeypad() {
+    if (!keypad.el || !keypad.input) return;
+    const numericField = isNumericKeypadField(keypad.input);
+    const layout = (numericField || keypad.forceNum) ? 'numeric' : 'text';
     keypad.layout = layout;
     keypad.el.dataset.layout = layout;
-    keypad.el.innerHTML = keypadMarkup(layout);
+    keypad.el.innerHTML = keypadMarkup(layout, !numericField);
     syncKeypadSpace();
   }
 
@@ -985,23 +1144,62 @@ const UI = (() => {
     document.body.style.setProperty('--kp-h', `${Math.round(keypad.el.offsetHeight)}px`);
   }
 
+  function goNextField(inp) {
+    const scope = inp.closest('.modal-body, form, .login-view, .page') || document.body;
+    const all = [...scope.querySelectorAll('input, textarea')].filter(el => isActiveKeypadField(el) && el.offsetParent !== null);
+    const next = all[all.indexOf(inp) + 1];
+    if (!next) { closeKeypad(true); return; }
+    prepareField(next);
+    next.focus();
+  }
+
+  function stopKeyRepeat() {
+    clearTimeout(keypad.repeatT); clearInterval(keypad.repeatI);
+    keypad.repeatT = keypad.repeatI = null;
+  }
+
+  function pressKey(btn) {
+    const inp = keypad.input;
+    if (!inp || !inp.isConnected) { closeKeypad(); return false; }
+    try { navigator.vibrate && navigator.vibrate(6); } catch (_) {}
+    btn.classList.add('pressed');
+    setTimeout(() => btn.classList.remove('pressed'), 90);
+    const k = btn.dataset.k;
+    if (k === 'done') { closeKeypad(true); return false; }
+    if (k === 'next') { goNextField(inp); return false; }
+    if (k === 'num') { keypad.forceNum = !keypad.forceNum; renderKeypad(); return false; }
+    if (k === 'del') { deleteKeypadText(inp); return true; }
+    if (k === 'clear') { updateKeypadInput(inp, '', 0); return false; }
+    if (k === 'space') { insertKeypadText(inp, ' '); return false; }
+    if (k === 'char') { insertKeypadText(inp, btn.dataset.char); return false; }
+    insertKeypadText(inp, k === 'minus' ? '-' : k);
+    return false;
+  }
+
   function buildKeypadEl() {
     const el = document.createElement('div');
     el.className = 'num-keypad';
-    el.addEventListener('pointerdown', e => e.preventDefault());
-    el.addEventListener('click', e => {
+    el.setAttribute('dir', 'ltr');
+    /* لەسەر pointerdown کار دەکات (خێراتر) و focus ی خانەکە ناگۆڕێت */
+    el.addEventListener('pointerdown', e => {
+      e.preventDefault();
       const btn = e.target.closest('button[data-k]');
       if (!btn) return;
-      const inp = keypad.input;
-      if (!inp || !inp.isConnected) { closeKeypad(); return; }
-      const k = btn.dataset.k;
-      if (k === 'done') { closeKeypad(); inp.blur(); return; }
-      if (k === 'del') { deleteKeypadText(inp); return; }
-      if (k === 'clear') { updateKeypadInput(inp, '', 0); return; }
-      if (k === 'space') { insertKeypadText(inp, ' '); return; }
-      if (k === 'char') { insertKeypadText(inp, btn.dataset.char); return; }
-      insertKeypadText(inp, k === 'minus' ? '-' : k);
+      stopKeyRepeat();
+      const repeatable = pressKey(btn);
+      /* ڕاگرتنی ⌫ — بە دووبارەبوونەوە دەسڕێتەوە */
+      if (repeatable) {
+        keypad.repeatT = setTimeout(() => {
+          keypad.repeatI = setInterval(() => {
+            if (!keypad.input || !keypad.input.isConnected) { stopKeyRepeat(); return; }
+            deleteKeypadText(keypad.input);
+          }, 55);
+        }, 380);
+      }
     });
+    ['pointerup', 'pointercancel', 'pointerleave'].forEach(ev => el.addEventListener(ev, stopKeyRepeat));
+    el.addEventListener('click', e => e.preventDefault());
+    el.addEventListener('contextmenu', e => e.preventDefault());
     document.body.appendChild(el);
     return el;
   }
@@ -1038,50 +1236,64 @@ const UI = (() => {
   function openKeypad(inp) {
     if (!keypad.el) keypad.el = buildKeypadEl();
     const changedField = keypad.input !== inp;
+    const wasOpen = keypad.el.classList.contains('open');
     keypad.input = inp;
-    if (!inp.dataset.kpReadonly) {
-      inp.dataset.kpReadonly = '1';
-      inp.readOnly = true;
-    }
-    if (changedField || !keypad.el.classList.contains('open')) {
-      renderKeypad(isNumericKeypadField(inp) ? 'numeric' : 'text');
-    }
+    if (changedField) keypad.forceNum = false;
+    if (changedField || !wasOpen) renderKeypad();
     keypad.el.classList.add('open');
+    /* دوگمەی گەڕانەوەی مووبایل = داخستنی کیبۆردەکە (نەک ویندۆکە یان ئەپەکە) */
+    if (!keypad.unreg) keypad.unreg = backRegister(() => { keypad.unreg = null; closeKeypad(true); });
     syncKeypadSpace();
     keepKeypadFieldVisible(inp);
   }
 
-  function closeKeypad() {
-    if (keypad.input) {
-      if (keypad.input.dataset.kpReadonly) {
-        keypad.input.readOnly = false;
-        delete keypad.input.dataset.kpReadonly;
-      }
-      keypad.input = null;
-      keypad.layout = null;
-    }
+  function closeKeypad(blur) {
+    const inp = keypad.input;
+    keypad.input = null;
+    keypad.layout = null;
+    keypad.forceNum = false;
+    stopKeyRepeat();
     if (keypad.el) keypad.el.classList.remove('open');
     document.body.classList.remove('keypad-open');
     document.body.style.removeProperty('--kp-h');
+    if (keypad.unreg) { const u = keypad.unreg; keypad.unreg = null; u(); }
+    if (blur && inp && inp.isConnected && document.activeElement === inp) inp.blur();
   }
 
+  /* — پێش tap: کیبۆردی ڕەسەنی دەکوژێنێتەوە (کردنەوەی کیبۆرد دەکەوێتە دوای tap، نەک دەست لێدان) — */
+  let lastDownTarget = null; // شوێنی دەستلێدانی یەکەم — بۆ ئەوەی جووڵەی ویندۆکە (کاتی کردنەوەی کیبۆرد) وەک tap ی دەرەوە حیساب نەکرێت
+  document.addEventListener('pointerdown', e => { lastDownTarget = e.target; prepareField(e.target); }, true);
+
+  /* — focus ی ڕاستەقینە (tap) — */
   document.addEventListener('focusin', e => {
     const t = e.target;
-    if (keypad.input && keypad.input !== t) closeKeypad();
-    if (isKeypadField(t) && keypadEnabledFor(t)) openKeypad(t);
+    if (isActiveKeypadField(t)) { prepareField(t); openKeypad(t); }
+    else if (keypad.input) closeKeypad();
   });
 
   document.addEventListener('focusout', e => {
-    if (keypad.input === e.target) closeKeypad();
+    const t = e.target;
+    restoreField(t);
+    if (keypad.input === t) {
+      /* دواکەوتن بۆ ئەوەی گواستنەوە بۆ خانەیەکی تر کیبۆردەکە نەپەڕێنێت */
+      setTimeout(() => {
+        if (keypad.input === t && document.activeElement !== t) closeKeypad();
+      }, 60);
+    }
   });
 
-  document.addEventListener('pointerdown', e => {
+  /* — tap: خانەی focus کراو کە کیبۆردەکەی داخراوە دووبارە دەکرێتەوە؛ tap لە دەرەوە دایدەخات (سکڕۆڵ نا) — */
+  document.addEventListener('click', e => {
     const t = e.target;
-    if (isKeypadField(t) && keypadEnabledFor(t)) {
-      openKeypad(t);
+    const down = lastDownTarget;
+    lastDownTarget = null;
+    if (isActiveKeypadField(t)) {
+      if (keypad.input !== t || !keypad.el?.classList.contains('open')) { prepareField(t); openKeypad(t); }
       return;
     }
-    if (keypad.input && keypad.el && !keypad.el.contains(t)) closeKeypad();
+    /* دەستلێدانەکە لەسەر خانەیەکی کیبۆرد/خودی کیبۆرد/لیستی پێشنیار دەستی پێکردووە — ئەو click ی دوای جووڵەی ڕووکارە، دەرەوە نییە */
+    if (down instanceof Element && (isActiveKeypadField(down) || keypad.el?.contains(down) || down.closest('.ac-list'))) return;
+    if (keypad.input && keypad.el && !keypad.el.contains(t) && !t.closest('.ac-list')) closeKeypad(true);
   }, true);
 
   /* ---- ئامرازی + / − لەسەر ئایۆئێس بۆ کاتێک کیبۆردی ژمارەیی سیستەم کراوەیە ---- */
@@ -1275,7 +1487,12 @@ const UI = (() => {
       </div>`;
 
     document.body.appendChild(overlay);
-    const close = () => overlay.remove();
+    let unregNp = null;
+    const close = () => {
+      if (unregNp) { const u = unregNp; unregNp = null; u(); }
+      overlay.remove();
+    };
+    unregNp = backRegister(close);
     overlay.querySelector('.notif-panel-backdrop').addEventListener('click', close);
     overlay.querySelector('[data-notif-close]').addEventListener('click', close);
 
@@ -1304,11 +1521,107 @@ const UI = (() => {
       </div>`).join('');
   }
 
+  /* ---------------- ئایکۆنی مۆدێرن بۆ هەموو ئیمۆجییەکانی سیستەم ----------------
+   *  هەر ئیمۆجییەک لە هەر شوێنێکدا (تایتڵ، دووگمە، تۆست، خشتە، فۆڕم...) خۆکار دەگۆڕدرێت بۆ ئایکۆنی SVG
+   *  بە کلاسی .lic — بۆیە ئۆپشنی «پشاندانی ئایکۆنەکان» (hide-icons) هەموویان بەیەکجار دەشارێتەوە. */
+
+  const EMOJI_ICON = {
+    '✓': 'check', '✔': 'check', '✕': 'x', '✖': 'x', '❌': 'x', '✅': 'checkCircle',
+    '📍': 'pin', '🚚': 'truck', '✏': 'edit', '🚏': 'signpost', '🏁': 'flag', '➕': 'plus',
+    '👁': 'eye', '🙈': 'eyeOff', '⚠': 'alert', '⊞': 'plusSquare', '🔔': 'bell', '⟲': 'rotate',
+    '💰': 'money', '🗑': 'trash', '📞': 'phone', '☎': 'phone', '📵': 'phoneOff', '🔐': 'lock', '🔒': 'lock',
+    '📊': 'chart', '💾': 'save', '📷': 'camera', '🖨': 'printer', '⚡': 'zap', '⌫': 'backspace',
+    '🔗': 'link', '↕': 'sort', '🗺': 'map', '🎉': 'sparkles', '📁': 'folder', '📂': 'folder', '🗂': 'folder',
+    '🛡': 'shield', '⚙': 'gear', '👋': 'smile', 'ℹ': 'info', '👤': 'user', '\u{1F9D1}\u200D\u2708': 'user',
+    '👥': 'users', '⏳': 'hourglass', '⏱': 'clock', '📥': 'download', '📋': 'clipboard', '🖼': 'image',
+    '📭': 'inbox', '🌙': 'moon', '☀': 'sun', '💡': 'bulb', '🎨': 'palette', '📏': 'ruler', '▶': 'play',
+    '📦': 'package', '🔠': 'type', '⌨': 'keyboard', '📱': 'smartphone', '🧭': 'compass', '🔍': 'search',
+  };
+  const EMOJI_RE = /\u{1F9D1}\u200D\u2708\uFE0F?|[\u{1F300}-\u{1FAFF}\u2600-\u27BF\u2B50\u23E9-\u23FF\u232B\u229E\u2195\u2139\u25B6\u27F2]\uFE0F?/gu;
+  const EMOJI_TEST = new RegExp(EMOJI_RE.source, 'u');
+  const emojiKey = m => m.replace(/\uFE0F/g, '');
+  const ICONIZE_SKIP = 'script, style, textarea, svg, [data-noicon]';
+
+  function makeInlineIcon(name) {
+    const tpl = document.createElement('template');
+    tpl.innerHTML = icon(name, '1.15em');
+    const svg = tpl.content.firstElementChild;
+    svg.classList.add('lic-inline');
+    return svg;
+  }
+
+  function iconizeTextNode(node) {
+    const txt = node.nodeValue;
+    if (!txt || !EMOJI_TEST.test(txt)) return;
+    const p = node.parentElement;
+    if (!p || p.closest(ICONIZE_SKIP)) return;
+
+    /* <option> و <title> ناتوانن SVG هەڵگرن — ئیمۆجییەکە لادەبرێت */
+    if (p.closest('option, title')) {
+      node.nodeValue = txt.replace(EMOJI_RE, m => (EMOJI_ICON[emojiKey(m)] ? '' : m)).replace(/^\s+/, '');
+      return;
+    }
+
+    const frag = document.createDocumentFragment();
+    let last = 0, any = false;
+    txt.replace(EMOJI_RE, (m, off) => {
+      const name = EMOJI_ICON[emojiKey(m)];
+      if (!name) return m;
+      if (off > last) frag.append(txt.slice(last, off));
+      frag.append(makeInlineIcon(name));
+      last = off + m.length;
+      any = true;
+      return m;
+    });
+    if (!any) return;
+    if (last < txt.length) frag.append(txt.slice(last));
+    const icons = [...frag.querySelectorAll('svg')];
+    node.replaceWith(frag);
+    /* دووگمەی بێ دەق (تەنها ئایکۆن) — لە دۆخی hide-icons نابێت بشاردرێتەوە */
+    if (/^(BUTTON|A)$/.test(p.tagName) && !p.textContent.trim()) icons.forEach(s => s.classList.add('lic-keep'));
+  }
+
+  function stripEmojiAttrs(el) {
+    ['title', 'placeholder', 'aria-label'].forEach(a => {
+      const v = el.getAttribute && el.getAttribute(a);
+      if (v && EMOJI_TEST.test(v)) {
+        el.setAttribute(a, v.replace(EMOJI_RE, m => (EMOJI_ICON[emojiKey(m)] ? '' : m)).replace(/\s+/g, ' ').trim());
+      }
+    });
+  }
+
+  function iconizeTree(root) {
+    if (!root) return;
+    if (root.nodeType === 3) { iconizeTextNode(root); return; }
+    if (root.nodeType !== 1 || root.matches(ICONIZE_SKIP) || root.closest('svg')) return;
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+    const nodes = [];
+    while (walker.nextNode()) nodes.push(walker.currentNode);
+    nodes.forEach(iconizeTextNode);
+    stripEmojiAttrs(root);
+    root.querySelectorAll('[title], [placeholder], [aria-label]').forEach(stripEmojiAttrs);
+  }
+
+  function initIconize() {
+    if (!document.body) return;
+    iconizeTree(document.body);
+    /* لە callback ی MutationObserver دا ڕاستەوخۆ جێبەجێ دەبێت — پێش paint، بۆیە ئیمۆجی ناپەڕێتەوە */
+    new MutationObserver(records => {
+      for (const r of records) {
+        if (r.type === 'characterData') iconizeTree(r.target);
+        else r.addedNodes.forEach(iconizeTree);
+      }
+    }).observe(document.body, { childList: true, subtree: true, characterData: true });
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initIconize);
+  else initIconize();
+
+
   return {
     esc, toLatinDigits, cleanInt, hasOperator, fmtNum, fmtMoney, todayStr, monthStartStr, monthEndStr, nowTime, timeToMinutes, daysAgoStr, fmtDateHuman,
     weekdayKu, toast, openModal, confirmDialog, autocomplete, avatarHtml, setLoading, btnLoading, sleep,
     norm, userMatches, parseIdList, recMatchesUser, calcDuration, durationMinutes, parseDurationMin, recordDurationMinutes, workTimeDisplay, fmtDuration, durationToHMM,
-    sortUsers, openRecordFullscreen, openUserProfile, openPhoneOptions, avatarEditor, intlPhoneDigits, phoneChipHtml, maskSecretInputs, icon,
+    sortUsers, openRecordFullscreen, openUserProfile, openPhoneOptions, avatarEditor, intlPhoneDigits, phoneChipHtml, maskSecretInputs, icon, backRegister, iconize: iconizeTree,
     fetchVisibleNotifications, openNotificationsPanel, refreshNotifBadge
   };
 })();
