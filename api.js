@@ -597,5 +597,23 @@ const API = (() => {
     return gw('users.changeOwnPin', { currentPin, newPin });
   }
 
-  return { Records, Lists, Notifications, Professions, login, loginOptions, changeOwnPin, gatewayActive: gwOn };
+  /**
+   * بارکردنی وێنەی پڕۆفایل — لە مۆدی دەروازەدا وێنەکە دەچێتە ناو GitHub repo
+   * (پەڕگەیەکی سەربەخۆ + CDN) و لە داتابەیسەکەدا تەنها ڕێڕەوەکە دەمێنێتەوە —
+   * بۆیە لیستی یوسەرەکان زۆر سووک و خێرا دەبێت. userId بەتاڵ بێت = تەنها فایلەکە بار دەکرێت
+   * (بۆ یوسەری نوێ کە هێشتا دروست نەکراوە).
+   */
+  function uploadAvatar(userId, dataUrl) {
+    if (gwOn()) return gw('users.uploadAvatar', { userId: userId || '', dataUrl });
+    // ڕێگای کۆن — dataURL ڕاستەوخۆ لە خشتەکەدا
+    if (!userId) return Promise.resolve({ avatar_url: dataUrl });
+    return Lists.updateUser(userId, { avatar_url: dataUrl });
+  }
+
+  /** گواستنەوەی هەموو وێنە کۆنەکان (dataURL) بۆ GitHub — تەنها بەڕێوەبەر */
+  function migrateAvatars() {
+    return gw('users.migrateAvatars', {});
+  }
+
+  return { Records, Lists, Notifications, Professions, login, loginOptions, changeOwnPin, uploadAvatar, migrateAvatars, gatewayActive: gwOn };
 })();

@@ -402,11 +402,13 @@ const SettingsView = (() => {
       if (!file) return;
       UI.avatarEditor(file, {
         onSave: async dataUrl => {
-          const updated = await API.Lists.updateUser(App.getUser().id, { avatar_url: dataUrl });
-          Store.updateSession({ avatar_url: updated ? updated.avatar_url : dataUrl });
+          const res = await API.uploadAvatar(App.getUser().id, dataUrl);
+          const newUrl = (res && res.avatar_url) ? res.avatar_url : dataUrl;
+          Store.updateSession({ avatar_url: newUrl });
           $('#profile-avatar', container).innerHTML = UI.avatarHtml(App.getUser(), 76);
           App.renderHeader();
           UI.toast('وێنەی پڕۆفایل نوێ کرایەوە ✓', 'success');
+          if (typeof Store !== 'undefined' && Store.invalidateLists) Store.invalidateLists();
         },
       });
     });

@@ -25,6 +25,8 @@ const LISTS_SERVICE = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
 const RECORDS_URL = (Deno.env.get('RECORDS_URL') ?? '').replace(/\/+$/, '');
 const RECORDS_SERVICE = Deno.env.get('RECORDS_SERVICE_KEY') ?? '';
 const TOKEN_SECRET = Deno.env.get('TOKEN_SECRET') ?? Deno.env.get('SUPABASE_JWT_SECRET') ?? '';
+const GITHUB_TOKEN = Deno.env.get('GITHUB_TOKEN') ?? '';
+const GITHUB_REPO = Deno.env.get('GITHUB_REPO') ?? ''; // 'owner/repo'
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -272,6 +274,43 @@ function sanitizeRow(row: Record<string, unknown>, cols: string[]): Record<strin
     if (cols.includes(k) && k !== 'id') out[k] = v;
   });
   return out;
+}
+
+/* ---------------- ئەڤاتار — پاشەکەوتکردن لە GitHub repo (بۆ خێرایی + CDN) ---------------- */
+
+const MAX_AVATAR_BYTES = 400_000;
+
+function parseDataUrl(dataUrl: string): { ext: string; b64: string; bytes: number } {
+  const m = /^data:image\/(jpeg|jpg|png|webp);base64,([A-Za-z0-9+/=]+)$/.exec(dataUrl);
+  if (!m) throw new Error('فۆرماتی وێنەکە دروست نییە (تەنها JPEG/PNG/WEBP ڕێپێدراوە)');
+  const bin = atob(m[2]);
+  if (bin.length > MAX_AVATAR_BYTES) throw new Error('وێنەکە زۆر گەورەیە — زۆرترین ٤٠٠KB');
+  return { ext: m[1] === 'jpeg' ? 'jpg' : m[1], b64: m[2], bytes: bin.length };
+}
+
+async function githubPutFile(path: string, contentB64: string): Promise<void> {
+  const res = await fetch(`https://api.github.com/repos/${GITHUB_REPO}/contents/${path}`, {
+    method: 'PUT',
+    headers: {
+      'Authorization': `Bearer ${GITHUB_TOKEN}`,
+      'Accept': 'application/vnd.github+json',
+      'Content-Type': 'application/json',
+      'X-GitHub-Api-Version': '2022-11-28',
+      'User-Agent': 'delivery-app-gateway',
+    },
+    body: JSON.stringify({ message: `avatar: ${path}`, content: contentB64 }),
+  });
+  if (!res.ok) {
+    const t = await res.text();
+    throw new Error(`GitHub (${res.status}): ${t.slice(0, 140)}`);
+  }
+}
+
+function requireGithubConfig(): Response | null {
+  if (!GITHUB_TOKEN || !GITHUB_REPO) {
+    return fail('GITHUB_TOKEN و GITHUB_REPO دانەنراون لە Secrets', 'CONFIG', 500);
+  }
+  return null;
 }
 
 /* ---------------- فلتەری تۆمارەکانی خۆی — بۆ ئەوانەی rep_view_all نییە ---------------- */
@@ -610,6 +649,61 @@ Deno.serve(async (req: Request) => {
         method: 'PATCH', body: { password: nw }, prefer: 'return=minimal',
       });
       return ok(true);
+    }
+
+    /* — ئەڤاتار — پاشەکەوتکردن لە GitHub repo (خێرا + CDN + سووک بۆ داتابەیس) — */
+    if (op === 'users.uploadAvatar') {
+      const cfgErr = requireGithubConfig();
+      if (cfgErr) return cfgErr;
+      const targetId = String(p.userId ?? '').trim();
+      // خۆی یان بەڕێوەبەری بەکارهێنەران
+      if (targetId !== uid && !can(cfg, prof, uid, 'view', 'admin_users')) {
+        return fail('دەسەڵاتی گۆڕینی وێنەی ئەم یوسەرەت نییە', 'FORBIDDEN', 403);
+      }
+      let img: { ext: string; b64: string; bytes: number };
+      try {
+        img = parseDataUrl(String(p.dataUrl ?? ''));
+      } catch (err) {
+        return fail((err as Error).message, 'BAD_IMAGE', 400);
+      }
+      const path = `avatars/a${Date.now()}${Math.floor(Math.random() * 9000 + 1000)}.${img.ext}`;
+      await githubPutFile(path, img.b64);
+      const rel = `avatars/${path.split('/').pop()}`;
+      // ئەگەر userId دراوە — ستوونی usersv2 نوێ بکەرەوە (بۆ یوسەری نوێ پێویست نییە)
+      if (targetId) {
+        await pg(LISTS_URL, LISTS_SERVICE, `/usersv2?driver_id=eq.${encodeURIComponent(targetId)}`, {
+          method: 'PATCH', body: { avatar_url: rel }, prefer: 'return=minimal',
+        });
+      }
+      return ok({ avatar_url: rel });
+    }
+
+    if (op === 'users.migrateAvatars') {
+      if (!sup) return fail('تەنها بەڕێوەبەر', 'FORBIDDEN', 403);
+      const cfgErr = requireGithubConfig();
+      if (cfgErr) return cfgErr;
+      const rows = await pg(LISTS_URL, LISTS_SERVICE,
+        `/usersv2?select=driver_id,username,avatar_url`) as Record<string, unknown>[];
+      let migrated = 0;
+      const failed: string[] = [];
+      for (const u of rows ?? []) {
+        const a = String(u.avatar_url ?? '');
+        if (!a.startsWith('data:image/')) continue;
+        try {
+          const img = parseDataUrl(a);
+          const path = `avatars/u${u.driver_id}-${Date.now()}.${img.ext}`;
+          await githubPutFile(path, img.b64);
+          await pg(LISTS_URL, LISTS_SERVICE, `/usersv2?driver_id=eq.${encodeURIComponent(String(u.driver_id))}`, {
+            method: 'PATCH', body: { avatar_url: `avatars/${path.split('/').pop()}` }, prefer: 'return=minimal',
+          });
+          migrated++;
+        } catch (err) {
+          console.error('avatar migrate failed:', u.username, err);
+          failed.push(String(u.username ?? u.driver_id));
+        }
+      }
+      permsCache = { ts: 0, cfg: {} };
+      return ok({ migrated, failed });
     }
 
     return fail(`کردارەکە نەزانراوە: ${op}`, 'UNKNOWN_OP', 400);

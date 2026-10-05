@@ -1521,6 +1521,7 @@ const AdminView = (() => {
         <div class="admin-header-row" style="margin-bottom:6px">
           <h3 style="font-size:0.96rem"><span class="sec-icon">${UI.icon('users')}</span> بەڕێوەبردنی بەکارهێنەران (خشتەی usersv2)</h3>
           <div style="display:flex;gap:8px">
+            ${CONFIG.GATEWAY_URL ? `<button type="button" class="btn btn-ghost btn-sm" id="adm-migrate-avatars-btn" title="گواستنەوەی وێنە کۆنەکان (base64) بۆ GitHub — لیستەکان خێراتر دەبێت">🌐 وێنەکان بۆ GitHub</button>` : ''}
             <button type="button" class="btn btn-ghost btn-sm" id="adm-toggle-pass">👁️ پشاندانی هەموو پاسۆڕدەکان</button>
             <button type="button" class="btn btn-primary btn-sm" id="admin-add-user-btn">➕ بەکارهێنەری نوێ</button>
           </div>
@@ -1628,6 +1629,29 @@ const AdminView = (() => {
       updateUserCardsGrid();
     });
     $('#admin-add-user-btn', wrap).addEventListener('click', () => openUserModal(null, updateUserCardsGrid));
+
+    // گواستنەوەی وێنە کۆنەکان (dataURL) بۆ GitHub repo — لیستی یوسەرەکان خێراتر دەبێت
+    const migBtn = $('#adm-migrate-avatars-btn', wrap);
+    if (migBtn) migBtn.addEventListener('click', async () => {
+      const ok = await UI.confirmDialog(
+        'هەموو وێنە کۆنەکان کە وەک base64 لە داتابەیسەکەدا پاشەکەوتکراون، دەگوازرێنەوە بۆ GitHub repo ەکە و لە داتابەیسەکەدا تەنها ڕێڕەوەکەیان دەمێنێتەوە. بەردەوام دەبیت؟',
+        { okLabel: 'بەڵێ، بگوازەوە', cancelLabel: 'پاشگەزبوونەوە' }
+      );
+      if (!ok) return;
+      UI.btnLoading(migBtn, true, '...');
+      try {
+        const res = await API.migrateAvatars();
+        Store.invalidateLists();
+        const failed = (res && res.failed) || [];
+        const failedTxt = failed.length ? ` — شکستی هێنا بۆ: ${failed.join('، ')}` : '';
+        UI.toast(`${UI.fmtNum(res.migrated || 0)} وێنە گواسترایەوە بۆ GitHub ✓${failedTxt}`, failed.length ? 'warning' : 'success', 6000);
+        updateUserCardsGrid();
+      } catch (err) {
+        UI.toast('هەڵە لە گواستنەوەی وێنەکان: ' + err.message, 'error', 5000);
+      } finally {
+        UI.btnLoading(migBtn, false);
+      }
+    });
 
     updateUserCardsGrid();
   }
@@ -1749,7 +1773,17 @@ const AdminView = (() => {
                   phone_number_2: phone2 || null,
                   location: location || null,
                 };
-                if (newAvatar !== undefined) patch.avatar_url = newAvatar;
+                if (newAvatar !== undefined) {
+                  if (newAvatar === null) {
+                    patch.avatar_url = null;
+                  } else if (CONFIG.GATEWAY_URL) {
+                    // وێنەکە دەچێتە ناو GitHub repo — لە داتابەیسەکەدا تەنها ڕێڕەوەکە دەمێنێتەوە
+                    const up = await API.uploadAvatar(user.id, newAvatar);
+                    patch.avatar_url = (up && up.avatar_url) ? up.avatar_url : newAvatar;
+                  } else {
+                    patch.avatar_url = newAvatar;
+                  }
+                }
                 await API.Lists.updateUser(user.id, patch);
                 const idx = state.users.findIndex(x => x.id === user.id);
                 if (idx !== -1) state.users[idx] = { ...state.users[idx], ...patch };
@@ -1761,7 +1795,15 @@ const AdminView = (() => {
                   phone_number_2: phone2 || null,
                   location: location || null,
                 };
-                if (newAvatar) row.avatar_url = newAvatar;
+                if (newAvatar) {
+                  if (CONFIG.GATEWAY_URL) {
+                    // یوسەری نوێ هێشتا ئایدی نییە — سەرەتا فایلەکە بۆ GitHub دەچێت، پاشان ڕێڕەوەکە لەگەڵ ڕیزەکە تۆمار دەکرێت
+                    const up = await API.uploadAvatar('', newAvatar);
+                    row.avatar_url = (up && up.avatar_url) ? up.avatar_url : newAvatar;
+                  } else {
+                    row.avatar_url = newAvatar;
+                  }
+                }
                 const inserted = await API.Lists.insertUser(row);
                 state.users.unshift(inserted || { id: Date.now(), ...row });
                 UI.toast('بەکارهێنەری نوێ زیادکرا ✓', 'success');
