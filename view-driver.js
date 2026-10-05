@@ -636,6 +636,10 @@ const DriverView = (() => {
       // تەنها یەک دووگمە لەناو کارتی نۆتیفیکەیشن — بێ هیچ داتای زیادە
       const title = `${stageIcon} گەیاندن`;
 
+      // وێنە گەورەکە — ئەڤاتاری یوسەرەکەی ئەنجامدەری کردارەکە (لە جیاتی ئایکۆنی ئەپ)
+      const me = App.getUser();
+      const userIcon = (me && me.avatar_url) ? me.avatar_url : './icon-192.png';
+
       const existing = await reg.getNotifications({ tag: 'active-trip-lockscreen' });
       const current = existing[0];
       if (current && current.data && current.data.recordId === active.id && current.data.stage === nextStage) {
@@ -643,7 +647,7 @@ const DriverView = (() => {
       }
 
       await reg.showNotification(title, {
-        icon: './icon-192.png',
+        icon: userIcon,
         badge: './icon-192.png',
         tag: 'active-trip-lockscreen',
         renotify: true,
@@ -887,15 +891,18 @@ const DriverView = (() => {
   /* ---------------- مۆدالی پارەی هێنراوە — دوگمەی جیاوە، دوای تۆمارکردن ون دەبێت ---------------- */
 
   function openMoneyModal(active) {
-    // قفڵی خانەی پارەی هێنراوە — ئەگەر قفڵکراوە، تۆمارکردن/گۆڕین ڕێگەپێدراو نییە
+    // قفڵی خانەی پارەی هێنراوە — تۆمارکردنی یەکجار: کاتێک بەتاڵە دەکرێت جارێک بنووسرێت،
+    // بەڵام ئەگەر ژمارەیەکی تێدایە و قفڵکراوە، هێڵ نادرێت بگۆڕدرێت
     const uMoney = App.getUser();
-    if (!isSupervisor() && !Perms.canAct(uMoney, 'act_bypass_field_lock') && Perms.isRecordLocked(active, 'collected_money', uMoney)) {
+    const moneyAlreadySet = Number(active.collected_money || 0) > 0;
+    if (!isSupervisor() && moneyAlreadySet && !Perms.canAct(uMoney, 'act_bypass_field_lock') && Perms.isRecordLocked(active, 'collected_money', uMoney)) {
       UI.toast('🔒 خانەی «پارەی هێنراوە» قفڵکراوە — ناتوانیت بیگۆڕیت', 'warning', 5000);
       return;
     }
     const body = document.createElement('div');
     body.innerHTML = `
       <p class="confirm-msg">بڕی پارەی کۆمکراوی ئەم بارە بنووسە (بە دیناری عێراقی):</p>
+      ${!moneyAlreadySet ? '<p class="hint" style="margin:0 0 6px">⚠️ تێبینی: ئەمە تۆمارکردنی یەکجارە — پاش پاشەکەوتکردن، خانەکە قفڵ دەبێت و چیتر ناگۆڕدرێت.</p>' : ''}
       <div class="field">
         <label>پارەی هێنراوە</label>
         <input id="f-money" type="number" min="0" step="1" inputmode="numeric" value="" placeholder="بڕی پارە بنووسە (د.ع)">

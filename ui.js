@@ -1444,8 +1444,17 @@ const UI = (() => {
       if (toAlert.length > 0) {
         localStorage.setItem('dlv_sys_alert_ts', String(new Date(toAlert[0].created_at).getTime()));
         if ('Notification' in window && Notification.permission === 'granted' && 'serviceWorker' in navigator) {
-          navigator.serviceWorker.ready.then(reg => {
-            toAlert.reverse().forEach(n => {
+          navigator.serviceWorker.ready.then(async reg => {
+            // وێنەی یوسەرەکەی ئەنجامدەری کردارەکە — لە لیستی یوسەرانەوە بە ناوەکەی دەدۆزرێتەوە
+            let users = [];
+            try { users = (await Store.loadLists()).users || []; } catch (_) { users = []; }
+            const avatarOf = name => {
+              if (!name) return null;
+              const target = norm(name);
+              const u = users.find(x => norm(x.username) === target);
+              return (u && u.avatar_url) ? u.avatar_url : null;
+            };
+            for (const n of toAlert.reverse()) {
               let shortMsg = n.action;
               const actionMatch = n.action.match(/^(.*?)\s*—/);
               const actorMatch = n.action.match(/\(لەلایەن\s*(.*?)\)$/);
@@ -1456,13 +1465,13 @@ const UI = (() => {
               }
               reg.showNotification('نۆتیفیکەیشن', {
                 body: shortMsg,
-                icon: './icon-192.png',
+                icon: avatarOf(actorMatch ? actorMatch[1] : null) || './icon-192.png',
                 badge: './icon-192.png',
                 tag: 'sys-alert-' + n.id,
                 renotify: true,
                 silent: false
               });
-            });
+            }
           }).catch(() => {});
         }
       }
