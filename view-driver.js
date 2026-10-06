@@ -12,6 +12,7 @@ const DriverView = (() => {
   let allTodayRecords = [];  // هەموو تۆمارەکانی ئەمڕۆ (بۆ ژماردنی ڕاستی گەشتەکانی شۆفێر)
   let lists = null;   // {users, zones}
   let isFirstRender = true;  // بۆ نیشاندانی لوک سکرینی شۆفێر لە یەکەم بار
+  let lastRenderSig = null;  // نیشانەی داتای ڕێندەرکراو — بۆ پشتگوێخستنی ڕێندەری بێگۆڕان
 
 
   const isDistributor = () => App.getUser()?.profession === CONFIG.PROFESSION_DISTRIBUTOR;
@@ -301,6 +302,10 @@ const DriverView = (() => {
       } else {
         records = cleanedToday.filter(r => UI.recMatchesUser(r, 'driver', u));
       }
+      // ڕیفرێشی خۆکار — ئەگەر داتاکە نەگۆڕابێت دووبارە ڕێندەر مەکەرەوە (خێرایی + بێ لەرینەوە)
+      const sig = JSON.stringify([records, allTodayRecords]);
+      if (silent && sig === lastRenderSig) { checkPendingLockAction(); return; }
+      lastRenderSig = sig;
       renderAll();
       checkPendingLockAction();
     } catch (err) {

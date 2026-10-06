@@ -497,11 +497,16 @@ const App = (() => {
     $('#app-view').hidden = true;
     $('#login-view').hidden = false;
     $('#login-foot').textContent = `${CONFIG.APP_NAME} • نسخە ${CONFIG.APP_VERSION}`;
+    // ئەگەر لیستی بەکارهێنەران هێشتا پڕ نەکراوە (دوای دەرچوون لە سێشنی چالاک) — پڕی بکەرەوە
+    if (!$('#login-username optgroup')) initLoginSelect();
   }
 
   function boot() {
     Store.applySettings();
-    initLoginSelect();
+    // لیستی چوونەژوورەوە تەنها کاتێک هێنەرێ کە شاشەی لۆگین دەکرێتەوە —
+    // لەگەڵ سێشنی چالاک (منی بیربکە) هیچ داواکارییەکی سەرەتایی زیادە ناکرێت و دەستپێک خێرایە
+    if (Store.getSession()) enterApp();
+    else { initLoginSelect(); showLogin(); }
     // خانەی تێپەڕەوشە بێ type="password" بکە (لە براوسەرانی پشتگیریکراو) — بۆ نەبوونی پۆپئەپی سەیڤکردنی پاسۆرد
     UI.maskSecretInputs(document);
 
@@ -509,8 +514,6 @@ const App = (() => {
     $('#login-password').addEventListener('input', e => {
       e.target.value = UI.toLatinDigits(e.target.value).replace(/\D/g, '').slice(0, 4);
     });
-
-    if (Store.getSession()) enterApp(); else showLogin();
 
     // کرۆم: State ی مێژوو بێ tap ی بەکارهێنەر تۆمار ناکرێت — لە یەکەم tap دووبارە دەسەلمێنرێت
     document.addEventListener('pointerdown', () => { if (currentTab) syncTabBack(currentTab.id); }, { capture: true, once: true });

@@ -3,12 +3,11 @@
  *  فایلەکانی سیستەم کاش دەکات؛ داتای Supabase هەمیشە ڕاستەوخۆ لە ڕایەڵەوە.
  * ========================================================= */
 
-const CACHE_NAME = 'dlv-cache-v1.9.17';
+const CACHE_NAME = 'dlv-cache-v1.9.18';
 const SHELL = [
   './',
   './index.html',
   './styles.css',
-  './xlsx.full.min.js',
   './config.js',
   './api.js',
   './store.js',

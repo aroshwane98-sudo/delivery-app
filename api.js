@@ -277,9 +277,11 @@ const API = (() => {
     },
 
     async insert(row) {
-      if (gwOn()) return gw('records.insert', { row });
-      // ئایدی بەکارهێنەران (usersv2) لەگەڵ ناوەکان تۆمار دەکرێن بۆ هاوتاکردنی ورد
-      const clean = await sanitizeRecordPayload(await attachUserIds(row));
+      // ئایدی بەکارهێنەران (usersv2) لەگەڵ ناوەکان تۆمار دەکرێن — لە هەردوو مۆدیدا.
+      // لە مۆدی دەروازەدا ئەگەر ئەمە شکست بخوات، سێرڤەر بە خۆکاری ئایدیەکان چارەسەر دەکات.
+      const withIds = await attachUserIds(row);
+      if (gwOn()) return gw('records.insert', { row: withIds });
+      const clean = await sanitizeRecordPayload(withIds);
       const rows = await request(CONFIG.RECORDS_URL, CONFIG.RECORDS_KEY,
         `/${CONFIG.RECORDS_TABLE}`, { method: 'POST', body: clean, prefer: 'return=representation' });
       return rows && rows[0] ? rows[0] : null;
@@ -294,11 +296,13 @@ const API = (() => {
      * هیچ داتایەک وونی نابێت. (INSERT و DELETE بە ئازادی کار دەکەن)
      */
     async update(id, patch) {
-      if (gwOn()) return gw('records.update', { id, patch });
+      // ئایدییەکان پێش ناردن حل دەکرێن (لە هەردوو مۆدیدا) — ئەگەر ناو گۆڕدرابێت
+      const withIds = await attachUserIds(patch);
+      if (gwOn()) return gw('records.update', { id, patch: withIds });
       // سەرەتا ستوونە نیەبووەکان (وەک work_time) لادەبرێن — ئەگینا PGRST204
       // دەگەڕێتەوە و چارەسەری لەبەرچاوگراوەکەی خوارەوە هەرگیز کار ناکات.
       // هەروەها ئەگەر ناوی شۆفێر/دابەشکار/مەندوب گۆڕدرابێت ئایدیەکەی نوێ دەکرێتەوە.
-      const clean = await sanitizeRecordPayload(await attachUserIds(patch));
+      const clean = await sanitizeRecordPayload(withIds);
       try {
         const rows = await request(CONFIG.RECORDS_URL, CONFIG.RECORDS_KEY,
           `/${CONFIG.RECORDS_TABLE}?id=eq.${encodeURIComponent(id)}`,

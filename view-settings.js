@@ -879,6 +879,8 @@ const SettingsView = (() => {
   }
 
   async function buildBackupWorkbook(dayStr) {
+    // کتێبخانەی ئێکسڵ خاوەنکار بار دەکرێت — تەنها کاتی باک ئەپ
+    await UI.ensureXlsx();
     const records = (await API.Records.list({ 'record_date': `eq.${dayStr}` })) || [];
     const rows = [
       [`سیستەمی گەیاندن — باک ئەپی ڕۆژی ${dayStr}`],

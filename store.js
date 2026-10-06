@@ -6,7 +6,7 @@ const Store = (() => {
   const SESSION_KEY = 'dlv_session';
   const SETTINGS_KEY = 'dlv_settings';
   const LISTS_CACHE_KEY = 'dlv_lists_cache';
-  const LISTS_TTL_MS = 10 * 60 * 1000; // ١٠ خولەک
+  const LISTS_TTL_MS = 30 * 60 * 1000; // ٣٠ خولەک — پاش هەر گۆڕانکارییەک بە خۆکاری بەتاڵ دەکرێتەوە
 
   /* ---------------- سێشن ---------------- */
 

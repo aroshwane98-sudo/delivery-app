@@ -399,6 +399,42 @@ const UI = (() => {
     return `<div class="avatar avatar-fallback" style="width:${size}px;height:${size}px;font-size:${Math.round(size * 0.42)}px"${attrs}>${initial}</div>`;
   }
 
+  // وێنەی ئاڤاتاری شێواو (بەستەری هەڵە یان نەگەیشتوو) — لە جیاتی نیشانەی وێنەی شێواو،
+  // پیتە یەکەمی ناوی یوسەرەکە پیشان دەدرێت (هەمان شێوەی فۆڵباکی بنەڕەتی)
+  document.addEventListener('error', e => {
+    const img = e.target;
+    if (!(img instanceof HTMLImageElement) || !img.classList.contains('avatar')) return;
+    const fallback = document.createElement('div');
+    fallback.className = 'avatar avatar-fallback';
+    fallback.setAttribute('style', img.getAttribute('style') || '');
+    const size = parseInt(img.style.width, 10) || 44;
+    fallback.style.fontSize = Math.round(size * 0.42) + 'px';
+    ['data-uid', 'data-uname', 'data-uprof'].forEach(a => {
+      const v = img.getAttribute(a);
+      if (v !== null) fallback.setAttribute(a, v);
+    });
+    fallback.textContent = (img.getAttribute('alt') || '؟').trim().charAt(0);
+    img.replaceWith(fallback);
+  }, true);
+
+  /* ---------------- بارکردنی خاوەنکاری کتێبخانەی ئێکسڵ ----------------
+   * xlsx.full.min.js (~٨٨٠KB) لە دەستپێکی سیستەمدا بار ناکرێت — تەنها کاتێک
+   * هەناردەی ئێکسڵ یان باک ئەپ داوا بکرێت، بۆ ئەوەی دەستپێک خێرا بێت. */
+  let _xlsxPromise = null;
+
+  function ensureXlsx() {
+    if (typeof XLSX !== 'undefined') return Promise.resolve();
+    if (_xlsxPromise) return _xlsxPromise;
+    _xlsxPromise = new Promise((resolve, reject) => {
+      const s = document.createElement('script');
+      s.src = 'xlsx.full.min.js';
+      s.onload = () => resolve();
+      s.onerror = () => { _xlsxPromise = null; reject(new Error('کتابخانەی ئێکسڵ بار نەبووە — پەیوەندی بە ڕایەڵەوە پشکنین بکە')); };
+      document.head.appendChild(s);
+    });
+    return _xlsxPromise;
+  }
+
   /* ---------------- پەیوەندی — ویندۆی یوسەر و ئۆپشنەکانی ژمارە تەلەفۆن ---------------- */
 
   // ئایکۆنەکانی ئەپ — شێوەی squircle ی تاریک بە ئایکۆنی سپی (One UI)
@@ -1631,6 +1667,7 @@ const UI = (() => {
     weekdayKu, toast, openModal, confirmDialog, autocomplete, avatarHtml, setLoading, btnLoading, sleep,
     norm, userMatches, parseIdList, recMatchesUser, calcDuration, durationMinutes, parseDurationMin, recordDurationMinutes, workTimeDisplay, fmtDuration, durationToHMM,
     sortUsers, openRecordFullscreen, openUserProfile, openPhoneOptions, avatarEditor, intlPhoneDigits, phoneChipHtml, maskSecretInputs, icon, backRegister, iconize: iconizeTree,
+    ensureXlsx,
     fetchVisibleNotifications, openNotificationsPanel, refreshNotifBadge
   };
 })();
