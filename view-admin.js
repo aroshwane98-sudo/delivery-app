@@ -85,8 +85,9 @@ const AdminView = (() => {
     }
 
     try {
-      // هێنانی لیستەکان (usersv2 + zonesv2)
-      const ls = await Store.loadLists(true);
+      // هێنانی لیستەکان (usersv2 + zonesv2) — لە کاشەوە ئەگەر نوێ بێت
+      // (پاش هەر گۆڕانکارییەک کاشەکە بە خۆکاری نوێ دەکرێتەوە) — بۆ خێرایی
+      const ls = await Store.loadLists();
       state.users = ls.users || [];
       state.zones = ls.zones || [];
 
@@ -1079,11 +1080,9 @@ const AdminView = (() => {
 
   /* ---------------- بەئێکسڵکردن بەپێی بەکارهێنەران (فرە-شیت) ---------------- */
 
-  function openExcelExportModal() {
-    if (typeof XLSX === 'undefined') {
-      UI.toast('کتێبخانەی ئێکسڵ بەردەست نییە، تکایە لاپەڕەکە نوێ بکەرەوە', 'error');
-      return;
-    }
+  async function openExcelExportModal() {
+    // کتێبخانەی ئێکسڵ خاوەنکار بار دەکرێت — تەنها کاتی هەناردە
+    try { await UI.ensureXlsx(); } catch (err) { UI.toast(err.message, 'error'); return; }
 
     let exportFrom = state.from || UI.daysAgoStr(6);
     let exportTo = state.to || UI.todayStr();
@@ -1643,11 +1642,14 @@ const AdminView = (() => {
         const res = await API.migrateAvatars();
         Store.invalidateLists();
         const failed = (res && res.failed) || [];
-        const failedTxt = failed.length ? ` — شکستی هێنا بۆ: ${failed.join('، ')}` : '';
-        UI.toast(`${UI.fmtNum(res.migrated || 0)} وێنە گواسترایەوە بۆ GitHub ✓${failedTxt}`, failed.length ? 'warning' : 'success', 6000);
+        const firstError = (res && res.firstError) || '';
+        const failedTxt = failed.length
+          ? ` — شکستی هێنا بۆ ${UI.fmtNum(failed.length)} وێنە${firstError ? ` (هۆکار: ${firstError})` : ''}`
+          : '';
+        UI.toast(`${UI.fmtNum(res.migrated || 0)} وێنە گواسترایەوە بۆ GitHub ✓${failedTxt}`, failed.length ? 'warning' : 'success', 8000);
         updateUserCardsGrid();
       } catch (err) {
-        UI.toast('هەڵە لە گواستنەوەی وێنەکان: ' + err.message, 'error', 5000);
+        UI.toast('هەڵە لە گواستنەوەی وێنەکان: ' + err.message, 'error', 8000);
       } finally {
         UI.btnLoading(migBtn, false);
       }
