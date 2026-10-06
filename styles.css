@@ -2857,3 +2857,33 @@ body.keypad-open .modal-fullscreen {
 .a-money .c4 { left: 74%; animation-delay: .78s; }
 @keyframes a-coin { 0% { transform: translateY(0) rotate(0deg); opacity: 0; } 15% { opacity: 1; } 78% { transform: translateY(33px) rotate(210deg); opacity: 1; } 100% { transform: translateY(41px) rotate(230deg); opacity: 0; } }
 .a-money .slot { position: absolute; bottom: 5px; left: 50%; width: 36px; height: 4px; margin-left: -18px; border-radius: 3px; background: rgba(255, 255, 255, .55); }
+
+/* =========================================================
+ *  لۆدینگی سەیارە — بۆ هەموو دووگمەکانی فۆڕمی کارەکان
+ *  لایەک دەچێتە ژوورەوە، لە کاتی لۆدینگ دەڕوات، و کاتێک
+ *  لۆدینگ تەواو بوو بە خێرایی لە لایەکی تر دەردەچێت.
+ * ========================================================= */
+
+.a-truck .a-lorry { position: absolute; top: 50%; left: -70px; width: 58px; height: 28px; margin-top: -17px; animation: a-truck-loop 1.6s linear infinite; }
+@keyframes a-truck-loop { from { left: -70px; } to { left: calc(100% + 10px); } }
+
+/* بەشەکانی سەیارە — هاوبەش لەگەڵ سیناریۆی دەرچوون */
+.a-truck .t-back, .a-exit .t-back { position: absolute; left: 0; bottom: 6px; width: 33px; height: 17px; background: linear-gradient(180deg, #f4f7fb, #ccd6e4); border-radius: 3px 2px 2px 3px; box-shadow: 0 1px 3px rgba(0, 0, 0, .3); }
+.a-truck .t-front, .a-exit .t-front { position: absolute; right: 9px; bottom: 6px; width: 15px; height: 13px; background: linear-gradient(180deg, color-mix(in srgb, var(--accent) 82%, #fff), var(--accent)); border-radius: 3px 7px 2px 2px; }
+.a-truck .t-window, .a-exit .t-window { position: absolute; right: 11px; bottom: 11px; width: 8px; height: 5px; background: #cfeaff; border-radius: 2px; }
+.a-truck .t-beam, .a-exit .t-beam { position: absolute; right: -15px; bottom: 7px; width: 19px; height: 10px; background: linear-gradient(90deg, rgba(255, 214, 102, .05), rgba(255, 214, 102, .8)); clip-path: polygon(0 32%, 100% 0, 100% 100%, 0 68%); animation: a-beam .45s ease-in-out infinite alternate; }
+.a-truck .t-wheel, .a-exit .t-wheel { position: absolute; bottom: 0; width: 9px; height: 9px; border-radius: 50%; background: conic-gradient(#1a2434 0 25%, #dfe7f2 0 50%, #1a2434 0 75%, #dfe7f2 0); box-shadow: 0 0 0 2px rgba(10, 16, 28, .55); animation: a-wheel .38s linear infinite; }
+.a-truck .t-wheel.w1, .a-exit .t-wheel.w1 { left: 7px; }
+.a-truck .t-wheel.w2, .a-exit .t-wheel.w2 { right: 12px; }
+
+/* هێڵی خێرایی لە دوای سەیارەکە — وەک ئایکۆنی Truck Loading */
+.a-truck .sp { position: absolute; height: 2px; border-radius: 2px; background: rgba(255, 255, 255, .6); animation: a-sp .9s ease-out infinite; }
+.a-truck .sp.s1 { top: 34%; left: 30%; width: 18px; }
+.a-truck .sp.s2 { top: 50%; left: 42%; width: 27px; animation-delay: .15s; }
+.a-truck .sp.s3 { top: 66%; left: 34%; width: 15px; animation-delay: .3s; }
+@keyframes a-sp { 0% { transform: translateX(22px); opacity: 0; } 30% { opacity: .9; } 100% { transform: translateX(-38px); opacity: 0; } }
+
+/* کۆتایی لۆدینگ — سەیارەکە بە خێرایی لە لایەکی تر دەردەچێت و هێڵەکان دەمێننەوە لە پشت */
+.btn.anim-done .anim-layer.a-truck .a-lorry { animation: a-truck-exit .55s ease-in forwards; }
+@keyframes a-truck-exit { from { left: -70px; } to { left: calc(100% + 16px); } }
+.btn.anim-done .anim-layer.a-truck .sp { animation-duration: .4s; }

@@ -85,13 +85,12 @@ const SettingsView = (() => {
             <span class="set-row-hint">لایتێک لەچوارچێوەی کارت و ویندۆیەکاندا دەسوڕێتەوە.</span>
           </span>
         </label>
-        <label class="set-row" for="set-btnanim" style="margin-top:14px;border-bottom:none">
-          <input type="checkbox" id="set-btnanim" ${s.btnAnim !== false ? 'checked' : ''}>
-          <span class="set-row-txt">
-            <span class="set-row-title">🎬 ئەنیمەیشنی دووگمەکانی کارەکان</span>
-            <span class="set-row-hint">لەکاتی تۆمارکردنی دەرچوون، ناو زۆن، دەرێی زۆن، گەشتنەوە و پارە — لە شوێنی لۆدینگ ئەنیمەیشنی تایبەت بە هەر کردارێک پیشان دەدرێت.</span>
-          </span>
-        </label>
+        <p class="hint" style="margin:14px 0 6px">🎬 لۆدینگی دووگمەکانی کارەکان — لە شوێنی چاوەڕوانی:</p>
+        <div class="seg" id="btnanim-seg">
+          <button type="button" data-mode="truck" class="${(s.btnAnimMode || 'truck') === 'truck' ? 'active' : ''}">🚚 سەیارە</button>
+          <button type="button" data-mode="scene" class="${s.btnAnimMode === 'scene' ? 'active' : ''}">🎯 تایبەت بە هەر دووگمە</button>
+          <button type="button" data-mode="off" class="${s.btnAnimMode === 'off' ? 'active' : ''}">ناچالاک</button>
+        </div>
         <label class="set-row" for="set-lastweek" style="margin-top:14px;border-bottom:none">
           <input type="checkbox" id="set-lastweek" ${s.lastWeekFill !== false ? 'checked' : ''}>
           <span class="set-row-txt">
@@ -102,6 +101,7 @@ const SettingsView = (() => {
         <div id="btnanim-preview" style="margin-top:10px">
           <p class="hint" style="margin:0 0 8px">پێشبینین — سەیری هەر دووگمەیەک بکە:</p>
           <div class="anim-preview-grid">
+            <button type="button" class="btn btn-primary anim-try" data-anim="truck">${UI.animLayerHtml('truck')}<span class="btn-anim-label">🚚 سەیارە</span></button>
             <button type="button" class="btn btn-primary anim-try" data-anim="exit">${UI.animLayerHtml('exit')}<span class="btn-anim-label">🚚 دەرچوون</span></button>
             <button type="button" class="btn btn-primary anim-try" data-anim="in_zone">${UI.animLayerHtml('in_zone')}<span class="btn-anim-label">📍 ناو زۆن</span></button>
             <button type="button" class="btn btn-primary anim-try" data-anim="out_zone">${UI.animLayerHtml('out_zone')}<span class="btn-anim-label">🚏 دەرێی زۆن</span></button>
@@ -496,10 +496,14 @@ const SettingsView = (() => {
       if (v) v.textContent = e.target.value;
     });
 
-    /* — ئەنیمەیشنی دووگمەکانی کارەکان + پێشبینین — */
-    $('#set-btnanim', el)?.addEventListener('change', e => {
-      Store.saveSettings({ btnAnim: e.target.checked });
-      UI.toast(e.target.checked ? 'ئەنیمەیشنی دووگمەکان چالاک کرا ✓' : 'ئەنیمەیشنی دووگمەکان ناچالاک کرا', 'info');
+    /* — لۆدینگی دووگمەکانی کارەکان (سەیارە / تایبەت / ناچالاک) + پێشبینین — */
+    el.querySelectorAll('#btnanim-seg button').forEach(sb => {
+      sb.addEventListener('click', () => {
+        const mode = sb.dataset.mode || 'truck';
+        Store.saveSettings({ btnAnimMode: mode });
+        el.querySelectorAll('#btnanim-seg button').forEach(b => b.classList.toggle('active', b === sb));
+        UI.toast(mode === 'truck' ? 'سەیارەکە بۆ هەموو دووگمەکان چالاک کرا 🚚' : (mode === 'scene' ? 'ئەنیمەیشنی تایبەت بە هەر دووگمە چالاک کرا ✓' : 'لۆدینگی ئاسایی چالاک کرا'), 'info');
+      });
     });
     el.querySelectorAll('#btnanim-preview .anim-try').forEach(pb => {
       pb.addEventListener('click', () => {

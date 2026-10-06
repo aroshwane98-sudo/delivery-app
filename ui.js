@@ -422,6 +422,8 @@ const UI = (() => {
    * پیشان دەدرێت و دەقە کوردییەکەی دووگمەکە بە شێوەیەکی سروشتی دەمێنێتەوە. */
 
   const ANIM_LAYERS = {
+    /* سەیارە — لۆدینگی هەموو دووگمەکان: لایەک دەچێتەوە، دەڕوات و لە کۆتاییدا لایەکی تر دەردەچێت */
+    truck: '<span class="a-road"><i></i><i></i><i></i></span><span class="a-lorry"><i class="t-back"></i><i class="t-front"></i><i class="t-window"></i><i class="t-beam"></i><i class="t-wheel w1"></i><i class="t-wheel w2"></i></span><i class="sp s1"></i><i class="sp s2"></i><i class="sp s3"></i>',
     /* دەرچوون — سەیارە بە درێژایی دووگمەکە لەگەڵ ڕووناکی و ڕێگا */
     exit: '<span class="a-road"><i></i><i></i><i></i></span><span class="a-truck"><i class="t-back"></i><i class="t-front"></i><i class="t-window"></i><i class="t-beam"></i><i class="t-wheel w1"></i><i class="t-wheel w2"></i></span>',
     /* ناو زۆن — پین دادەبەزێت و ڕادار بەربڵاو دەبێت */
@@ -438,29 +440,38 @@ const UI = (() => {
     return ANIM_LAYERS[type] ? `<span class="anim-layer a-${type}" aria-hidden="true">${ANIM_LAYERS[type]}</span>` : '';
   }
 
-  /** چالاک/ناچالاککردنی ئەنیمەیشن لەسەر دووگمە — دەقی ئەسلی دووگمەکە پاشەکەوت و بەرز دەکرێتەوە */
+  /** چالاک/ناچالاککردنی ئەنیمەیشن لەسەر دووگمە — دەقی ئەسلی دووگمەکە پاشەکەوت و بەرز دەکرێتەوە.
+   * بۆ شێوازی سەیارە: لە کاتی ناچالاککردندا سەیارەکە بە خێرایی لە لایەکی تر دەردەچێت پاشان دووگمەکە دەگەڕێتەوە. */
   function btnScene(btn, type, on) {
     if (!btn) return;
-    if (on) {
-      if (!btn.dataset.sceneHtml) btn.dataset.sceneHtml = btn.innerHTML;
-      btn.disabled = true;
-      btn.classList.add('anim-on');
-      btn.innerHTML = `${animLayerHtml(type)}<span class="btn-anim-label">${btn.dataset.sceneHtml}</span>`;
-    } else {
+    const finish = () => {
       btn.disabled = false;
-      btn.classList.remove('anim-on');
+      btn.classList.remove('anim-on', 'anim-done');
       if (btn.dataset.sceneHtml) {
         btn.innerHTML = btn.dataset.sceneHtml;
         delete btn.dataset.sceneHtml;
       }
-    }
+    };
+    if (on) {
+      if (!btn.dataset.sceneHtml) btn.dataset.sceneHtml = btn.innerHTML;
+      btn.disabled = true;
+      btn.classList.remove('anim-done');
+      btn.classList.add('anim-on');
+      btn.innerHTML = `${animLayerHtml(type)}<span class="btn-anim-label">${btn.dataset.sceneHtml}</span>`;
+    } else if (type === 'truck' && btn.classList.contains('anim-on')) {
+      // کۆتایی لۆدینگ — سەیارەکە بە خێرایی لە لایەکی تر دەردەچێت
+      btn.classList.add('anim-done');
+      setTimeout(finish, 620);
+    } else finish();
   }
 
-  /** ئەگەر ئەنیمەیشن لە ڕێکخستنەکان چالاک بێت scene پیشان دەدرێت، ئەگینا لۆدینگی ئاسایی */
+  /** ئەگەر ئەنیمەیشن لە ڕێکخستنەکان چالاک بێت scene پیشان دەدرێت، ئەگینا لۆدینگی ئاسایی.
+   * شێوازەکان: 'truck' = سەیارە بۆ هەموو دووگمەکان | 'scene' = ئەنیمەیشنی تایبەت بە هەر دووگمە | 'off' = لۆدینگی ئاسایی */
   function btnBusy(btn, type, on, text) {
-    let animEnabled = true;
-    try { animEnabled = Store.getSettings().btnAnim !== false; } catch (_) {}
-    if (animEnabled && type && ANIM_LAYERS[type]) btnScene(btn, type, on);
+    let mode = 'truck';
+    try { mode = Store.getSettings().btnAnimMode || 'truck'; } catch (_) {}
+    if (mode === 'truck' && type) btnScene(btn, 'truck', on);
+    else if (mode === 'scene' && type && ANIM_LAYERS[type]) btnScene(btn, type, on);
     else btnLoading(btn, on, text || 'چاوەڕوان بە...');
   }
 
