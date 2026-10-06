@@ -2782,3 +2782,78 @@ body.keypad-open .modal-fullscreen {
   color: #fff; font-weight: 700; font-size: 1.05rem;
   text-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
 }
+
+/* =========================================================
+ *  ئەنیمەیشنی دووگمەکانی کردار — فۆڕمی کارەکان
+ *  لە شوێنی لۆدینگ پیشان دەدرێت + پێشبینین لە ڕێکخستنەکان
+ * ========================================================= */
+
+.btn.anim-on { position: relative; overflow: hidden; pointer-events: none; }
+.anim-layer { position: absolute; inset: 0; display: none; pointer-events: none; z-index: 1; }
+.btn.anim-on .anim-layer { display: block; }
+.btn-anim-label { position: relative; z-index: 2; display: inline-flex; align-items: center; gap: 8px; text-shadow: 0 1px 4px rgba(2, 8, 20, .45); }
+
+/* — پێشبینینی ڕێکخستنەکان — */
+.anim-preview-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.anim-preview-grid .btn { position: relative; overflow: hidden; font-size: .85rem; padding: 11px 8px; }
+@media (min-width: 480px) { .anim-preview-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+
+/* — ١) دەرچوون: سەیارە بە درێژایی دووگمەکە لەگەڵ ڕێگا و ڕووناکی — */
+.a-exit .a-road i { position: absolute; bottom: 6px; width: 16px; height: 2px; border-radius: 2px; background: rgba(255, 255, 255, .55); animation: a-dash .9s linear infinite; }
+.a-exit .a-road i:nth-child(1) { left: 12%; }
+.a-exit .a-road i:nth-child(2) { left: 42%; animation-delay: .3s; }
+.a-exit .a-road i:nth-child(3) { left: 70%; animation-delay: .6s; }
+@keyframes a-dash { 0% { transform: translateX(0); opacity: 0; } 25% { opacity: .85; } 100% { transform: translateX(40px); opacity: 0; } }
+
+.a-exit .a-truck { position: absolute; top: 50%; left: -70px; width: 58px; height: 28px; margin-top: -17px; animation: a-truck-drive 1.5s linear infinite; }
+@keyframes a-truck-drive { from { left: -70px; } to { left: calc(100% + 10px); } }
+
+.a-exit .t-back { position: absolute; left: 0; bottom: 6px; width: 33px; height: 17px; background: linear-gradient(180deg, #f4f7fb, #ccd6e4); border-radius: 3px 2px 2px 3px; box-shadow: 0 1px 3px rgba(0, 0, 0, .3); }
+.a-exit .t-front { position: absolute; right: 9px; bottom: 6px; width: 15px; height: 13px; background: linear-gradient(180deg, color-mix(in srgb, var(--accent) 82%, #fff), var(--accent)); border-radius: 3px 7px 2px 2px; }
+.a-exit .t-window { position: absolute; right: 11px; bottom: 11px; width: 8px; height: 5px; background: #cfeaff; border-radius: 2px; }
+.a-exit .t-beam { position: absolute; right: -15px; bottom: 7px; width: 19px; height: 10px; background: linear-gradient(90deg, rgba(255, 214, 102, .05), rgba(255, 214, 102, .8)); clip-path: polygon(0 32%, 100% 0, 100% 100%, 0 68%); animation: a-beam .45s ease-in-out infinite alternate; }
+@keyframes a-beam { from { opacity: .5; } to { opacity: 1; } }
+.a-exit .t-wheel { position: absolute; bottom: 0; width: 9px; height: 9px; border-radius: 50%; background: conic-gradient(#1a2434 0 25%, #dfe7f2 0 50%, #1a2434 0 75%, #dfe7f2 0); box-shadow: 0 0 0 2px rgba(10, 16, 28, .55); animation: a-wheel .38s linear infinite; }
+.a-exit .t-wheel.w1 { left: 7px; }
+.a-exit .t-wheel.w2 { right: 12px; }
+@keyframes a-wheel { to { transform: rotate(360deg); } }
+
+/* — ٢) ناو زۆن: پین دادەبەزێت و ڕادار بەربڵاو دەبێت — */
+.a-inzone .a-pin { position: absolute; left: 50%; top: -16px; width: 15px; height: 15px; margin-left: -8px; animation: a-pin-drop 1.4s cubic-bezier(.32, .72, .4, 1.25) infinite; }
+.a-inzone .p-body { position: absolute; inset: 0; background: linear-gradient(160deg, #ff7b6e, #e9483c); border-radius: 50% 50% 50% 0; transform: rotate(-45deg); box-shadow: 0 2px 6px rgba(0, 0, 0, .35); }
+.a-inzone .p-hole { position: absolute; left: 4.5px; top: 4.5px; width: 6px; height: 6px; background: #fff; border-radius: 50%; }
+@keyframes a-pin-drop {
+  0% { transform: translateY(0); opacity: 0; }
+  22% { opacity: 1; }
+  55% { transform: translateY(25px); }
+  68% { transform: translateY(19px); }
+  78%, 92% { transform: translateY(25px); opacity: 1; }
+  100% { transform: translateY(25px); opacity: 0; }
+}
+.a-inzone .a-radar { position: absolute; left: 50%; bottom: 5px; width: 14px; height: 6px; margin-left: -7px; border: 2px solid color-mix(in srgb, var(--accent) 55%, #fff); border-radius: 50%; opacity: 0; animation: a-radar 1.4s ease-out infinite; }
+@keyframes a-radar { 0%, 52% { transform: scale(.35); opacity: 0; } 64% { opacity: .95; } 100% { transform: scale(2.7); opacity: 0; } }
+
+/* — ٣) دەرێی زۆن: خێرایی دەرچوون بە هێڵی با و تیر — */
+.a-out_zone .st { position: absolute; height: 2px; border-radius: 2px; background: linear-gradient(90deg, transparent, rgba(255, 255, 255, .75)); animation: a-streak 1s ease-in infinite; }
+.a-out_zone .s1 { top: 30%; left: 34%; width: 22px; }
+.a-out_zone .s2 { top: 50%; left: 48%; width: 32px; animation-delay: .18s; }
+.a-out_zone .s3 { top: 69%; left: 38%; width: 20px; animation-delay: .34s; }
+@keyframes a-streak { 0% { transform: translateX(48px); opacity: 0; } 30% { opacity: 1; } 100% { transform: translateX(-72px); opacity: 0; } }
+.a-out_zone .a-chev { position: absolute; top: 50%; left: 100%; width: 11px; height: 11px; margin-top: -6px; border-left: 3px solid #fff; border-bottom: 3px solid #fff; transform: rotate(45deg); animation: a-chev 1s ease-in infinite; filter: drop-shadow(0 1px 2px rgba(0, 0, 0, .3)); }
+@keyframes a-chev { 0% { left: 104%; opacity: 0; } 22% { opacity: 1; } 100% { left: -16px; opacity: 0; } }
+
+/* — ٤) گەشتنەوە: ئاڵای شطرنجی لەڕێگەوە دەڕوات — */
+.a-arrival .a-flag { position: absolute; left: 50%; top: 50%; width: 0; height: 0; animation: a-flag-move 1.6s ease-in-out infinite; }
+@keyframes a-flag-move { 0% { transform: translate(36px, 0); opacity: 0; } 18% { opacity: 1; } 78% { opacity: 1; } 100% { transform: translate(-40px, 0); opacity: 0; } }
+.a-arrival .f-pole { position: absolute; left: -2px; bottom: -15px; width: 3px; height: 31px; background: linear-gradient(180deg, #f4f7fb, #b9c6d8); border-radius: 2px; }
+.a-arrival .f-cloth { position: absolute; left: 1px; top: -15px; width: 27px; height: 16px; background: repeating-conic-gradient(#111a2b 0 25%, #f2f6fb 0 50%) 0 0 / 9px 8px; clip-path: polygon(0 0, 100% 8%, 100% 92%, 0 100%); animation: a-flag-wave .45s linear infinite; box-shadow: 0 1px 4px rgba(0, 0, 0, .25); }
+@keyframes a-flag-wave { to { background-position: 18px 0; } }
+
+/* — ٥) پارە: دراو دادەبەزێتە ناو خانەکە — */
+.a-money .coin { position: absolute; top: -12px; width: 11px; height: 11px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #ffdf8a, #f0a733 68%); box-shadow: inset 0 0 0 2px rgba(255, 255, 255, .38), 0 1px 3px rgba(0, 0, 0, .3); animation: a-coin 1.15s ease-in infinite; }
+.a-money .c1 { left: 22%; }
+.a-money .c2 { left: 40%; animation-delay: .26s; }
+.a-money .c3 { left: 58%; animation-delay: .52s; }
+.a-money .c4 { left: 74%; animation-delay: .78s; }
+@keyframes a-coin { 0% { transform: translateY(0) rotate(0deg); opacity: 0; } 15% { opacity: 1; } 78% { transform: translateY(33px) rotate(210deg); opacity: 1; } 100% { transform: translateY(41px) rotate(230deg); opacity: 0; } }
+.a-money .slot { position: absolute; bottom: 5px; left: 50%; width: 36px; height: 4px; margin-left: -18px; border-radius: 3px; background: rgba(255, 255, 255, .55); }

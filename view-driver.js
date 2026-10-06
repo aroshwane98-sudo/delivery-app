@@ -198,6 +198,18 @@ const DriverView = (() => {
       clearInvalid: () => rows.forEach(r => r.inp.classList.remove('invalid')),
       hasFirst: () => !!(rows[0] && rows[0].inp.value.trim()),
       markFirstInvalid: () => { if (rows[0]) rows[0].inp.classList.add('invalid'); },
+      // دانانی بەهاکان — ڕیزە زیادەکان دەسڕدرێنەوە و نوێیان دروست دەکرێن (بۆ پڕکردنەوەی خۆکار).
+      // ڕیزی قفڵکراو (ناوی خۆی یوسەر) ناگۆڕدرێت.
+      setValues: (vals = []) => {
+        while (rows.length > 1) {
+          const r = rows.pop();
+          r.row.remove();
+        }
+        if (rows[0] && !rows[0].inp.readOnly) rows[0].inp.value = vals[0] || '';
+        for (let i = 1; i < vals.length && i < max; i++) makeRow(vals[i] || '', false);
+        refreshAdd();
+        rows.forEach(r => r.inp.classList.remove('invalid'));
+      },
       // ڕێگری: هەموو بەها نابەتاڵەکان دەبێت لە لیستی ڕێگەپێدراودا بن (پاشگر دوو/سێ پشتگوێ دەخرێت)
       validateAllowed: (allowedNames) => {
         if (!allowedNames || !allowedNames.length) return true;
@@ -568,7 +580,8 @@ const DriverView = (() => {
     const icon = { in_zone: '📍', out_zone: '🚏', arrival: '🏁' }[type];
 
     const actBtn = container ? $('#act-btn', container) : null;
-    if (actBtn) UI.btnLoading(actBtn, true, 'تۆمار دەکرێت...');
+    // لە شوێنی لۆدینگ — ئەنیمەیشنی تایبەتی کردارەکە (ئەگەر لە ڕێکخستنەکان چالاک بێت)
+    if (actBtn) UI.btnBusy(actBtn, type, true, 'تۆمار دەکرێت...');
     try {
       const patch = { [field]: UI.nowTime() };
       // کاتی کارکردن — لە کاتی گەشتنەوەدا حیساب و کۆگا دەکرێت لە average_time
@@ -584,7 +597,7 @@ const DriverView = (() => {
     } catch (err) {
       UI.toast('هەڵە لە تۆمارکردن: ' + err.message, 'error', 4200);
     } finally {
-      if (actBtn) UI.btnLoading(actBtn, false);
+      if (actBtn) UI.btnBusy(actBtn, type, false);
     }
   }
 
@@ -778,6 +791,63 @@ const DriverView = (() => {
     UI.autocomplete($('#f-vehicle', body), () => vehicles);
     ['#f-weight', '#f-pieces', '#f-receipt'].forEach(id => wireExprField($(id, body)));
 
+    /* — ئۆپشنی «حەفتەی ڕابردوو» — پڕکردنەوەی خۆکاری خانەکان لە داتای هەمان ڕۆژی حەفتەی ڕابردوو.
+     * دەستدان لە هەر خانەیەکی پڕکراوە بەتاڵی دەکاتەوە بۆ ئەوەی یوسەر بە ئازادی بنووسێت. */
+    if (Store.getSettings().lastWeekFill !== false) {
+      const armTouchClearGroup = group => {
+        const inputs = group.inputs();
+        const clear = () => {
+          group.setValues([]);
+          inputs.forEach(i => {
+            i.removeEventListener('pointerdown', clear);
+            i.removeEventListener('focus', clear);
+          });
+        };
+        inputs.forEach(i => {
+          i.addEventListener('pointerdown', clear);
+          i.addEventListener('focus', clear);
+        });
+      };
+      const armTouchClearInput = inp => {
+        if (!inp) return;
+        const clear = () => {
+          inp.value = '';
+          inp.removeEventListener('pointerdown', clear);
+          inp.removeEventListener('focus', clear);
+        };
+        inp.addEventListener('pointerdown', clear);
+        inp.addEventListener('focus', clear);
+      };
+      (async () => {
+        try {
+          const lwRows = (await API.Records.list({ 'record_date': `eq.${UI.daysAgoStr(7)}` })) || [];
+          if (!lwRows.length || !document.body.contains(body)) return; // داتا نییە یان مۆدالەکە داخراوە
+          // ئەگەر هەمان ژمارەی باری ئەمڕۆ لەو ڕۆژەدا هەبوو — ئەوە هەڵبژێرە، ئەگینا دوایینیان
+          const rec = lwRows.find(r => cargoIndex(r) === records.length) || lwRows[0];
+          const splitNames = (v, stripSuffix) => String(v || '')
+            .split(/\s+و\s+/)
+            .map(p => stripSuffix ? stripCargoSuffix(stripEditMark(p)) : stripEditMark(p).trim())
+            .filter(Boolean);
+          [
+            { group: driverGroup,   vals: splitNames(rec.driver, true) },
+            { group: distribGroup,  vals: splitNames(rec.distributor, true) },
+            { group: delegateGroup, vals: splitNames(rec.delegate, false) },
+            { group: zoneGroup,     vals: splitNames(rec.zone, false) },
+          ].forEach(f => {
+            if (!f.vals.length) return;
+            if (f.group.getValues().length) return; // یوسەر پێش ئێستا شتێکی نووسیوە — دەست ناپێوە
+            f.group.setValues(f.vals);
+            armTouchClearGroup(f.group);
+          });
+          const veh = $('#f-vehicle', body);
+          if (rec.vehicle && veh && !veh.value.trim()) {
+            veh.value = rec.vehicle;
+            armTouchClearInput(veh);
+          }
+        } catch (_) { /* هەڵەی هێنان — فۆڕمەکە بەتاڵ دەمێنێتەوە */ }
+      })();
+    }
+
     const { close } = UI.openModal({
       title: `🚚 تۆمارکردنی دەرچوون — ${cargoLabel}`,
       body,
@@ -860,7 +930,7 @@ const DriverView = (() => {
             // پاشگر تەنها «دوو» ـە (بۆ باری دووەم و هەر بارێکی دواتر) و بۆ سایەق و دابەشکار هەردووکیان
             const suffix = cargoSuffixFor(finalCargoIndex);
 
-            UI.btnLoading(submitBtn, true, 'تۆمار دەکرێت...');
+            UI.btnBusy(submitBtn, 'exit', true, 'تۆمار دەکرێت...');
             try {
               await API.Records.insert({
                 driver:       finalDriver + suffix,
@@ -885,7 +955,7 @@ const DriverView = (() => {
             } catch (err) {
               UI.toast('هەڵە لە تۆمارکردنی دەرچوون: ' + err.message, 'error', 4200);
             } finally {
-              UI.btnLoading(submitBtn, false);
+              UI.btnBusy(submitBtn, 'exit', false);
             }
           }
         },
@@ -931,7 +1001,7 @@ const DriverView = (() => {
               UI.toast('تکایە بڕێکی ژمارەیی دروست بنووسە', 'warning');
               return;
             }
-            UI.btnLoading(saveBtn, true, 'پاشەکەوت دەکرێت...');
+            UI.btnBusy(saveBtn, 'money', true, 'پاشەکەوت دەکرێت...');
             try {
               await API.Records.update(active.id, { collected_money: money });
               UI.toast('پارەی هێنراوە تۆمار کرا ✓', 'success');
@@ -940,7 +1010,7 @@ const DriverView = (() => {
             } catch (err) {
               UI.toast('هەڵە لە تۆمارکردنی پارە: ' + err.message, 'error', 4200);
             } finally {
-              UI.btnLoading(saveBtn, false);
+              UI.btnBusy(saveBtn, 'money', false);
             }
           }
         },

@@ -85,6 +85,30 @@ const SettingsView = (() => {
             <span class="set-row-hint">لایتێک لەچوارچێوەی کارت و ویندۆیەکاندا دەسوڕێتەوە.</span>
           </span>
         </label>
+        <label class="set-row" for="set-btnanim" style="margin-top:14px;border-bottom:none">
+          <input type="checkbox" id="set-btnanim" ${s.btnAnim !== false ? 'checked' : ''}>
+          <span class="set-row-txt">
+            <span class="set-row-title">🎬 ئەنیمەیشنی دووگمەکانی کارەکان</span>
+            <span class="set-row-hint">لەکاتی تۆمارکردنی دەرچوون، ناو زۆن، دەرێی زۆن، گەشتنەوە و پارە — لە شوێنی لۆدینگ ئەنیمەیشنی تایبەت بە هەر کردارێک پیشان دەدرێت.</span>
+          </span>
+        </label>
+        <label class="set-row" for="set-lastweek" style="margin-top:14px;border-bottom:none">
+          <input type="checkbox" id="set-lastweek" ${s.lastWeekFill !== false ? 'checked' : ''}>
+          <span class="set-row-txt">
+            <span class="set-row-title">🗓 حەفتەی ڕابردوو</span>
+            <span class="set-row-hint">لە فۆڕمی تۆمارکردنی دەرچووندا خانەی سایەق، دابەشکار، مەندوب، زۆن و ژمارەی سەیارە بە خۆکاری پڕ دەکرێنەوە لە داتای هەمان ڕۆژی حەفتەی ڕابردوو — دەستدان لە هەر خانەیەکی پڕکراوە بەتاڵی دەکاتەوە.</span>
+          </span>
+        </label>
+        <div id="btnanim-preview" style="margin-top:10px">
+          <p class="hint" style="margin:0 0 8px">پێشبینین — سەیری هەر دووگمەیەک بکە:</p>
+          <div class="anim-preview-grid">
+            <button type="button" class="btn btn-primary anim-try" data-anim="exit">${UI.animLayerHtml('exit')}<span class="btn-anim-label">🚚 دەرچوون</span></button>
+            <button type="button" class="btn btn-primary anim-try" data-anim="in_zone">${UI.animLayerHtml('in_zone')}<span class="btn-anim-label">📍 ناو زۆن</span></button>
+            <button type="button" class="btn btn-primary anim-try" data-anim="out_zone">${UI.animLayerHtml('out_zone')}<span class="btn-anim-label">🚏 دەرێی زۆن</span></button>
+            <button type="button" class="btn btn-primary anim-try" data-anim="arrival">${UI.animLayerHtml('arrival')}<span class="btn-anim-label">🏁 گەشتنەوە</span></button>
+            <button type="button" class="btn btn-primary anim-try" data-anim="money">${UI.animLayerHtml('money')}<span class="btn-anim-label">💰 پارەی هێنراوە</span></button>
+          </div>
+        </div>
         <div id="glow-extra" ${s.glow ? '' : 'hidden'} style="margin-top:8px">
           <div class="field"><label>🎨 ڕەنگی گڵۆپ</label><input type="color" id="glow-color" value="${s.glowColor || '#10b981'}"></div>
           <div class="field"><label>📏 درێژی گڵۆپ — <b id="glow-len-val">${Math.min(60, Math.max(5, Number(s.glowLen) || 20))}%</b></label><input type="range" id="glow-len" min="5" max="60" step="5" value="${Math.min(60, Math.max(5, Number(s.glowLen) || 20))}"></div>
@@ -470,6 +494,26 @@ const SettingsView = (() => {
       Store.saveSettings({ glowSpeed: Number(e.target.value) });
       const v = $('#glow-speed-val', el);
       if (v) v.textContent = e.target.value;
+    });
+
+    /* — ئەنیمەیشنی دووگمەکانی کارەکان + پێشبینین — */
+    $('#set-btnanim', el)?.addEventListener('change', e => {
+      Store.saveSettings({ btnAnim: e.target.checked });
+      UI.toast(e.target.checked ? 'ئەنیمەیشنی دووگمەکان چالاک کرا ✓' : 'ئەنیمەیشنی دووگمەکان ناچالاک کرا', 'info');
+    });
+    el.querySelectorAll('#btnanim-preview .anim-try').forEach(pb => {
+      pb.addEventListener('click', () => {
+        const t = pb.dataset.anim;
+        if (!t) return;
+        UI.btnScene(pb, t, true);
+        setTimeout(() => UI.btnScene(pb, t, false), 2000);
+      });
+    });
+
+    /* — حەفتەی ڕابردوو: پڕکردنەوەی خۆکاری فۆڕمی دەرچوون — */
+    $('#set-lastweek', el)?.addEventListener('change', e => {
+      Store.saveSettings({ lastWeekFill: e.target.checked });
+      UI.toast(e.target.checked ? 'پڕکردنەوەی حەفتەی ڕابردوو چالاک کرا ✓' : 'پڕکردنەوەی حەفتەی ڕابردوو ناچالاک کرا', 'info');
     });
 
     /* — شێوازی پیشاندانی خشتە — */

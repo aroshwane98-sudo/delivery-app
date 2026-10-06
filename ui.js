@@ -417,6 +417,53 @@ const UI = (() => {
     img.replaceWith(fallback);
   }, true);
 
+  /* ---------------- ئەنیمەیشنی دووگمەکانی کردار ----------------
+   * بۆ هەر کردارێکی فۆڕمی کارەکان ئەنیمەیشنێکی تایبەت — لە شوێنی لۆدینگی ئاسایی
+   * پیشان دەدرێت و دەقە کوردییەکەی دووگمەکە بە شێوەیەکی سروشتی دەمێنێتەوە. */
+
+  const ANIM_LAYERS = {
+    /* دەرچوون — سەیارە بە درێژایی دووگمەکە لەگەڵ ڕووناکی و ڕێگا */
+    exit: '<span class="a-road"><i></i><i></i><i></i></span><span class="a-truck"><i class="t-back"></i><i class="t-front"></i><i class="t-window"></i><i class="t-beam"></i><i class="t-wheel w1"></i><i class="t-wheel w2"></i></span>',
+    /* ناو زۆن — پین دادەبەزێت و ڕادار بەربڵاو دەبێت */
+    in_zone: '<span class="a-pin"><i class="p-body"></i><i class="p-hole"></i></span><span class="a-radar"></span>',
+    /* دەرێی زۆن — خێرایی دەرچوون بە هێڵی با و تیری ئاراستە */
+    out_zone: '<i class="st s1"></i><i class="st s2"></i><i class="st s3"></i><i class="a-chev"></i>',
+    /* گەشتنەوە — ئاڵای شطرنجی لەڕێگەوە دەڕوات */
+    arrival: '<span class="a-flag"><i class="f-pole"></i><i class="f-cloth"></i></span>',
+    /* پارە — دراو دادەبەزێتە ناو خانەکە */
+    money: '<i class="coin c1"></i><i class="coin c2"></i><i class="coin c3"></i><i class="coin c4"></i><i class="slot"></i>',
+  };
+
+  function animLayerHtml(type) {
+    return ANIM_LAYERS[type] ? `<span class="anim-layer a-${type}" aria-hidden="true">${ANIM_LAYERS[type]}</span>` : '';
+  }
+
+  /** چالاک/ناچالاککردنی ئەنیمەیشن لەسەر دووگمە — دەقی ئەسلی دووگمەکە پاشەکەوت و بەرز دەکرێتەوە */
+  function btnScene(btn, type, on) {
+    if (!btn) return;
+    if (on) {
+      if (!btn.dataset.sceneHtml) btn.dataset.sceneHtml = btn.innerHTML;
+      btn.disabled = true;
+      btn.classList.add('anim-on');
+      btn.innerHTML = `${animLayerHtml(type)}<span class="btn-anim-label">${btn.dataset.sceneHtml}</span>`;
+    } else {
+      btn.disabled = false;
+      btn.classList.remove('anim-on');
+      if (btn.dataset.sceneHtml) {
+        btn.innerHTML = btn.dataset.sceneHtml;
+        delete btn.dataset.sceneHtml;
+      }
+    }
+  }
+
+  /** ئەگەر ئەنیمەیشن لە ڕێکخستنەکان چالاک بێت scene پیشان دەدرێت، ئەگینا لۆدینگی ئاسایی */
+  function btnBusy(btn, type, on, text) {
+    let animEnabled = true;
+    try { animEnabled = Store.getSettings().btnAnim !== false; } catch (_) {}
+    if (animEnabled && type && ANIM_LAYERS[type]) btnScene(btn, type, on);
+    else btnLoading(btn, on, text || 'چاوەڕوان بە...');
+  }
+
   /* ---------------- بارکردنی خاوەنکاری کتێبخانەی ئێکسڵ ----------------
    * xlsx.full.min.js (~٨٨٠KB) لە دەستپێکی سیستەمدا بار ناکرێت — تەنها کاتێک
    * هەناردەی ئێکسڵ یان باک ئەپ داوا بکرێت، بۆ ئەوەی دەستپێک خێرا بێت. */
@@ -1667,7 +1714,7 @@ const UI = (() => {
     weekdayKu, toast, openModal, confirmDialog, autocomplete, avatarHtml, setLoading, btnLoading, sleep,
     norm, userMatches, parseIdList, recMatchesUser, calcDuration, durationMinutes, parseDurationMin, recordDurationMinutes, workTimeDisplay, fmtDuration, durationToHMM,
     sortUsers, openRecordFullscreen, openUserProfile, openPhoneOptions, avatarEditor, intlPhoneDigits, phoneChipHtml, maskSecretInputs, icon, backRegister, iconize: iconizeTree,
-    ensureXlsx,
+    ensureXlsx, animLayerHtml, btnScene, btnBusy,
     fetchVisibleNotifications, openNotificationsPanel, refreshNotifBadge
   };
 })();
