@@ -432,7 +432,7 @@ const DriverView = (() => {
           <div class="detail"><span>وەسڵ</span><b>${UI.fmtNum(active.receipt_number)}${markHtml(active, 'receipt_number')}</b></div>
           <div class="detail"><span>پارەی هێنراوە</span><b class="money-val">${UI.fmtMoney(active.collected_money)}${markHtml(active, 'collected_money')}</b></div>
         </div>
-        ${active.arrival_time && !(Number(active.collected_money || 0) > 0) && canMoney ? `
+        ${active.out_zone_time && !(Number(active.collected_money || 0) > 0) && canMoney ? `
         <button class="money-row" id="money-btn" type="button">
           <span class="money-lbl">💰 پارەی هێنراوە</span>
           <b class="money-val">—</b>
