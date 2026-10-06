@@ -24,13 +24,15 @@ const App = (() => {
 
   function defineTabs() {
     TABS.length = 0;
-    // تابی کارەکان هەمیشە دروست دەکرێت — بینینی بە دەسەڵاتەکان دیاری دەکرێت
+    // تابی کارەکان بۆ بەڕێوەبەر دروست ناکرێت — بەڕێوەبەر لە پانێلی بەڕێوەبردن کار دەکات
     // (بنەڕەت: سایەق، دابەشکار و یاریدەدەر؛ دەکرێت بۆ پیشەی تر چالاک بکرێت لە فۆڕمی پیشە)
-    TABS.push({
-      id: 'driver', label: 'کارەکان', icon: ICONS.truck, roles: 'ALL',
-      render: el => DriverView.render(el),
-      onDeactivate: () => DriverView.stop(),
-    });
+    if (!isSupervisor(currentUser)) {
+      TABS.push({
+        id: 'driver', label: 'کارەکان', icon: ICONS.truck, roles: 'ALL',
+        render: el => DriverView.render(el),
+        onDeactivate: () => DriverView.stop(),
+      });
+    }
     TABS.push({
       id: 'reports', label: 'ڕاپۆرت', icon: ICONS.chart, roles: 'ALL',
       render: el => ReportsView.render(el),
@@ -96,7 +98,16 @@ const App = (() => {
   function syncTabBack(id) {
     if (id !== homeTabId()) {
       if (!tabBackUnreg) {
-        tabBackUnreg = UI.backRegister(() => { tabBackUnreg = null; switchTab(homeTabId()); });
+        tabBackUnreg = UI.backRegister(() => {
+          tabBackUnreg = null;
+          // پارێزەری گلیچ — ئەگەر مۆدالێکی دەستکاری/زیادکردن کراوە بێت،
+          // گەڕانەوە بۆ تابی سەرەکی ئەنجام نەدرێت (بازدانی نەخوازراو لە کاتی کارکردندا)
+          if (document.querySelector('.modal-backdrop.open')) {
+            syncTabBack(currentTab.id);
+            return;
+          }
+          switchTab(homeTabId());
+        });
       }
     } else if (tabBackUnreg) {
       const u = tabBackUnreg; tabBackUnreg = null; u();
