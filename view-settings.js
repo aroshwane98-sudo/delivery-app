@@ -150,27 +150,6 @@ const SettingsView = (() => {
         </div>
       </section>
 
-      ${Perms.canView(u, 'set_keypad') ? `
-      <section class="card">
-        <h3 class="section-title"><span class="sec-icon">${UI.icon('keyboard')}</span> کیبۆردی تایبەتی سیستەم</h3>
-        <div class="set-rows">
-          <label class="set-row">
-            <input type="checkbox" id="set-custom-keypad-text" ${s.customKeypadText ? 'checked' : ''}>
-            <span class="set-row-txt">
-              <span class="set-row-title">کیبۆردی پیتەکان — بۆ خانە نووسینەکان</span>
-              <span class="set-row-hint">هەموو پیته کوردییەکان پیشان دەدات بۆ خانەکانی ناو وەک سایەق، دابەشکار، مەندوب و زۆن.</span>
-            </span>
-          </label>
-          <label class="set-row">
-            <input type="checkbox" id="set-custom-keypad-num" ${s.customKeypadNum ? 'checked' : ''}>
-            <span class="set-row-txt">
-              <span class="set-row-title">کیبۆردی ژمارەکان — بۆ خانە ژمارەییەکان</span>
-              <span class="set-row-hint">ژمارە و ئامرازی (+) و (−) پیشان دەدات بۆ خانەکانی ژمارەی سەیارە، وەسڵ، کێشی بار و پارچەکان — چونکە کیبۆردی ئائیۆس ئەم دوو ئامرازە پیشان نادات.</span>
-            </span>
-          </label>
-        </div>
-      </section>` : ''}
-
       <section class="card">
         <h3 class="section-title"><span class="sec-icon">${UI.icon('columns')}</span> پیشاندان/شاردنەوەی ستوونەکان و کۆیەکان</h3>
         <p class="hint">دانە دانە دیاری بکە کام ستوونی خشتە و کام کارتی تۆتاڵ پیشان بدرێت یان بشاردرێتەوە — لە هەردوو بەشی ڕاپۆرت و تۆمارەکانی بەڕێوبەر جێبەجێ دەبێت.</p>
@@ -539,16 +518,6 @@ const SettingsView = (() => {
     $('#set-show-hints', el)?.addEventListener('change', e => {
       Store.saveSettings({ showHints: e.target.checked });
       UI.toast(e.target.checked ? 'تێبینی و ڕوونکردنەوەکان پیشان دەدرێن ✓' : 'تێبینی و ڕوونکردنەوەکان شاردراونەوە', 'info');
-    });
-
-    $('#set-custom-keypad-text', el)?.addEventListener('change', e => {
-      Store.saveSettings({ customKeypadText: e.target.checked });
-      UI.toast(e.target.checked ? 'کیبۆردی پیتەکان چالاک کرا ✓' : 'کیبۆردی پیتەکان ناچالاک کرا', 'info');
-    });
-
-    $('#set-custom-keypad-num', el)?.addEventListener('change', e => {
-      Store.saveSettings({ customKeypadNum: e.target.checked });
-      UI.toast(e.target.checked ? 'کیبۆردی ژمارەکان چالاک کرا ✓' : 'کیبۆردی ژمارەکان ناچالاک کرا', 'info');
     });
 
     /* — پشاندان/شاردنەوەی ستوونەکان و کۆیەکان (دانە دانە) — */

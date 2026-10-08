@@ -379,7 +379,7 @@ html.glow-on .login-card::before {
 .step-dot .lic-inline { width: 1.2em; height: 1.2em; vertical-align: middle; }
 
 /* — «پشاندانی ئایکۆنەکان» ناچالاک: هەموو ئایکۆنە ڕازێنەرەکان (SVG و ئیمۆجی) دەشاردرێنەوە —
- * تەنها ئەوانە دەمێننەوە کە دووگمەی بێ دەقن (داخستن، زیادکردن، سڕینەوە، کیبۆرد...) چونکە بەبێ ئەوان کار ناکەن */
+ * تەنها ئەوانە دەمێننەوە کە دووگمەی بێ دەقن (داخستن، زیادکردن، سڕینەوە...) چونکە بەبێ ئەوان کار ناکەن */
 html.hide-icons .sec-icon,
 html.hide-icons .lic { display: none !important; }
 html.hide-icons .lic.lic-keep,
@@ -387,8 +387,7 @@ html.hide-icons .icon-btn .lic,
 html.hide-icons .modal-close .lic,
 html.hide-icons .btn-field-add .lic,
 html.hide-icons .step-dot .lic,
-html.hide-icons .toast-ico .lic,
-html.hide-icons .num-keypad .lic { display: inline-block !important; }
+html.hide-icons .toast-ico .lic { display: inline-block !important; }
 
 .hint { color: var(--muted); font-size: 0.82rem; margin: 6px 0 12px; }
 
@@ -835,6 +834,12 @@ html.hide-icons .num-keypad .lic { display: inline-block !important; }
 .field-toggle-btn.active {
   border-color: var(--accent); color: var(--accent);
   background: color-mix(in srgb, var(--accent) 12%, var(--input-bg));
+}
+/* دووگمەی پشاندان وەک ڕاپۆرت/داتابەیس — تەنها ئایکۆن */
+.rep-view-btn {
+  padding: 7px 11px;
+  font-size: 1.1rem;
+  line-height: 1;
 }
 @media (max-width: 560px) {
   .date-range-compact.with-toggle { grid-template-columns: 1fr 1fr; }
@@ -2166,118 +2171,6 @@ html.hide-icons .num-keypad .lic { display: inline-block !important; }
 }
 
 /* =========================================================
- *  کیبۆردی تایبەتی سیستەم (ژمارە + پیتی کوردی)
- * ========================================================= */
-
-.num-keypad {
-  position: fixed; bottom: 0; inset-inline: 0; z-index: 95;
-  display: block; direction: ltr;
-  padding: 10px 10px calc(10px + env(safe-area-inset-bottom));
-  background: color-mix(in srgb, var(--nav-bg) 94%, transparent);
-  backdrop-filter: blur(18px) saturate(1.2); -webkit-backdrop-filter: blur(18px) saturate(1.2);
-  border-top: 1px solid var(--border);
-  border-radius: 20px 20px 0 0;
-  box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.22);
-  transform: translateY(110%);
-  transition: transform 0.2s cubic-bezier(.2, .8, .2, 1);
-  pointer-events: none;
-  touch-action: manipulation;
-  user-select: none; -webkit-user-select: none;
-  -webkit-touch-callout: none;
-}
-.num-keypad.open { transform: translateY(0); pointer-events: auto; }
-.num-keypad::before {           /* دەستگرەی بچووک — تەنها ڕەنگدانەوەی دیزاینە */
-  content: ''; display: block; width: 38px; height: 4px; border-radius: 4px;
-  background: var(--border); margin: -2px auto 9px; opacity: 0.9;
-}
-.num-keypad .kp-number-layout { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
-.num-keypad .kp-text-layout { display: grid; gap: 6px; }
-.num-keypad .kp-row { display: grid; grid-template-columns: repeat(9, minmax(0, 1fr)); gap: 5px; }
-.num-keypad .kp-controls { grid-template-columns: 1.3fr 3fr 1.3fr 1.3fr 1.3fr; gap: 6px; }
-
-.num-keypad button {
-  min-width: 0; height: 54px; border-radius: 14px;
-  border: 0;
-  background: var(--surface-2); color: var(--text);
-  box-shadow: inset 0 0 0 1px var(--border), 0 2px 0 rgba(0, 0, 0, 0.18);
-  font-family: inherit; font-size: 1.35rem; font-weight: 600;
-  display: inline-flex; align-items: center; justify-content: center;
-  cursor: pointer; user-select: none; -webkit-user-select: none;
-  -webkit-tap-highlight-color: transparent;
-  transition: transform 0.06s ease, background 0.12s ease, box-shadow 0.06s ease;
-}
-.num-keypad[data-layout="text"] button { height: 46px; font-size: 1.1rem; }
-.num-keypad button.pressed,
-.num-keypad button:active {
-  transform: translateY(1px) scale(0.95);
-  background: color-mix(in srgb, var(--accent) 30%, var(--surface-2));
-  box-shadow: inset 0 0 0 1px var(--accent);
-}
-.num-keypad .lic { width: 22px; height: 22px; stroke-width: 2; }
-.num-keypad .kp-op { color: var(--accent); }
-.num-keypad .kp-del, .num-keypad .kp-clear, .num-keypad .kp-next { color: var(--muted); }
-.num-keypad .kp-fn { font-size: 0.95rem; color: var(--accent); background: color-mix(in srgb, var(--accent) 12%, var(--surface-2)); }
-.num-keypad .kp-space { direction: rtl; font-size: 0.9rem !important; color: var(--muted); }
-.num-keypad .kp-done {
-  background: var(--accent); color: #fff;
-  box-shadow: 0 2px 0 color-mix(in srgb, var(--accent) 60%, #000);
-}
-.num-keypad .kp-done.pressed, .num-keypad .kp-done:active { background: color-mix(in srgb, var(--accent) 82%, #000); }
-@media (prefers-reduced-motion: reduce) {
-  .num-keypad, .num-keypad button { transition: none; }
-}
-
-/* ---- کاتێک کیبۆردی سیستەم کراوەیە: خانە هەڵبژێردراوەکە نەکەوێتە ژێر کیبۆردەکە ---- */
-
-body.keypad-open .bottom-nav { display: none; }
-/* 280px = بەرزی لیستی ئۆتۆکۆمپلیت + بۆشایی — بۆ ئەوەی دواین خانەش بگاتە سەرەوە و لیستەکەی ببینرێت */
-body.keypad-open .page { padding-bottom: calc(var(--kp-h, 300px) + 280px); }
-body.keypad-open .login-view { padding-bottom: calc(var(--kp-h, 300px) + 280px); }
-body.keypad-open .modal-body { padding-bottom: 280px; }
-body.keypad-open .modal-backdrop { padding-bottom: var(--kp-h, 300px); }
-body.keypad-open .modal { max-height: calc(92dvh - var(--kp-h, 300px)); }
-body.keypad-open .modal-fullscreen {
-  height: calc(100dvh - var(--kp-h, 300px)) !important;
-  max-height: calc(100dvh - var(--kp-h, 300px)) !important;
-}
-
-/* ---- ئامرازی + / − لەسەر ئایۆئێس — لەسەری کیبۆردی ڕەسەنی سیستەم دەردەکەوێت ---- */
-
-#ios-num-toolbar {
-  position: fixed;
-  bottom: 0; inset-inline: 0;
-  z-index: 96;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 12px calc(8px + env(safe-area-inset-bottom));
-  background: var(--nav-bg);
-  backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
-  border-top: 1px solid var(--border);
-  transform: translateY(110%);
-  transition: transform 0.18s ease;
-  pointer-events: none;
-  direction: ltr;
-}
-#ios-num-toolbar.open { transform: translateY(0); pointer-events: auto; }
-
-#ios-num-toolbar button {
-  min-width: 0; flex: 1; height: 44px;
-  border-radius: 10px;
-  border: 1px solid var(--border);
-  background: var(--surface-2); color: var(--text);
-  font-family: inherit; font-size: 1.35rem; font-weight: 700;
-  cursor: pointer; user-select: none; -webkit-user-select: none;
-  transition: background 0.1s ease;
-}
-#ios-num-toolbar button:active { background: var(--accent); color: #fff; border-color: transparent; }
-#ios-num-toolbar button[data-op="plus"]  { color: var(--accent); }
-#ios-num-toolbar button[data-op="minus"] { color: var(--accent); }
-#ios-num-toolbar button[data-op="done"]  { background: var(--accent); color: #fff; border-color: transparent; flex: 0.6; }
-
-
-
-/* =========================================================
  *  بەشەکانی کۆیەکان — باری یەکەم / باری دووەم (پانێلی بەڕێوبەر)
  * ========================================================= */
 
@@ -2520,46 +2413,51 @@ body.keypad-open .modal-fullscreen {
 
 
 
-/* ---------------- ���?�� ?ǁ?�� �? �???�?�?� ---------------- */
-.rep-filter-top-row {
+/* ---------------- فۆڕمی ڕاپۆرت — دوو ڕێزی فلتەر ---------------- */
+.rep-row1 {
   display: flex;
+  flex-wrap: wrap;
   align-items: flex-end;
   gap: 8px;
-  margin-bottom: 8px;
+  margin-bottom: 10px;
 }
-.rep-driver-select-compact {
-  font-family: inherit;
-  font-size: 0.85rem;
-  color: var(--text);
-  background: var(--input-bg);
-  border: 1.5px solid var(--border);
-  border-radius: 9px;
-  padding: 0 10px;
-  height: 38px;
+.rep-row1 .date-range-compact {
+  flex: 1;
+  min-width: 240px;
+  margin-bottom: 0;
+}
+.rep-row1-chips {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+.rep-row2 {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 8px;
+}
+.rep-row2 .field {
+  flex: 1 1 132px;
   min-width: 0;
-  width: 170px;
-  flex-shrink: 0;
-  outline: none;
-  transition: border-color 0.15s ease;
+  margin-bottom: 0 !important;
+}
+.rep-row2 .field select {
+  padding: 7px 10px;
+  font-size: 0.88rem;
+  height: 38px;
+  border-radius: 9px;
   cursor: pointer;
 }
-.rep-driver-select-compact:focus {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 20%, transparent);
+.rep-row2 .rep-f2-search {
+  flex: 1.6 1 220px;
 }
-@media (max-width: 560px) {
-  .rep-filter-top-row {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 8px;
-  }
-  .rep-driver-select-compact {
-    width: 100%;
-    height: 38px;
-  }
-  .rep-filter-top-row .date-range-compact {
-    flex: unset !important;
-  }
+.rep-row2 .rep-f2-search input {
+  padding: 7px 10px;
+  font-size: 0.88rem;
+  height: 38px;
+  border-radius: 9px;
 }
 
 /* =========================================================
@@ -2887,3 +2785,19 @@ body.keypad-open .modal-fullscreen {
 .btn.anim-done .anim-layer.a-truck .a-lorry { animation: a-truck-exit .55s ease-in forwards; }
 @keyframes a-truck-exit { from { left: -70px; } to { left: calc(100% + 16px); } }
 .btn.anim-done .anim-layer.a-truck .sp { animation-duration: .4s; }
+
+@media (max-width: 560px) {
+  #rep-print, .rep-row2 { display: none !important; }
+}
+
+@media (max-width: 560px) {
+  .rep-row1 .date-range-compact { order: 1; flex: 1 1 100%; }
+  #rep-view-mode { order: 2; }
+  #rep-refresh { order: 3; }
+  .rep-row1-chips { order: 4; }
+}
+
+@media (max-width: 560px) {
+  #rep-refresh .btn-text, .rep-row1-chips .btn-text { display: none !important; }
+  #rep-refresh, .rep-row1-chips .chip-btn { padding: 7px 11px; font-size: 1.1rem; line-height: 1; border-radius: 9px; min-width: auto; }
+}
