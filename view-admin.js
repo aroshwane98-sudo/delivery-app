@@ -39,6 +39,9 @@ const AdminView = (() => {
     // خشتەی زۆنەکان
     zones: [],
     zoneSearch: '',
+    vehicles: [],
+    vehiclesError: '',
+    vehicleSearch: '',
 
     secondOnly: false, // تەنها باری دووەم پیشان بدە
     outZoneOnly: false, // تەنها تۆمارەکانی دەرێی زۆن (هەمان فلتەری فۆڕمی ڕاپۆرت)
@@ -90,6 +93,16 @@ const AdminView = (() => {
       const ls = await Store.loadLists();
       state.users = ls.users || [];
       state.zones = ls.zones || [];
+      // سەیارەکان — ڕاستەوخۆ لە Supabase (نەک کاش) و هەڵەکەش پیشان دەدرێت
+      try {
+        const freshVeh = await API.Lists.vehicles();
+        state.vehicles = Array.isArray(freshVeh) ? freshVeh : [];
+        state.vehiclesError = '';
+        if ((ls.vehicles || []).length !== state.vehicles.length) Store.invalidateLists();
+      } catch (verr) {
+        state.vehicles = ls.vehicles || [];
+        state.vehiclesError = verr.message || String(verr);
+      }
 
       // هێنانی تۆمارەکان (delivery_records) بەپێی بەروار
       const params = { select: '*', order: 'record_date.desc,id.desc' };
@@ -189,6 +202,62 @@ const AdminView = (() => {
     return rows;
   }
 
+  /* شاردنەوە/پشاندانی توخمێک لای هەموو یوسەرەکان */
+  const canToggleHidden = () => Perms.canAct(App.getUser(), 'admin_toggle_hidden');
+  const hideBtnHtml = (kind, id, cls) => {
+    if (!canToggleHidden()) return '';
+    const h = Store.isHidden(kind, id);
+    return `<button type="button" class="${cls} adm-hide-btn" data-kind="${kind}" data-id="${UI.esc(String(id))}" title="${h ? 'پشاندان لای هەموو' : 'شاردنەوە لای هەموو'}">${h ? '🙈' : '👁️'}</button>`;
+  };
+  const hiddenBadge = (kind, id) => Store.isHidden(kind, id) ? '<span class="chip hidden-badge">🙈 شاردراوە</span>' : '';
+  function bindHideButtons(root, getItems) {
+    root.querySelectorAll('.adm-hide-btn').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const kind = btn.dataset.kind;
+        const id = btn.dataset.id;
+        const nowHidden = !Store.isHidden(kind, id);
+        btn.disabled = true;
+        try {
+          await Store.setHidden(kind, id, nowHidden);
+          UI.toast(nowHidden ? 'لای هەموو یوسەرەکان شاردرایەوە 🙈' : 'لای هەموو یوسەرەکان پیشان دەدرێت 👁️', 'success');
+          renderContent();
+        } catch (err) {
+          btn.disabled = false;
+          UI.toast('هەڵە لە پاشەکەوتکردن: ' + err.message, 'error', 4200);
+        }
+      });
+    });
+  }
+
+  /* ژمارەی سەیارە — ناوی ستوونەکە بە دۆزینەوە لە ڕیزەکان (یان CONFIG.VEHICLE_COLUMN) */
+  const VEH_KEYS = ['vehicle_number', 'plate_number', 'number', 'name', 'vehicle', 'plate'];
+  const VEH_SKIP = ['id', 'created_at', 'updated_at', 'inserted_at'];
+  function vehicleKeyOf(row) {
+    if (!row) return null;
+    const k = VEH_KEYS.find(x => row[x] !== undefined && row[x] !== null);
+    if (k) return k;
+    // ناوی ستوونەکە نەزانراو — یەکەم ستوونی نادیاری (نە id و نە بەروار)
+    return Object.keys(row).find(x => !VEH_SKIP.includes(x) && row[x] !== null && row[x] !== undefined) || null;
+  }
+  function vehicleKey() {
+    for (const r of (state.vehicles || [])) { const k = vehicleKeyOf(r); if (k) return k; }
+    return CONFIG.VEHICLE_COLUMN || 'vehicle_number';
+  }
+  const vehicleLabel = r => {
+    if (!r) return '';
+    const k = vehicleKeyOf(r);
+    return String((k && r[k]) ?? '').trim();
+  };
+
+  function filteredVehicles() {
+    let rows = state.vehicles || [];
+    if (state.vehicleSearch) {
+      const q = norm(state.vehicleSearch);
+      rows = rows.filter(r => norm(vehicleLabel(r)).includes(q));
+    }
+    return rows;
+  }
+
   /* ---------------- ڕێندەری سەرەکی ---------------- */
 
   function render(el) {
@@ -224,6 +293,10 @@ const AdminView = (() => {
           ${Perms.canView(App.getUser(), 'admin_zones') ? `
           <button type="button" class="admin-tab-btn ${state.subtab === 'zones' ? 'active' : ''}" data-sub="zones">
             <span class="sec-icon">${UI.icon('map', 15)}</span> زۆنەکان <span class="badge-count" id="badge-zones-count">${state.zones.length}</span>
+          </button>` : ''}
+          ${Perms.canView(App.getUser(), 'admin_vehicles') ? `
+          <button type="button" class="admin-tab-btn ${state.subtab === 'vehicles' ? 'active' : ''}" data-sub="vehicles">
+            <span class="sec-icon">${UI.icon('truck', 15)}</span> سەیارەکان <span class="badge-count" id="badge-vehicles-count">${state.vehicles.length}</span>
           </button>` : ''}
           <!-- فۆڕمی پیشە — تەنها لە مۆبایل لێرە دەردەکەوێت (لە دیسکتۆپ لە باڕی خوارەوەیە) -->
           <button type="button" class="admin-tab-btn admin-mobile-only" id="admin-professions-btn" title="فۆڕمی پیشە و دەسەڵاتەکان">
@@ -294,10 +367,13 @@ const AdminView = (() => {
     if (bu) bu.textContent = state.users.length;
     const bz = $('#badge-zones-count', container);
     if (bz) bz.textContent = state.zones.length;
+    const bv = $('#badge-vehicles-count', container);
+    if (bv) bv.textContent = state.vehicles.length;
 
     if (state.subtab === 'records') renderRecordsTab(wrap);
     else if (state.subtab === 'users') renderUsersTab(wrap);
     else if (state.subtab === 'zones') renderZonesTab(wrap);
+    else if (state.subtab === 'vehicles') renderVehiclesTab(wrap);
   }
 
   function renderRecordsTab(wrap) {
@@ -576,10 +652,10 @@ const AdminView = (() => {
     // ستوونی average_time — کۆگای کاتی کارکردن؛ خانەی دەستی تەنها کاتێک پیشان دەدرێت
     // کە ستوونەکە لە داتابەیسەکەدا بێت (ئەگینا پاشەکەوتکردن بە PGRST204 شکست دەهێنێت)
     const supportsWorkTime = await API.Records.hasColumn('average_time').catch(() => false);
-    const distributors = state.users.filter(u => u.profession === CONFIG.PROFESSION_DISTRIBUTOR).map(u => ({ label: u.username }));
-    const delegates = state.users.filter(u => u.profession === CONFIG.PROFESSION_DELEGATE).map(u => ({ label: u.username }));
-    const drivers = state.users.filter(u => u.profession === CONFIG.PROFESSION_DRIVER).map(u => ({ label: u.username }));
-    const zones = state.zones.map(z => ({ label: z.name }));
+    const distributors = Store.visible('users', state.users).filter(u => u.profession === CONFIG.PROFESSION_DISTRIBUTOR).map(u => ({ label: u.username }));
+    const delegates = Store.visible('users', state.users).filter(u => u.profession === CONFIG.PROFESSION_DELEGATE).map(u => ({ label: u.username }));
+    const drivers = Store.visible('users', state.users).filter(u => u.profession === CONFIG.PROFESSION_DRIVER).map(u => ({ label: u.username }));
+    const zones = Store.visible('zones', state.zones).map(z => ({ label: z.name }));
 
     // جیاکردنەوەی بەهای «X و Y» — هەمان شێوازی فۆڕمی دەستکاری داتا
     const splitCombined = value => {
@@ -671,10 +747,7 @@ const AdminView = (() => {
     UI.autocomplete($('#m-rec-zn-2', body), () => zones);
 
     Store.loadLists().then(ls => {
-      const vList = (ls?.vehicles || []).map(v => {
-        const val = v.vehicle_number || v.plate_number || v.number || v.name || v.vehicle || v.plate || Object.values(v)[1] || Object.values(v)[0];
-        return { label: String(val).trim() };
-      }).filter(v => v.label && v.label !== '[object Object]');
+      const vList = Store.visible('vehicles', ls?.vehicles).map(v => ({ label: Store.vehicleLabel(v) })).filter(v => v.label);
       UI.autocomplete($('#m-rec-veh', body), () => vList);
     }).catch(() => {});
 
@@ -1551,12 +1624,13 @@ const AdminView = (() => {
       const rows = filteredUsers();
       grid.innerHTML = !rows.length ? `<div class="empty-state" style="grid-column:1/-1"><p>هیچ بەکارهێنەرێک نەدۆزرایەوە.</p></div>` :
         rows.map(u => `
-          <div class="user-card">
+          <div class="user-card${Store.isHidden('users', u.id) ? ' is-hidden' : ''}">
             <div class="user-card-top">
               ${UI.avatarHtml(u, 46)}
               <div class="user-card-info">
                 <strong>${UI.esc(u.username)}</strong>
                 <span class="chip">${UI.esc(u.profession || '—')}</span>
+                ${hiddenBadge('users', u.id)}
               </div>
             </div>
             <div class="user-card-meta">
@@ -1575,10 +1649,13 @@ const AdminView = (() => {
             </div>` : ''}
             <div class="user-card-actions">
               <button type="button" class="btn btn-ghost btn-sm adm-usr-view" data-user-id="${UI.esc(String(u.id))}" title="بینینی کارەکان">📋 کارەکانی</button>
+              ${hideBtnHtml('users', u.id, 'btn btn-ghost btn-sm')}
               <button type="button" class="btn btn-ghost btn-sm adm-usr-edit" data-id="${u.id}">✏️ دەستکاری</button>
               <button type="button" class="btn btn-danger btn-sm adm-usr-del" data-id="${u.id}">🗑️</button>
             </div>
           </div>`).join('');
+
+      bindHideButtons(grid);
 
       // بینینی کارەکانی بەکارهێنەر ڕاستەوخۆ — بە ئایدی یوسەر
       grid.querySelectorAll('.adm-usr-view').forEach(btn => {
@@ -1872,13 +1949,16 @@ const AdminView = (() => {
       const rows = filteredZones();
       grid.innerHTML = !rows.length ? `<div class="empty-state" style="grid-column:1/-1"><p>هیچ زۆنێک نەدۆزرایەوە.</p></div>` :
         rows.map(z => `
-          <div class="zone-card">
-            <span class="zone-name">🗺️ ${UI.esc(z.name)}</span>
+          <div class="zone-card${Store.isHidden('zones', z.id) ? ' is-hidden' : ''}">
+            <span class="zone-name">🗺️ ${UI.esc(z.name)} ${hiddenBadge('zones', z.id)}</span>
             <div class="zone-actions">
+              ${hideBtnHtml('zones', z.id, 'btn-action-sm')}
               <button type="button" class="btn-action-sm btn-edit adm-zn-edit" data-id="${z.id}">✏️</button>
               <button type="button" class="btn-action-sm btn-del adm-zn-del" data-id="${z.id}">🗑️</button>
             </div>
           </div>`).join('');
+
+      bindHideButtons(grid);
 
       grid.querySelectorAll('.adm-zn-edit').forEach(btn => {
         btn.addEventListener('click', () => {
@@ -1913,9 +1993,40 @@ const AdminView = (() => {
       <form id="adm-zone-form" novalidate>
         <div class="field">
           <label>ناوی زۆن / ناوچە *</label>
-          <input type="text" id="mz-name" value="${zone ? UI.esc(zone.name) : ''}" placeholder="بۆ نموونە: هەولێر - بەختیاری">
+          <input type="text" id="mz-name" value="${zone ? UI.esc(zone.name) : ''}" placeholder="بۆ نموونە: هەولێر - بەختیاری" autocomplete="off">
+          <div id="mz-dup" style="margin-top:8px;font-size:0.85rem;line-height:1.7"></div>
         </div>
       </form>`;
+
+    /* — پشکنینی دووبارەبوون — بێ جیاوازی لە space، هێڵ (-)، ژمارەی عەرەبی/لاتینی و پیتە هاوشێوەکان — */
+    const key = v => UI.norm(v).replace(/[\s\-–—_.،,]+/g, '');
+    const otherZones = list => (list || []).filter(z => !isEdit || String(z.id) !== String(zone.id));
+    const findDup = (name, list) => {
+      const k = key(name);
+      if (!k) return { exact: null, similar: [] };
+      const zs = otherZones(list);
+      const exact = zs.find(z => key(z.name) === k) || null;
+      const similar = exact ? [] : zs.filter(z => {
+        const zk = key(z.name);
+        return zk && (zk.includes(k) || k.includes(zk));
+      }).slice(0, 5);
+      return { exact, similar };
+    };
+    const dupBox = () => $('#mz-dup', body);
+    const showDup = () => {
+      const box = dupBox();
+      if (!box) return;
+      const { exact, similar } = findDup($('#mz-name', body).value, state.zones);
+      if (exact) {
+        box.innerHTML = `<span style="color:var(--danger,#ef4444)">⛔ ئەم زۆنە پێشتر تۆمار کراوە: «${UI.esc(exact.name)}»</span>`;
+      } else if (similar.length) {
+        box.innerHTML = `<span style="color:var(--warning,#f59e0b)">⚠️ زۆنی هاوشێوە هەیە:</span> ` +
+          similar.map(z => `<span class="chip">${UI.esc(z.name)}</span>`).join(' ');
+      } else {
+        box.innerHTML = '';
+      }
+    };
+    setTimeout(() => { $('#mz-name', body)?.addEventListener('input', showDup); }, 0);
 
     const { close } = UI.openModal({
       title: isEdit ? '✏️ دەستکاریکردنی زۆن' : '➕ زیادکردنی زۆنی نوێ',
@@ -1933,6 +2044,15 @@ const AdminView = (() => {
 
             UI.btnLoading(subBtn, true, 'پاشەکەوت دەکرێت...');
             try {
+              // نوێترین لیست لە سێرڤەر — بۆ ئەوەی ئەو زۆنانەی لە ئامێرێکی تر زیاد کراون بپشکنرێن
+              const fresh = await Store.loadLists(true);
+              const dup = findDup(name, fresh.zones || state.zones);
+              if (dup.exact) {
+                state.zones = fresh.zones || state.zones;
+                showDup();
+                UI.toast(`ئەم زۆنە پێشتر تۆمار کراوە: «${dup.exact.name}»`, 'warning', 4200);
+                return;
+              }
               if (isEdit) {
                 await API.Lists.updateZone(zone.id, { name });
                 UI.toast('ناوی زۆن نوێ کرایەوە ✓', 'success');
@@ -1962,6 +2082,154 @@ const AdminView = (() => {
     try {
       await API.Lists.deleteZone(zone.id);
       UI.toast('زۆن سڕدرایەوە ✓', 'success');
+      await loadData({ silent: true });
+    } catch (err) {
+      UI.toast('هەڵە لە سڕینەوە: ' + err.message, 'error', 4200);
+    }
+  }
+
+
+  /* =========================================================
+   *  ٤. بەشی سەیارەکان (vehiclesv2)
+   * ========================================================= */
+  function renderVehiclesTab(wrap) {
+    wrap.innerHTML = `
+      <section class="card filter-card">
+        <div class="admin-header-row" style="margin-bottom:6px">
+          <h3 style="font-size:0.96rem"><span class="sec-icon">${UI.icon('truck')}</span> بەڕێوەبردنی ژمارەی سەیارەکان (خشتەی vehiclesv2)</h3>
+          <button type="button" class="btn btn-primary btn-sm" id="admin-add-veh-btn">➕ سەیارەی نوێ</button>
+        </div>
+        <div class="field">
+          <label>گەڕان لە سەیارەکان</label>
+          <input type="search" id="adm-veh-search" placeholder="ژمارەی سەیارە بنووسە..." value="${UI.esc(state.vehicleSearch)}">
+        </div>
+      </section>
+      <div class="zone-cards-grid" id="adm-veh-cards-grid"></div>`;
+
+    function updateGrid() {
+      const grid = $('#adm-veh-cards-grid', wrap);
+      if (!grid) return;
+      const rows = filteredVehicles();
+      grid.innerHTML = state.vehiclesError && !state.vehicles.length
+        ? `<div class="empty-state" style="grid-column:1/-1"><div class="empty-ico">⚠️</div><p>نەتوانرا ژمارەی سەیارەکان لە Supabase بهێنرێت: ${UI.esc(state.vehiclesError)}</p></div>`
+        : !rows.length ? `<div class="empty-state" style="grid-column:1/-1"><p>هیچ سەیارەیەک نەدۆزرایەوە.</p></div>` :
+        rows.map(r => `
+          <div class="zone-card${Store.isHidden('vehicles', r.id) ? ' is-hidden' : ''}">
+            <span class="zone-name">🚐 ${UI.esc(vehicleLabel(r))} ${hiddenBadge('vehicles', r.id)}</span>
+            <div class="zone-actions">
+              ${hideBtnHtml('vehicles', r.id, 'btn-action-sm')}
+              <button type="button" class="btn-action-sm btn-edit adm-veh-edit" data-id="${UI.esc(String(r.id))}">✏️</button>
+              <button type="button" class="btn-action-sm btn-del adm-veh-del" data-id="${UI.esc(String(r.id))}">🗑️</button>
+            </div>
+          </div>`).join('');
+
+      bindHideButtons(grid);
+      const find = btn => state.vehicles.find(x => String(x.id) === btn.dataset.id);
+      grid.querySelectorAll('.adm-veh-edit').forEach(btn => btn.addEventListener('click', () => {
+        const r = find(btn); if (r) openVehicleModal(r);
+      }));
+      grid.querySelectorAll('.adm-veh-del').forEach(btn => btn.addEventListener('click', () => {
+        const r = find(btn); if (r) deleteVehicle(r);
+      }));
+    }
+
+    $('#adm-veh-search', wrap).addEventListener('input', e => {
+      state.vehicleSearch = e.target.value;
+      updateGrid();
+    });
+    $('#admin-add-veh-btn', wrap).addEventListener('click', () => openVehicleModal(null));
+    updateGrid();
+  }
+
+  function openVehicleModal(veh = null) {
+    const isEdit = !!veh;
+    const body = document.createElement('div');
+    body.innerHTML = `
+      <form id="adm-veh-form" novalidate>
+        <div class="field">
+          <label>ژمارەی سەیارە *</label>
+          <input type="text" id="mv-number" value="${veh ? UI.esc(vehicleLabel(veh)) : ''}" placeholder="بۆ نموونە: 12345 هەولێر" autocomplete="off">
+          <div id="mv-dup" style="margin-top:8px;font-size:0.85rem;line-height:1.7"></div>
+        </div>
+      </form>`;
+
+    // پشکنینی دووبارەبوون — بێ جیاوازی لە space و هێڵ و ژمارەی عەرەبی/لاتینی
+    const key = x => UI.norm(x).replace(/[\s\-–—_.،,]+/g, '');
+    const others = list => (list || []).filter(r => !isEdit || String(r.id) !== String(veh.id));
+    const findDup = (name, list) => {
+      const k = key(name);
+      if (!k) return { exact: null, similar: [] };
+      const rs = others(list);
+      const exact = rs.find(r => key(vehicleLabel(r)) === k) || null;
+      const similar = exact ? [] : rs.filter(r => {
+        const rk = key(vehicleLabel(r));
+        return rk && (rk.includes(k) || k.includes(rk));
+      }).slice(0, 5);
+      return { exact, similar };
+    };
+    const showDup = () => {
+      const box = $('#mv-dup', body);
+      if (!box) return;
+      const { exact, similar } = findDup($('#mv-number', body).value, state.vehicles);
+      if (exact) box.innerHTML = `<span style="color:var(--danger,#ef4444)">⛔ ئەم ژمارەیە پێشتر تۆمار کراوە: «${UI.esc(vehicleLabel(exact))}»</span>`;
+      else if (similar.length) box.innerHTML = `<span style="color:var(--warning,#f59e0b)">⚠️ ژمارەی هاوشێوە هەیە:</span> ` + similar.map(r => `<span class="chip">${UI.esc(vehicleLabel(r))}</span>`).join(' ');
+      else box.innerHTML = '';
+    };
+    setTimeout(() => { $('#mv-number', body)?.addEventListener('input', showDup); }, 0);
+
+    const { close } = UI.openModal({
+      title: isEdit ? '✏️ دەستکاریکردنی سەیارە' : '➕ زیادکردنی سەیارەی نوێ',
+      size: 'wide',
+      body,
+      actions: [
+        { label: 'پاشگەزبوونەوە', className: 'btn-ghost', onClick: () => close() },
+        {
+          label: isEdit ? 'پاشەکەوتکردن' : 'تۆمارکردن',
+          className: 'btn-primary',
+          onClick: async (backdrop) => {
+            const subBtn = backdrop.querySelector('.modal-foot .btn-primary');
+            const number = $('#mv-number', body).value.trim();
+            if (!number) { UI.toast('تکایە ژمارەی سەیارە بنووسە', 'warning'); return; }
+
+            UI.btnLoading(subBtn, true, 'پاشەکەوت دەکرێت...');
+            try {
+              const fresh = await Store.loadLists(true);
+              const dup = findDup(number, fresh.vehicles || state.vehicles);
+              if (dup.exact) {
+                state.vehicles = fresh.vehicles || state.vehicles;
+                showDup();
+                UI.toast(`ئەم ژمارەیە پێشتر تۆمار کراوە: «${vehicleLabel(dup.exact)}»`, 'warning', 4200);
+                return;
+              }
+              const col = vehicleKey();
+              if (isEdit) {
+                await API.Lists.updateVehicle(veh.id, { [col]: number });
+                UI.toast('ژمارەی سەیارە نوێ کرایەوە ✓', 'success');
+              } else {
+                await API.Lists.insertVehicle({ [col]: number });
+                UI.toast('سەیارەی نوێ زیادکرا ✓', 'success');
+              }
+              close();
+              await loadData({ silent: true });
+            } catch (err) {
+              UI.toast('هەڵە لە پاشەکەوتکردن: ' + err.message, 'error', 4200);
+            } finally {
+              UI.btnLoading(subBtn, false);
+            }
+          }
+        }
+      ]
+    });
+  }
+
+  async function deleteVehicle(veh) {
+    const ok = await UI.confirmDialog(`دڵنیاییت لە سڕینەوەی سەیارەی «${vehicleLabel(veh)}»؟`, {
+      danger: true, okLabel: 'بەڵێ، بسڕەوە', cancelLabel: 'پاشگەزبوونەوە'
+    });
+    if (!ok) return;
+    try {
+      await API.Lists.deleteVehicle(veh.id);
+      UI.toast('سەیارە سڕدرایەوە ✓', 'success');
       await loadData({ silent: true });
     } catch (err) {
       UI.toast('هەڵە لە سڕینەوە: ' + err.message, 'error', 4200);

@@ -17,6 +17,7 @@ const CONFIG = {
   USERS_TABLE: 'usersv2',
   ZONES_TABLE: 'zonesv2',
   VEHICLES_TABLE: 'vehiclesv2',
+  VEHICLE_COLUMN: 'vehicle_number',
 
   /* دەروازەی پارێزراو — Supabase Edge Function کە هەموو داتاکان بە ئەوەوە تێپەڕ دەبن.
    * پاش جێبەجێکردنی فەنکشنەکە (سەیری SECURITY-GUIDE.md بکە) ئەم بەستانە دابنێ:

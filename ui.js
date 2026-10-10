@@ -1040,7 +1040,6 @@ const UI = (() => {
     `;
 
     const actions = [];
-    const hasCustom = typeof onEdit === 'function' || typeof onDelete === 'function';
     if (typeof onEdit === 'function') {
       actions.push({
         label: '✏️ دەستکاری داتا',
@@ -1052,14 +1051,6 @@ const UI = (() => {
         }
       });
     }
-    actions.push({
-      label: 'داخستن',
-      className: hasCustom ? 'btn-ghost' : 'btn-primary',
-      onClick: backdrop => {
-        backdrop.classList.remove('open');
-        setTimeout(() => backdrop.remove(), 220);
-      }
-    });
     if (typeof onDelete === 'function') {
       actions.push({
         label: '🗑️ سڕینەوە',

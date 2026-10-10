@@ -37,7 +37,7 @@ const ContactsView = (() => {
   function render(el) {
     container = el;
     el.innerHTML = `
-      <div class="settings-view">
+      <div class="settings-view contacts-view">
         <section class="card filter-card">
           <div class="admin-header-row" style="margin-bottom:6px">
             <h3 style="font-size:0.96rem"><span class="sec-icon">${UI.icon('phone')}</span> پەیوەندییەکان</h3>
@@ -77,7 +77,7 @@ const ContactsView = (() => {
 
     Store.loadLists()
       .then(ls => {
-        state.users = ls.users || [];
+        state.users = Store.visible('users', ls.users);
         const q = UI.norm(state.search);
         const users = state.users.filter(u => matches(u, q));
 

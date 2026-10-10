@@ -83,6 +83,41 @@ const DriverView = (() => {
   // بلەر: کۆی گشتی پیشان دەدات؛ فۆکەس: دەقە ڕەسەنەکە دەگەڕێنێتەوە بۆ دەستکاری
   const wireExprField = inp => {
     if (!inp) return;
+
+    // دووگمەی + لەناو خانەکە (لای چەپ) — دوای ژمارە دەرئەکەوێت و + زیاد دەکات
+    const wrap = document.createElement('div');
+    wrap.className = 'expr-wrap';
+    inp.parentNode.insertBefore(wrap, inp);
+    wrap.appendChild(inp);
+    inp.classList.add('expr-input');
+    const plusBtn = document.createElement('button');
+    plusBtn.type = 'button';
+    plusBtn.className = 'expr-plus-btn';
+    plusBtn.tabIndex = -1;
+    plusBtn.setAttribute('aria-label', 'کۆکردنەوە');
+    plusBtn.textContent = '+';
+    wrap.appendChild(plusBtn);
+    const syncPlus = () => {
+      const v = inp.value.trim();
+      const show = !inp.readOnly && !inp.disabled && /[0-9٠-٩۰-۹]$/.test(v);
+      plusBtn.classList.toggle('show', show);
+    };
+    // mousedown: با خانەکە فۆکەسی نەچێت (کیبۆرد دانەخرێت)
+    plusBtn.addEventListener('mousedown', e => e.preventDefault());
+    plusBtn.addEventListener('click', () => {
+      if (inp.dataset.raw) { inp.value = inp.dataset.raw; delete inp.dataset.raw; }
+      const v = inp.value.trim();
+      if (!/[0-9٠-٩۰-۹]$/.test(v)) return;
+      inp.value = v + '+';
+      inp.focus();
+      try { inp.setSelectionRange(inp.value.length, inp.value.length); } catch (_) {}
+      syncPlus();
+    });
+    inp.addEventListener('input', syncPlus);
+    inp.addEventListener('focus', () => setTimeout(syncPlus, 0));
+    inp.addEventListener('blur', () => setTimeout(syncPlus, 0));
+    syncPlus();
+
     inp.addEventListener('blur', () => {
       const raw = inp.value.trim();
       if (UI.hasOperator(raw)) {
@@ -718,14 +753,11 @@ const DriverView = (() => {
     const u = App.getUser();
     const distrib = isDistributor();
 
-    const distributors = (lists?.users || []).filter(x => x.profession === CONFIG.PROFESSION_DISTRIBUTOR).map(x => ({ label: x.username }));
-    const drivers     = (lists?.users || []).filter(x => x.profession === CONFIG.PROFESSION_DRIVER || x.profession === CONFIG.PROFESSION_ASSISTANT).map(x => ({ label: x.username }));
-    const delegates   = (lists?.users || []).filter(x => x.profession === CONFIG.PROFESSION_DELEGATE).map(x => ({ label: x.username }));
-    const zones       = (lists?.zones || []).map(z => ({ label: z.name }));
-    const vehicles    = (lists?.vehicles || []).map(v => {
-      const val = v.vehicle_number || v.plate_number || v.number || v.name || v.vehicle || v.plate || Object.values(v)[1] || Object.values(v)[0];
-      return { label: String(val).trim() };
-    }).filter(v => v.label && v.label !== '[object Object]');
+    const distributors = Store.visible('users', lists?.users).filter(x => x.profession === CONFIG.PROFESSION_DISTRIBUTOR).map(x => ({ label: x.username }));
+    const drivers     = Store.visible('users', lists?.users).filter(x => x.profession === CONFIG.PROFESSION_DRIVER || x.profession === CONFIG.PROFESSION_ASSISTANT).map(x => ({ label: x.username }));
+    const delegates   = Store.visible('users', lists?.users).filter(x => x.profession === CONFIG.PROFESSION_DELEGATE).map(x => ({ label: x.username }));
+    const zones       = Store.visible('zones', lists?.zones).map(z => ({ label: z.name }));
+    const vehicles    = Store.visible('vehicles', lists?.vehicles).map(v => ({ label: Store.vehicleLabel(v) })).filter(v => v.label);
 
     const count = records.length;
     const cargoLabel = CONFIG.CARGO_LABELS[count] || 'باری نوێ';
@@ -1050,14 +1082,11 @@ const DriverView = (() => {
 
     const distrib = isDistributor();
     const listsNow = lists || { users: [], zones: [], vehicles: [] };
-    const distributors = (listsNow.users || []).filter(x => x.profession === CONFIG.PROFESSION_DISTRIBUTOR).map(x => ({ label: x.username }));
-    const driversList  = (listsNow.users || []).filter(x => x.profession === CONFIG.PROFESSION_DRIVER || x.profession === CONFIG.PROFESSION_ASSISTANT).map(x => ({ label: x.username }));
-    const delegates    = (listsNow.users || []).filter(x => x.profession === CONFIG.PROFESSION_DELEGATE).map(x => ({ label: x.username }));
-    const zones        = (listsNow.zones || []).map(z => ({ label: z.name }));
-    const vehicles     = (listsNow.vehicles || []).map(v => {
-      const val = v.vehicle_number || v.plate_number || v.number || v.name || v.vehicle || v.plate || Object.values(v)[1] || Object.values(v)[0];
-      return { label: String(val).trim() };
-    }).filter(v => v.label && v.label !== '[object Object]');
+    const distributors = Store.visible('users', listsNow.users).filter(x => x.profession === CONFIG.PROFESSION_DISTRIBUTOR).map(x => ({ label: x.username }));
+    const driversList  = Store.visible('users', listsNow.users).filter(x => x.profession === CONFIG.PROFESSION_DRIVER || x.profession === CONFIG.PROFESSION_ASSISTANT).map(x => ({ label: x.username }));
+    const delegates    = Store.visible('users', listsNow.users).filter(x => x.profession === CONFIG.PROFESSION_DELEGATE).map(x => ({ label: x.username }));
+    const zones        = Store.visible('zones', listsNow.zones).map(z => ({ label: z.name }));
+    const vehicles     = Store.visible('vehicles', listsNow.vehicles).map(v => ({ label: Store.vehicleLabel(v) })).filter(v => v.label);
 
     // دیاریکردنی خانەی ناوی خۆی — قفڵ دەکرێت وەک فۆڕمی تۆمارکردنی دەرچوون (تەنها بۆ شۆفێر/دابەشکار، نەک بەڕێوەبەر)
     // بە ئایدی usersv2 ئەگەر تۆمارەکە هەیبێت، ئەگینا بە ناو

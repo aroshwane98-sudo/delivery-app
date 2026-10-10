@@ -6,6 +6,7 @@ const Store = (() => {
   const SESSION_KEY = 'dlv_session';
   const SETTINGS_KEY = 'dlv_settings';
   const LISTS_CACHE_KEY = 'dlv_lists_cache';
+  const VEHICLES_TTL_MS = 60 * 1000; // ژمارەی سەیارەکان — هەر ٦٠ چرکە جارێک لە Supabase نوێ دەکرێنەوە
   const LISTS_TTL_MS = 30 * 60 * 1000; // ٣٠ خولەک — پاش هەر گۆڕانکارییەک بە خۆکاری بەتاڵ دەکرێتەوە
 
   /* ---------------- سێشن ---------------- */
@@ -142,8 +143,35 @@ const Store = (() => {
 
   let memoryLists = null;
 
+  /** ناوی/ژمارەی سەیارە لە ڕیزی vehiclesv2 — یەک لۆژیک بۆ هەموو بەشەکانی سیستەم */
+  const VEH_KEYS = ['vehicle_number', 'plate_number', 'number', 'name', 'vehicle', 'plate'];
+  const VEH_SKIP = ['id', 'created_at', 'updated_at', 'inserted_at'];
+  function vehicleLabel(v) {
+    if (!v) return '';
+    let k = VEH_KEYS.find(x => v[x] !== undefined && v[x] !== null);
+    if (!k) k = Object.keys(v).find(x => !VEH_SKIP.includes(x) && v[x] !== null && v[x] !== undefined);
+    return k ? String(v[k]).trim() : '';
+  }
+
+  /** ئەگەر لیستی سەیارەکان کۆن بوو (>٦٠ چرکە) لە Supabase نوێی دەکاتەوە */
+  async function ensureFreshVehicles(lists) {
+    if (!lists) return lists;
+    if (lists.vehiclesTs && Date.now() - lists.vehiclesTs < VEHICLES_TTL_MS) return lists;
+    try {
+      const v = await API.Lists.vehicles();
+      lists.vehicles = Array.isArray(v) ? v : [];
+      lists.vehiclesTs = Date.now();
+      if (memoryLists === lists) {
+        try { localStorage.setItem(LISTS_CACHE_KEY, JSON.stringify(lists)); } catch (_) {}
+      }
+    } catch (err) {
+      console.warn('نەتوانرا ژمارەی سەیارەکان لە Supabase نوێ بکرێنەوە:', err);
+    }
+    return lists;
+  }
+
   async function loadLists(force = false) {
-    if (memoryLists && !force) return memoryLists;
+    if (memoryLists && !force) return ensureFreshVehicles(memoryLists);
 
     try {
       const raw = localStorage.getItem(LISTS_CACHE_KEY);
@@ -151,16 +179,18 @@ const Store = (() => {
         const cached = JSON.parse(raw);
         if (Date.now() - cached.ts < LISTS_TTL_MS && cached.users && cached.zones) {
           memoryLists = cached;
-          return cached;
+          return ensureFreshVehicles(cached);
         }
       }
     } catch (_) { /* کاشی خراپ — پشتگوێ بخرێت */ }
 
+    let vehiclesOk = true;
     const [users, zones, vehicles, profData] = await Promise.all([
       API.Lists.users(),
       API.Lists.zones(),
       API.Lists.vehicles().catch(err => {
         console.warn('نەتوانرا لیستی سەیارەکان لە vehiclesv2 بهێنرێت:', err);
+        vehiclesOk = false;
         return [];
       }),
       API.Professions.all().catch(err => {
@@ -173,6 +203,7 @@ const Store = (() => {
       users: UI.sortUsers(users),
       zones,
       vehicles: vehicles || [],
+      vehiclesTs: vehiclesOk ? Date.now() : 0,
       professions: (profData.names || []).map(r => r.profession),
       perms: API.Professions.parsePerms(profData.permsRaw),
     };
@@ -243,6 +274,36 @@ const Store = (() => {
     return true;
   }
 
+  /* — شاردنەوەی بەکارهێنەر/زۆن/سەیارە لای هەموو یوسەرەکان —
+   * لە کۆنفیگی ناوەندی (cfg.hidden) پاشەکەوت دەکرێت: { users: [id], zones: [id], vehicles: [id] } */
+  function getHidden(kind) {
+    const h = getPermsConfig().hidden;
+    return (h && Array.isArray(h[kind])) ? h[kind].map(String) : [];
+  }
+  const isHidden = (kind, id) => getHidden(kind).includes(String(id));
+  /** تەنها ئەو توخمانە دەگەڕێنێتەوە کە نەشاردراون (بە ئایدی) */
+  function visible(kind, arr) {
+    const hid = getHidden(kind);
+    if (!hid.length) return arr || [];
+    return (arr || []).filter(x => !hid.includes(String(x && x.id)));
+  }
+  /** شاردنەوە/پشاندانی توخمێک — لەسەر نوێترین کۆنفیگی سێرڤەر دەنووسرێت */
+  async function setHidden(kind, id, hidden) {
+    let cfg;
+    try {
+      const data = await API.Professions.all();
+      cfg = JSON.parse(JSON.stringify(API.Professions.parsePerms(data.permsRaw) || {}));
+    } catch (_) {
+      cfg = JSON.parse(JSON.stringify(getPermsConfig()));
+    }
+    cfg.hidden = cfg.hidden || {};
+    const cur = new Set((Array.isArray(cfg.hidden[kind]) ? cfg.hidden[kind] : []).map(String));
+    if (hidden) cur.add(String(id)); else cur.delete(String(id));
+    cfg.hidden[kind] = [...cur];
+    await savePermsConfig(cfg);
+    return true;
+  }
+
   /* — پشکنینی خۆکاری گۆڕانی دەسەڵاتەکان لە ئامێرەکانی تر —
    * هەر ماوەیەک جارێک خشتەی سووکی professions دەپشکنێت؛ ئەگەر گۆڕانکاری هەبوو
    * کاش نوێ دەکاتەوە و ڕووداوی dlv-perms-changed دەنێرێت بۆ نوێکردنەوەی ڕووکار */
@@ -301,5 +362,5 @@ const Store = (() => {
     return true;
   }
 
-  return { getSession, setSession, updateSession, clearSession, getSettings, saveSettings, applySettings, isColHidden, isTotalHidden, loadLists, invalidateLists, getTabState, saveTabState, getPermsConfig, getCustomProfessions, savePermsConfig, addProfession, removeProfession, getBaseTime, setBaseTime, startPermsPolling, stopPermsPolling, PRINT_DEFAULTS };
+  return { getSession, setSession, updateSession, clearSession, getSettings, saveSettings, applySettings, isColHidden, isTotalHidden, loadLists, vehicleLabel, invalidateLists, getTabState, saveTabState, getPermsConfig, getHidden, isHidden, visible, setHidden, getCustomProfessions, savePermsConfig, addProfession, removeProfession, getBaseTime, setBaseTime, startPermsPolling, stopPermsPolling, PRINT_DEFAULTS };
 })();

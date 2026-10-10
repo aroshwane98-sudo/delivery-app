@@ -419,13 +419,25 @@ const API = (() => {
     },
 
     async vehicles() {
-      if (gwOn()) return gw('lists.vehicles', {});
+      if (gwOn()) {
+        try { return await gw('lists.vehicles', {}); }
+        catch (err) {
+          // ئەگەر دەروازە نەیتوانی — هەوڵی خوێندنەوەی ڕاستەوخۆ لە Supabase
+          console.warn('lists.vehicles لە دەروازە سەرنەکەوت، هەوڵی ڕاستەوخۆ:', err);
+          return request(CONFIG.LISTS_URL, CONFIG.LISTS_KEY,
+            `/${CONFIG.VEHICLES_TABLE}?select=*&order=id`);
+        }
+      }
       return request(CONFIG.LISTS_URL, CONFIG.LISTS_KEY,
         `/${CONFIG.VEHICLES_TABLE}?select=*&order=id`);
     },
 
     async insertUser(row) {
-      if (gwOn()) return gw('lists.insertUser', { row });
+      if (gwOn()) {
+        const r = await gw('lists.insertUser', { row });
+        if (typeof Store !== 'undefined' && Store.invalidateLists) Store.invalidateLists();
+        return r;
+      }
       const rows = await request(CONFIG.LISTS_URL, CONFIG.LISTS_KEY,
         `/${CONFIG.USERS_TABLE}`, { method: 'POST', body: row, prefer: 'return=representation' });
       if (typeof Store !== 'undefined' && Store.invalidateLists) Store.invalidateLists();
@@ -433,7 +445,11 @@ const API = (() => {
     },
 
     async updateUser(id, patch) {
-      if (gwOn()) return gw('lists.updateUser', { id, patch });
+      if (gwOn()) {
+        const r = await gw('lists.updateUser', { id, patch });
+        if (typeof Store !== 'undefined' && Store.invalidateLists) Store.invalidateLists();
+        return r;
+      }
       const rows = await request(CONFIG.LISTS_URL, CONFIG.LISTS_KEY,
         `/${CONFIG.USERS_TABLE}?driver_id=eq.${encodeURIComponent(id)}`,
         { method: 'PATCH', body: patch, prefer: 'return=representation' });
@@ -442,7 +458,11 @@ const API = (() => {
     },
 
     async deleteUser(id) {
-      if (gwOn()) return gw('lists.deleteUser', { id });
+      if (gwOn()) {
+        const r = await gw('lists.deleteUser', { id });
+        if (typeof Store !== 'undefined' && Store.invalidateLists) Store.invalidateLists();
+        return r;
+      }
       const res = await request(CONFIG.LISTS_URL, CONFIG.LISTS_KEY,
         `/${CONFIG.USERS_TABLE}?driver_id=eq.${encodeURIComponent(id)}`, { method: 'DELETE' });
       if (typeof Store !== 'undefined' && Store.invalidateLists) Store.invalidateLists();
@@ -450,7 +470,11 @@ const API = (() => {
     },
 
     async insertZone(row) {
-      if (gwOn()) return gw('lists.insertZone', { row });
+      if (gwOn()) {
+        const r = await gw('lists.insertZone', { row });
+        if (typeof Store !== 'undefined' && Store.invalidateLists) Store.invalidateLists();
+        return r;
+      }
       const rows = await request(CONFIG.LISTS_URL, CONFIG.LISTS_KEY,
         `/${CONFIG.ZONES_TABLE}`, { method: 'POST', body: row, prefer: 'return=representation' });
       if (typeof Store !== 'undefined' && Store.invalidateLists) Store.invalidateLists();
@@ -458,7 +482,11 @@ const API = (() => {
     },
 
     async updateZone(id, patch) {
-      if (gwOn()) return gw('lists.updateZone', { id, patch });
+      if (gwOn()) {
+        const r = await gw('lists.updateZone', { id, patch });
+        if (typeof Store !== 'undefined' && Store.invalidateLists) Store.invalidateLists();
+        return r;
+      }
       const rows = await request(CONFIG.LISTS_URL, CONFIG.LISTS_KEY,
         `/${CONFIG.ZONES_TABLE}?id=eq.${encodeURIComponent(id)}`,
         { method: 'PATCH', body: patch, prefer: 'return=representation' });
@@ -467,9 +495,50 @@ const API = (() => {
     },
 
     async deleteZone(id) {
-      if (gwOn()) return gw('lists.deleteZone', { id });
+      if (gwOn()) {
+        const r = await gw('lists.deleteZone', { id });
+        if (typeof Store !== 'undefined' && Store.invalidateLists) Store.invalidateLists();
+        return r;
+      }
       const res = await request(CONFIG.LISTS_URL, CONFIG.LISTS_KEY,
         `/${CONFIG.ZONES_TABLE}?id=eq.${encodeURIComponent(id)}`, { method: 'DELETE' });
+      if (typeof Store !== 'undefined' && Store.invalidateLists) Store.invalidateLists();
+      return res;
+    },
+
+    async insertVehicle(row) {
+      if (gwOn()) {
+        const r = await gw('lists.insertVehicle', { row });
+        if (typeof Store !== 'undefined' && Store.invalidateLists) Store.invalidateLists();
+        return r;
+      }
+      const rows = await request(CONFIG.LISTS_URL, CONFIG.LISTS_KEY,
+        `/${CONFIG.VEHICLES_TABLE}`, { method: 'POST', body: row, prefer: 'return=representation' });
+      if (typeof Store !== 'undefined' && Store.invalidateLists) Store.invalidateLists();
+      return rows && rows[0] ? rows[0] : null;
+    },
+
+    async updateVehicle(id, patch) {
+      if (gwOn()) {
+        const r = await gw('lists.updateVehicle', { id, patch });
+        if (typeof Store !== 'undefined' && Store.invalidateLists) Store.invalidateLists();
+        return r;
+      }
+      const rows = await request(CONFIG.LISTS_URL, CONFIG.LISTS_KEY,
+        `/${CONFIG.VEHICLES_TABLE}?id=eq.${encodeURIComponent(id)}`,
+        { method: 'PATCH', body: patch, prefer: 'return=representation' });
+      if (typeof Store !== 'undefined' && Store.invalidateLists) Store.invalidateLists();
+      return rows && rows[0] ? rows[0] : null;
+    },
+
+    async deleteVehicle(id) {
+      if (gwOn()) {
+        const r = await gw('lists.deleteVehicle', { id });
+        if (typeof Store !== 'undefined' && Store.invalidateLists) Store.invalidateLists();
+        return r;
+      }
+      const res = await request(CONFIG.LISTS_URL, CONFIG.LISTS_KEY,
+        `/${CONFIG.VEHICLES_TABLE}?id=eq.${encodeURIComponent(id)}`, { method: 'DELETE' });
       if (typeof Store !== 'undefined' && Store.invalidateLists) Store.invalidateLists();
       return res;
     },

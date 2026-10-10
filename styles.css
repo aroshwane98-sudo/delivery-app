@@ -1229,7 +1229,8 @@ html.hide-icons .toast-ico .lic { display: inline-block !important; }
 
 @media (min-width: 992px) {
   .page.page-admin,
-  body.role-supervisor .page {
+  body.role-supervisor .page,
+  body.desktop-wide .page {
     max-width: 96%;
     width: 96%;
     transition: max-width 0.2s ease;
@@ -1274,7 +1275,8 @@ html.hide-icons .toast-ico .lic { display: inline-block !important; }
 
 @media (min-width: 1440px) {
   .page.page-admin,
-  body.role-supervisor .page {
+  body.role-supervisor .page,
+  body.desktop-wide .page {
     max-width: 1600px;
     width: 96%;
   }
@@ -2794,6 +2796,7 @@ html.hide-icons .toast-ico .lic { display: inline-block !important; }
   .rep-row1 .date-range-compact { order: 1; flex: 1 1 100%; }
   #rep-view-mode { order: 2; }
   #rep-refresh { order: 3; }
+  #rep-reset-filters { order: 3; }
   .rep-row1-chips { order: 4; }
 }
 
@@ -2801,3 +2804,68 @@ html.hide-icons .toast-ico .lic { display: inline-block !important; }
   #rep-refresh .btn-text, .rep-row1-chips .btn-text { display: none !important; }
   #rep-refresh, .rep-row1-chips .chip-btn { padding: 7px 11px; font-size: 1.1rem; line-height: 1; border-radius: 9px; min-width: auto; }
 }
+
+/* ڕاپۆرت — شێوازی دیسکتۆپ لە مووبایلدا (ئۆپشنی دەسەڵات rep_desktop_layout) */
+@media (max-width: 560px) {
+  .rep-desktop .rep-row2 { display: flex !important; }
+  .rep-desktop #rep-print { display: inline-flex !important; }
+  .rep-desktop .rep-row2 .field { flex: 1 1 calc(50% - 8px); }
+  .rep-desktop .rep-row2 .rep-f2-search { flex: 1 1 100%; }
+}
+
+/* بەڕێوەبردن — توخمە شاردراوەکان (شاردنەوە لای هەموو یوسەرەکان) */
+.user-card.is-hidden, .zone-card.is-hidden { opacity: 0.55; border-style: dashed; }
+.hidden-badge { font-size: 0.72rem; padding: 2px 8px; }
+
+/* =========================================================
+ *  دیسکتۆپ — فۆڕمی ڕێکخستن و پەیوەندییەکان (نەک شێوازی مووبایلی درێژ)
+ * ========================================================= */
+
+@media (min-width: 992px) {
+  .page.page-wide { max-width: 96%; width: 96%; }
+
+  /* ڕێکخستن — کارتەکان لە چەند ستوون دابەش دەبن */
+  .settings-view:not(.contacts-view) {
+    display: block;
+    column-count: 2;
+    column-gap: 16px;
+  }
+  .settings-view:not(.contacts-view) > .card {
+    break-inside: avoid;
+    -webkit-column-break-inside: avoid;
+    margin-bottom: 14px;
+  }
+  .settings-view:not(.contacts-view) > .profile-card,
+  .settings-view:not(.contacts-view) > .about-card {
+    column-span: all;
+  }
+
+  /* پەیوەندییەکان — ڕیزی یوسەرەکان وەک تۆڕێکی کارت */
+  .ct-group-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+    gap: 10px;
+  }
+  .ct-groups { gap: 22px; }
+}
+
+@media (min-width: 1440px) {
+  .page.page-wide { max-width: 1600px; width: 96%; }
+}
+
+@media (min-width: 1500px) {
+  .settings-view:not(.contacts-view) { column-count: 3; }
+}
+
+/* دووگمەی + لەناو خانە ژمارەییەکانی کۆکردنەوە (کێش / پارچە / وەسڵ) */
+.expr-wrap { position: relative; width: 100%; }
+.expr-wrap .expr-input { direction: ltr; text-align: right; }
+.expr-wrap .expr-input.has-plus, .expr-wrap:has(.expr-plus-btn.show) .expr-input { padding-left: 46px; }
+.expr-plus-btn {
+  display: none; position: absolute; left: 6px; top: 50%; transform: translateY(-50%);
+  width: 34px; height: 34px; padding: 0; border: none; border-radius: 8px;
+  background: var(--accent); color: #fff; font-size: 1.3rem; font-weight: 700; line-height: 1;
+  cursor: pointer; align-items: center; justify-content: center;
+}
+.expr-plus-btn.show { display: inline-flex; }
+.expr-plus-btn:active { transform: translateY(-50%) scale(0.92); }

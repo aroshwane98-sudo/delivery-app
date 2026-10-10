@@ -156,22 +156,21 @@ const ReportsView = (() => {
 
   // پڕکردنەوەی لیستی ژمارەی سەیارەکان — لە لیستی سەیارەکان، ئەگینا لە تۆمارە بارکراوەکان
   function refreshVehicleOptions(ls) {
-    if (!container || !Perms.canView(App.getUser(), 'rep_filter_driver')) return;
+    if (!container || !Perms.canView(App.getUser(), 'rep_filter_vehicle')) return;
     const sel = $('#rep-veh-filter', container);
-    if (!sel || sel.options.length > 1) return; // پێشتر پڕکراوەتەوە
+    if (!sel || sel.dataset.src === 'lists') return; // پێشتر لە Supabase پڕکراوەتەوە
     let list = [];
-    const fromLs = (ls && ls.vehicles) || [];
-    if (fromLs.length) {
-      list = fromLs.map(v => {
-        const val = v.vehicle_number || v.plate_number || v.number || v.name || v.vehicle || v.plate || '';
-        return String(val).trim();
-      }).filter(Boolean);
+    const fromLs = Store.visible('vehicles', ls && ls.vehicles);
+    const fromSupabase = fromLs.length > 0;
+    if (fromSupabase) {
+      list = fromLs.map(v => Store.vehicleLabel(v)).filter(Boolean);
     } else {
       list = [...new Set((state.rows || []).map(r => String(r.vehicle || '').trim()).filter(Boolean))];
     }
     list = [...new Set(list)].sort((a, b) => a.localeCompare(b, 'ckb'));
     if (!list.length) return;
     const keep = state.vehicleFilter || '';
+    if (fromSupabase) sel.dataset.src = 'lists';
     sel.innerHTML = '<option value="">هەموو سەیارەکان</option>' +
       list.map(v => `<option value="${UI.esc(v)}"${v === keep ? ' selected' : ''}>${UI.esc(v)}</option>`).join('');
   }
@@ -194,7 +193,7 @@ const ReportsView = (() => {
 
       state.rows = await API.Records.list(params);
       state.lastUpdated = new Date();
-      refreshVehicleOptions();
+      Store.loadLists().then(l => refreshVehicleOptions(l)).catch(() => refreshVehicleOptions());
       renderResults();
     } catch (err) {
       UI.toast('هەڵە لە هێنانی ڕاپۆرت: ' + err.message, 'error', 4200);
@@ -217,6 +216,18 @@ const ReportsView = (() => {
     const canOutZone = Perms.canView(u0, 'rep_filter_out_zone');
     const canArrival = Perms.canView(u0, 'rep_filter_arrival');
     const canDriverFilter = Perms.canView(u0, 'rep_filter_driver');
+    const canMonth = Perms.canView(u0, 'rep_filter_month');
+    const canDay = Perms.canView(u0, 'rep_filter_day');
+    const canDistFilter = Perms.canView(u0, 'rep_filter_distributor');
+    const canDelFilter = Perms.canView(u0, 'rep_filter_delegate');
+    const canVehFilter = Perms.canView(u0, 'rep_filter_vehicle');
+    const canSearch = Perms.canView(u0, 'rep_search');
+    const canReset = Perms.canView(u0, 'rep_reset_filters');
+    const canViewMode = Perms.canView(u0, 'rep_view_mode');
+    const canTotals = Perms.canView(u0, 'rep_totals');
+    const canPrint = Perms.canAct(u0, 'rep_print');
+    const desktopLayout = Perms.canView(u0, 'rep_desktop_layout');
+    el.classList.toggle('rep-desktop', desktopLayout);
     if (!state.initializedDates) {
       if (seesAll) {
         // بینینی هەموو تۆمارەکان — تەنها بەرواری ئەمڕۆ بە خۆکاری
@@ -235,13 +246,14 @@ const ReportsView = (() => {
     el.innerHTML = `
       <section class="card filter-card">
         <div class="rep-row1">
-          <button type="button" class="field-toggle-btn rep-view-btn" id="rep-view-mode" title="گۆڕینی شێوازی پیشاندان"></button>
+          ${canViewMode ? `<button type="button" class="field-toggle-btn rep-view-btn" id="rep-view-mode" title="گۆڕینی شێوازی پیشاندان"></button>` : ''}
           <div class="date-range-compact">
             <div class="field compact-field"><label>لە بەروار</label><input type="date" id="rep-from" value="${state.from}"></div>
             <div class="field compact-field"><label>بۆ بەروار</label><input type="date" id="rep-to" value="${state.to}"></div>
           </div>
-          <button class="btn btn-ghost btn-sm" id="rep-print" title="پرێنتکردنی داتای فلتەرکراو">🖨️ پرێنتکردن</button>
+          ${canPrint ? `<button class="btn btn-ghost btn-sm" id="rep-print" title="پرێنتکردنی داتای فلتەرکراو">🖨️ پرێنتکردن</button>` : ''}
           <button class="field-toggle-btn rep-view-btn" id="rep-refresh" title="نوێکردنەوە" type="button">⚡</button>
+          ${canReset ? `<button type="button" class="field-toggle-btn rep-view-btn" id="rep-reset-filters" title="پاککردنەوەی هەموو فلتەرەکان و گەڕانەوە بۆ ئەمڕۆ" style="height: 38px;">✖</button>` : ''}
           ${(canSecondOnly || canOutZone || canArrival) ? `
           <div class="rep-row1-chips">
             ${canSecondOnly ? `<button class="field-toggle-btn rep-view-btn ${state.secondOnly ? 'active' : ''}" id="rep-second-only" type="button" title="تەنها باری دووەم">📦</button>` : ''}
@@ -250,58 +262,58 @@ const ReportsView = (() => {
           </div>` : ''}
         </div>
         <div class="rep-row2">
-          <div class="field compact-field" style="flex: 0 0 auto;">
-            <button type="button" class="field-toggle-btn rep-view-btn" id="rep-reset-filters" title="پاککردنەوەی هەموو فلتەرەکان و گەڕانەوە بۆ ئەمڕۆ" style="height: 38px;">✖</button>
-          </div>
-          ${canDriverFilter ? `
+          ${canMonth ? `
           <div class="field compact-field"><label>مانگ</label>
             <select id="rep-month-filter">
               <option value="">هەموو مانگەکان</option>
               ${Array.from({ length: 12 }, (_, i) => `<option value="${i + 1}" ${String(state.monthFilter) === String(i + 1) ? 'selected' : ''}>${i + 1}</option>`).join('')}
             </select>
-          </div>
+          </div>` : ''}
+          ${canDay ? `
           <div class="field compact-field"><label>ڕۆژی حەفتە</label>
             <select id="rep-day-filter">
               <option value="">هەموو ڕۆژەکان</option>
               ${WEEKDAY_OPTIONS.map(d => `<option value="${UI.esc(d)}" ${state.dayFilter === d ? 'selected' : ''}>${UI.esc(d)}</option>`).join('')}
             </select>
-          </div>
+          </div>` : ''}
+          ${canDriverFilter ? `
           <div class="field compact-field"><label>ناوی سایەق</label>
             <select id="rep-driver-select">
               <option value="">هەموو سایەقەکان</option>
             </select>
-          </div>
+          </div>` : ''}
+          ${canDistFilter ? `
           <div class="field compact-field"><label>ناوی دابەشكار</label>
             <select id="rep-dist-filter">
               <option value="">هەموو دابەشكارەکان</option>
             </select>
-          </div>
+          </div>` : ''}
+          ${canDelFilter ? `
           <div class="field compact-field"><label>ناوی مەندوو</label>
             <select id="rep-del-filter">
               <option value="">هەموو مەندووەکان</option>
             </select>
-          </div>
+          </div>` : ''}
+          ${canVehFilter ? `
           <div class="field compact-field"><label>ژمارەی سەیارە</label>
             <select id="rep-veh-filter">
               <option value="">هەموو سەیارەکان</option>
             </select>
-          </div>
-          ` : ''}
+          </div>` : ''}
+          ${canSearch ? `
           <div class="field compact-field rep-f2-search">
             <input type="search" id="rep-search" placeholder="گەڕان بۆ سەرجەم داتاکان..." value="${UI.esc(state.search)}" autocomplete="off">
-          </div>
+          </div>` : ''}
         </div>
       </section>
 
-      <div id="rep-totals" class="totals-grid"></div>
+      ${canTotals ? '<div id="rep-totals" class="totals-grid"></div>' : ''}
       <div id="rep-table"></div>`;
 
     Store.loadLists().then(ls => {
-      const users = (ls && ls.users) || [];
+      const users = Store.visible('users', ls && ls.users);
       state.allUsers = users;
       state.driverUsers = users.filter(u => u.profession === CONFIG.PROFESSION_DRIVER);
-      if (!canDriverFilter) return;
-
       // ناوی سایەق
       const dsel = $('#rep-driver-select', container);
       if (dsel) {
@@ -342,6 +354,7 @@ const ReportsView = (() => {
     // دووگمەی پشاندان وەک ڕاپۆرت / داتابەیس — شێوازی کارت یان خشتە
     const viewBtn = $('#rep-view-mode', el);
     const syncViewBtn = () => {
+      if (!viewBtn) return;
       const card = Store.getSettings().reportCardLayout;
       // تەنها ئایکۆن — ئایکۆنەکە ئەو شێوازە نیشان دەدات کە بە داگرتن دەگۆڕدرێت بۆی
       viewBtn.textContent = card ? '🗄️' : '📋';
@@ -349,7 +362,7 @@ const ReportsView = (() => {
       viewBtn.classList.toggle('active', !card);
     };
     syncViewBtn();
-    viewBtn.addEventListener('click', () => {
+    viewBtn?.addEventListener('click', () => {
       Store.saveSettings({ reportCardLayout: !Store.getSettings().reportCardLayout });
       syncViewBtn();
       renderResults();
@@ -357,9 +370,9 @@ const ReportsView = (() => {
 
     $('#rep-from', el).addEventListener('change', e => { state.from = e.target.value; clearMonthSel(el); load(); });
     $('#rep-to', el).addEventListener('change', e => { state.to = e.target.value; clearMonthSel(el); load(); });
-    $('#rep-search', el).addEventListener('input', e => { state.search = e.target.value; renderResults(); });
+    $('#rep-search', el)?.addEventListener('input', e => { state.search = e.target.value; renderResults(); });
     $('#rep-refresh', el).addEventListener('click', () => load());
-    $('#rep-print', el).addEventListener('click', () => printReportRecords());
+    $('#rep-print', el)?.addEventListener('click', () => printReportRecords());
 
     $('#rep-reset-filters', el)?.addEventListener('click', () => {
       state.monthFilter = '';

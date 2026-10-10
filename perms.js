@@ -34,6 +34,17 @@ const Perms = (() => {
     { group: 'reports', key: 'rep_filter_out_zone', icon: '🚏', label: 'فلتەری دەرێی زۆن',       type: 'view' },
     { group: 'reports', key: 'rep_filter_arrival', icon: '🏁', label: 'فلتەری گەشتنەوە',        type: 'view' },
     { group: 'reports', key: 'rep_filter_second',  icon: '📦', label: 'فلتەری تەنها باری دووەم', type: 'view' },
+    { group: 'reports', key: 'rep_filter_month',       icon: '🗓', label: 'فلتەری مانگ',              type: 'view' },
+    { group: 'reports', key: 'rep_filter_day',         icon: '📅', label: 'فلتەری ڕۆژی حەفتە',        type: 'view' },
+    { group: 'reports', key: 'rep_filter_distributor', icon: '🧑‍💼', label: 'فلتەری دابەشکار',          type: 'view' },
+    { group: 'reports', key: 'rep_filter_delegate',    icon: '🙋', label: 'فلتەری مەندوب',            type: 'view' },
+    { group: 'reports', key: 'rep_filter_vehicle',     icon: '🚐', label: 'فلتەری ژمارەی سەیارە',     type: 'view' },
+    { group: 'reports', key: 'rep_desktop_layout',   icon: '🖥️', label: 'شێوازی دیسکتۆپ لە مووبایلدا (فلتەرەکان و پرێنت بشاردرێنەوە نەکرێت)', type: 'view' },
+    { group: 'reports', key: 'rep_search',             icon: '🔍', label: 'گەڕان لە ڕاپۆرت',          type: 'view' },
+    { group: 'reports', key: 'rep_reset_filters',      icon: '✖', label: 'دوگمەی پاککردنەوەی فلتەرەکان', type: 'view' },
+    { group: 'reports', key: 'rep_view_mode',          icon: '🗄️', label: 'گۆڕینی شێوازی پیشاندان (کارت / خشتە)', type: 'view' },
+    { group: 'reports', key: 'rep_totals',             icon: '🧮', label: 'کارتەکانی کۆی گشتی (تۆتاڵ)', type: 'view' },
+    { group: 'reports', key: 'rep_print',              icon: '🖨️', label: 'پرێنتکردنی ڕاپۆرت',        type: 'act' },
     { group: 'reports', key: 'rep_edit',           icon: '✏️', label: 'دەستکاریکردنی تۆمار',    type: 'act' },
     { group: 'reports', key: 'rep_delete',         icon: '🗑', label: 'سڕینەوەی تۆمار',         type: 'act' },
 
@@ -41,10 +52,12 @@ const Perms = (() => {
     { group: 'admin', key: 'admin_records', icon: '🚚', label: 'بەشی تۆمارەکان',   type: 'view' },
     { group: 'admin', key: 'admin_users',   icon: '👥', label: 'بەشی بەکارهێنەران', type: 'view' },
     { group: 'admin', key: 'admin_zones',   icon: '🗺️', label: 'بەشی زۆنەکان',     type: 'view' },
+    { group: 'admin', key: 'admin_toggle_hidden', icon: '🙈', label: 'شاردنەوە/پشاندانی بەکارهێنەر و زۆن و سەیارە', type: 'act' },
+    { group: 'admin', key: 'admin_vehicles', icon: '🚐', label: 'بەشی ژمارەی سەیارەکان', type: 'view' },
 
     // ڕێکخستن و ئەوانیتر
+    { group: 'settings', key: 'ui_desktop_wide', icon: '🖥️', label: 'پانکردنەوەی سیستەم بۆ قەبارەی دیسکتۆپ (هەموو فۆڕمەکان)', type: 'view' },
     { group: 'settings', key: 'set_font',      icon: '🔠', label: 'ڕێکخستنی فۆنت و قەبارەی نووسین', type: 'view' },
-    { group: 'settings', key: 'set_keypad',    icon: '⌨️', label: 'ڕێکخستنی کیبۆردی تایبەتی',  type: 'view' },
     { group: 'settings', key: 'set_lockscreen', icon: '📱', label: 'ڕێکخستنی شاشەی قفڵ',       type: 'view' },
     { group: 'settings', key: 'set_notif',     icon: '🔔', label: 'ڕێکخستنی نۆتیفیکەیشنەکان', type: 'view' },
     { group: 'settings', key: 'set_print',     icon: '🖨️', label: 'ناوەڕۆکی پرێنتکردن',       type: 'view' },
@@ -96,18 +109,46 @@ const Perms = (() => {
 
   const defaultsFor = prof => DEFAULTS[prof] || NEW_DEFAULT;
 
+  /* تایبەتمەندییە نوێیەکانی ڕاپۆرت — بۆ ئەوەی ڕەفتاری ئێستا نەگۆڕێت:
+   * FALLBACK: ئەگەر ئەم کلیلە هیچ ڕێکخستنێکی نەبوو، نرخی کلیلی دایک وەردەگرێت
+   * DEFAULT_ON: بنەڕەت چالاکە بۆ هەموو پیشەکان (پێشتر بۆ هەموو ئاشکرا بوو) */
+  const FALLBACK = {
+    rep_filter_month: 'rep_filter_driver',
+    rep_filter_day: 'rep_filter_driver',
+    rep_filter_distributor: 'rep_filter_driver',
+    rep_filter_delegate: 'rep_filter_driver',
+    rep_filter_vehicle: 'rep_filter_driver',
+    admin_vehicles: 'admin_zones',
+  };
+  const DEFAULT_ON = ['rep_search', 'rep_reset_filters', 'rep_view_mode', 'rep_totals', 'rep_print'];
+
+  /** نرخی ڕێکخراو (یوسەر ← پیشە) — undefined ئەگەر نەبێت */
+  function configured(cfg, prof, userId, type, key) {
+    const uc = userId !== undefined && userId !== null && cfg.users && cfg.users[String(userId)];
+    if (uc && uc[type] && uc[type][key] !== undefined) return !!uc[type][key];
+    const pc = cfg.professions && cfg.professions[prof];
+    if (pc && pc[type] && pc[type][key] !== undefined) return !!pc[type][key];
+    return undefined;
+  }
+
+  function resolve(prof, userId, type, key) {
+    const cfg = Store.getPermsConfig();
+    const v = configured(cfg, prof, userId, type, key);
+    if (v !== undefined) return v;
+    if (FALLBACK[key]) return resolve(prof, userId, type, FALLBACK[key]);
+    if (key === 'ui_desktop_wide' && prof === 'چاودێر') return true; // پیشەی چاودێر — بنەڕەت چالاکە
+    if (DEFAULT_ON.includes(key)) return true;
+    const d = defaultsFor(prof);
+    return !!(d[type] && d[type][key]);
+  }
+
   /* ---------------- پشکنینی دەسەڵات ----------------
    * ڕیزبەندی: بەڕێوەبەر (هەمیشە هەموو شت) ← یوسەر override ← پیشە override ← بنەڕەت
    * ------------------------------------------------ */
   function can(u, type, key) {
     if (!u) return false;
     if (isSup(u)) return true;
-    const cfg = Store.getPermsConfig();
-    const uv = cfg.users && cfg.users[String(u.id)] && cfg.users[String(u.id)][type];
-    if (uv && uv[key] !== undefined) return !!uv[key];
-    const pv = cfg.professions && cfg.professions[u.profession] && cfg.professions[u.profession][type];
-    if (pv && pv[key] !== undefined) return !!pv[key];
-    return !!(defaultsFor(u.profession)[type] && defaultsFor(u.profession)[type][key]);
+    return resolve(u.profession, u.id, type, key);
   }
 
   const canView = (u, key) => can(u, 'view', key);
@@ -115,14 +156,7 @@ const Perms = (() => {
 
   /** نرخە کۆتایییەکە کە لە ئێدیتەردا پیشان دەدرێت */
   function effective(prof, userId, type, key) {
-    const cfg = Store.getPermsConfig();
-    if (userId !== undefined && userId !== null) {
-      const uc = cfg.users && cfg.users[String(userId)];
-      if (uc && uc[type] && uc[type][key] !== undefined) return !!uc[type][key];
-    }
-    const pc = cfg.professions && cfg.professions[prof];
-    if (pc && pc[type] && pc[type][key] !== undefined) return !!pc[type][key];
-    return !!(defaultsFor(prof)[type] && defaultsFor(prof)[type][key]);
+    return resolve(prof, userId, type, key);
   }
 
   /** پیشە سڕدراوەکان (بنەڕەتییە شاردراوەکان) لە کۆنفیگەکەوە */

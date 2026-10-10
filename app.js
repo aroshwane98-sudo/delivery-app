@@ -123,7 +123,7 @@ const App = (() => {
     syncTabBack(id);
 
     const page = $('#page');
-    page.className = 'page' + (id === 'admin' ? ' page-admin' : '');
+    page.className = 'page' + (id === 'admin' ? ' page-admin' : '') + ((id === 'settings' || id === 'contacts') ? ' page-wide' : '');
     page.innerHTML = '';
     tab.render(page);
 
@@ -310,11 +310,18 @@ const App = (() => {
 
   document.addEventListener('dlv-notif-seen', updateTopbarNotifBadge);
 
+  /* — شاشەی پان بۆ دیسکتۆپ — بەڕێوەبەر یان ئەوانەی ئۆپشنی ui_desktop_wide یان هەیە — */
+  function applyWideLayout() {
+    const on = !!currentUser && (isSupervisor(currentUser) || Perms.canView(currentUser, 'ui_desktop_wide'));
+    document.body.classList.toggle('desktop-wide', on);
+  }
+
   /* — گۆڕانی دەسەڵاتەکان لە ئامێرەکانی تر — ئاگادارکردنەوە لە Store — */
   let permsUiSig = null;
 
   document.addEventListener('dlv-perms-changed', () => {
     if (!currentUser) return;
+    applyWideLayout();
     renderNav(); // بینینی تابەکان و ڕیزبەندییەکەیان لەوانەیە گۆڕابن
     const tabs = visibleTabs();
     if (currentTab && !tabs.find(t => t.id === currentTab.id)) {
@@ -404,6 +411,7 @@ const App = (() => {
       }).catch(() => {});
     }
     document.body.classList.remove('role-supervisor');
+    document.body.classList.remove('desktop-wide');
     currentUser = null;
     currentTab = null;
     showLogin();
@@ -471,6 +479,7 @@ const App = (() => {
     document.body.classList.toggle('role-supervisor', isSupervisor(currentUser));
     // لیستەکان و دەسەڵاتەکان پێش ڕێندەر — بۆ ئەوەی تابەکان بەپێی دەسەڵاتە ڕاستەکان دەربکەون
     try { await Store.loadLists(); } catch (_) { /* کاش/بنەڕەت بەکاردەهێنرێت */ }
+    applyWideLayout();
     renderHeader();
     defineTabs();
     renderNav();
