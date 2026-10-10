@@ -2869,3 +2869,26 @@ html.hide-icons .toast-ico .lic { display: inline-block !important; }
 }
 .expr-plus-btn.show { display: inline-flex; }
 .expr-plus-btn:active { transform: translateY(-50%) scale(0.92); }
+
+/* ---------- فۆڕمی تارگێت ---------- */
+.target-view .tg-row { display: flex; gap: 12px; }
+.target-view .tg-actions-row { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 8px; }
+.tg-users { display: flex; flex-direction: column; gap: 6px; }
+.tg-user {
+  display: flex; align-items: center; gap: 10px; padding: 8px 10px; cursor: pointer;
+  border: 1.5px solid var(--border); border-radius: var(--radius-sm); background: var(--input-bg);
+}
+.tg-user.on { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 12%, var(--input-bg)); }
+.tg-user input { width: 18px; height: 18px; accent-color: var(--accent); flex: none; }
+.tg-user-name { flex: 1; font-weight: 700; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.tg-ext-list { display: flex; flex-direction: column; gap: 6px; margin-bottom: 8px; }
+.tg-ext-item { display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  padding: 6px 10px; border-radius: var(--radius-sm); background: color-mix(in srgb, var(--accent) 10%, transparent); font-size: 0.9rem; }
+.tg-period { font-weight: 700; margin-bottom: 8px; }
+.tg-table-wrap { overflow-x: auto; }
+.tg-table { width: 100%; border-collapse: collapse; font-size: 0.88rem; white-space: nowrap; }
+.tg-table th, .tg-table td { border: 1px solid var(--border); padding: 7px 9px; text-align: center; }
+.tg-table th { background: color-mix(in srgb, var(--accent) 14%, var(--surface)); }
+.tg-table tfoot td { font-weight: 800; background: color-mix(in srgb, var(--accent) 8%, var(--surface)); }
+.tg-export { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.tg-export .btn { flex: 1 1 160px; }

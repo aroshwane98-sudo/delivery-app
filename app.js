@@ -16,11 +16,22 @@ const App = (() => {
   const ICONS = {
     truck: UI.icon('truck', 22),
     chart: UI.icon('chart', 22),
+    target: UI.icon('target', 22),
     shield: UI.icon('shield', 22),
     gear: UI.icon('gear', 22),
     phone: UI.icon('phone', 22),
     badge: UI.icon('badge', 22),
   };
+
+  // view-target.js ئەگەر لە index.html نەبێت، خۆکار بار دەکرێت
+  function withTargetView(fn) {
+    if (typeof TargetView !== 'undefined') return fn();
+    const sc = document.createElement('script');
+    sc.src = 'view-target.js';
+    sc.onload = () => fn();
+    sc.onerror = () => UI.toast('view-target.js بار نەبوو', 'error');
+    document.head.appendChild(sc);
+  }
 
   function defineTabs() {
     TABS.length = 0;
@@ -37,6 +48,11 @@ const App = (() => {
       id: 'reports', label: 'ڕاپۆرت', icon: ICONS.chart, roles: 'ALL',
       render: el => ReportsView.render(el),
       onDeactivate: () => ReportsView.stop(),
+    });
+    TABS.push({
+      id: 'target', label: 'تارگێت', icon: ICONS.target, roles: 'ALL',
+      render: el => withTargetView(() => TargetView.render(el)),
+      onDeactivate: () => { try { typeof TargetView !== 'undefined' && TargetView.stop(); } catch (_) {} },
     });
     TABS.push({
       id: 'contacts', label: 'پەیوەندی', icon: ICONS.phone, roles: 'ALL',
@@ -69,7 +85,7 @@ const App = (() => {
   function visibleTabs() {
     // بینینی تابەکان بەپێی دەسەڵاتەکان — بەڕێوەبەر هەمیشە هەموو شتێک دەبینێت (Perms خۆی bypass دەکات)
     const u = currentUser;
-    const keyById = { driver: 'tab_driver', reports: 'tab_reports', contacts: 'tab_contacts', admin: 'tab_admin', settings: 'tab_settings' };
+    const keyById = { driver: 'tab_driver', reports: 'tab_reports', contacts: 'tab_contacts', target: 'tab_target', admin: 'tab_admin', settings: 'tab_settings' };
     return TABS.filter(t => {
       if (t.id === 'professions') return isSupervisor(u);
       const k = keyById[t.id];
@@ -123,7 +139,7 @@ const App = (() => {
     syncTabBack(id);
 
     const page = $('#page');
-    page.className = 'page' + (id === 'admin' ? ' page-admin' : '') + ((id === 'settings' || id === 'contacts') ? ' page-wide' : '');
+    page.className = 'page' + (id === 'admin' ? ' page-admin' : '') + ((id === 'settings' || id === 'contacts' || id === 'target') ? ' page-wide' : '');
     page.innerHTML = '';
     tab.render(page);
 
@@ -394,7 +410,7 @@ const App = (() => {
     const ok = await UI.confirmDialog('دڵنیاییت لە دەرچوون لە هەژمار؟', { danger: true, okLabel: 'بەڵێ، دەربچم', cancelLabel: 'پاشگەزبوونەوە' });
     if (!ok) return;
     if (tabBackUnreg) { const u = tabBackUnreg; tabBackUnreg = null; u(); }
-    ['driver', 'reports', 'contacts', 'admin', 'settings', 'professions'].forEach(id => {
+    ['driver', 'reports', 'contacts', 'target', 'admin', 'settings', 'professions'].forEach(id => {
       try {
         const t = TABS.find(x => x.id === id);
         if (t && t.onDeactivate) t.onDeactivate();

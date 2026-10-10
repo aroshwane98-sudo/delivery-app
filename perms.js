@@ -16,6 +16,7 @@ const Perms = (() => {
     { group: 'tabs', key: 'tab_driver',    icon: '🚚', label: 'فۆڕمی کارەکان',          type: 'view' },
     { group: 'tabs', key: 'tab_reports',   icon: '📊', label: 'فۆڕمی ڕاپۆرت',           type: 'view' },
     { group: 'tabs', key: 'tab_contacts',  icon: '📞', label: 'فۆڕمی پەیوەندی',         type: 'view' },
+    { group: 'tabs', key: 'tab_target',    icon: '🎯', label: 'فۆڕمی تارگێت',           type: 'view' },
     { group: 'tabs', key: 'tab_admin',     icon: '🛡️', label: 'پانێلی بەڕێوەبردن',      type: 'view' },
     { group: 'tabs', key: 'tab_settings',  icon: '⚙️', label: 'فۆڕمی ڕێکخستن',          type: 'view' },
 
