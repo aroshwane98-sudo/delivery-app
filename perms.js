@@ -15,8 +15,9 @@ const Perms = (() => {
     // بینینی فۆڕمەکان (تابەکان)
     { group: 'tabs', key: 'tab_driver',    icon: '🚚', label: 'فۆڕمی کارەکان',          type: 'view' },
     { group: 'tabs', key: 'tab_reports',   icon: '📊', label: 'فۆڕمی ڕاپۆرت',           type: 'view' },
-    { group: 'tabs', key: 'tab_contacts',  icon: '📞', label: 'فۆڕمی پەیوەندی',         type: 'view' },
     { group: 'tabs', key: 'tab_target',    icon: '🎯', label: 'فۆڕمی تارگێت',           type: 'view' },
+    { group: 'tabs', key: 'tab_markets',   icon: '🏪', label: 'فۆڕمی ماڕکێتەکان',       type: 'view' },
+    { group: 'tabs', key: 'tab_contacts',  icon: '📞', label: 'فۆڕمی پەیوەندی',         type: 'view' },
     { group: 'tabs', key: 'tab_admin',     icon: '🛡️', label: 'پانێلی بەڕێوەبردن',      type: 'view' },
     { group: 'tabs', key: 'tab_settings',  icon: '⚙️', label: 'فۆڕمی ڕێکخستن',          type: 'view' },
 
@@ -55,6 +56,7 @@ const Perms = (() => {
     { group: 'admin', key: 'admin_zones',   icon: '🗺️', label: 'بەشی زۆنەکان',     type: 'view' },
     { group: 'admin', key: 'admin_toggle_hidden', icon: '🙈', label: 'شاردنەوە/پشاندانی بەکارهێنەر و زۆن و سەیارە', type: 'act' },
     { group: 'admin', key: 'admin_vehicles', icon: '🚐', label: 'بەشی ژمارەی سەیارەکان', type: 'view' },
+    { group: 'admin', key: 'admin_trash', icon: '🗑', label: 'بەشی ڕەشکراوەکان (باک ئەپی سڕاوەکان)', type: 'view' },
 
     // ڕێکخستن و ئەوانیتر
     { group: 'settings', key: 'ui_desktop_wide', icon: '🖥️', label: 'پانکردنەوەی سیستەم بۆ قەبارەی دیسکتۆپ (هەموو فۆڕمەکان)', type: 'view' },
@@ -83,28 +85,28 @@ const Perms = (() => {
 
   const DEFAULTS = {
     [P]: {
-      view: { tab_driver: true, tab_reports: true, tab_contacts: true, tab_settings: true, rep_filter_second: true },
+      view: { tab_driver: true, tab_reports: true, tab_markets: true, tab_contacts: true, tab_settings: true, rep_filter_second: true },
       act: { act_exit: true, act_in_zone: true, act_out_zone: true, act_arrival: true, act_money: true, act_edit_data: true },
     },
     [D]: {
-      view: { tab_driver: true, tab_reports: true, tab_contacts: true, tab_settings: true, rep_filter_second: true },
+      view: { tab_driver: true, tab_reports: true, tab_markets: true, tab_contacts: true, tab_settings: true, rep_filter_second: true },
       act: { act_exit: true, act_in_zone: true, act_out_zone: true, act_arrival: true, act_money: true, act_edit_data: true },
     },
     // مەندوب — تەنها ڕاپۆرتی خۆی و پەیوەندی و ڕێکخستن (دەکرێت لە فۆڕمی پیشە چالاک بکرێت بۆ زیاتر)
     [DL]: {
-      view: { tab_reports: true, tab_contacts: true, tab_settings: true },
+      view: { tab_reports: true, tab_markets: true, tab_contacts: true, tab_settings: true },
       act: {},
     },
     // یاریدەدەر — وەک سایەق + فلتەرەکانی گەشت + زەنگی نۆتیفیکەیشن
     [A]: {
-      view: { tab_driver: true, tab_reports: true, tab_contacts: true, tab_settings: true, rep_filter_out_zone: true, rep_filter_arrival: true, notif_bell: true },
+      view: { tab_driver: true, tab_reports: true, tab_markets: true, tab_contacts: true, tab_settings: true, rep_filter_out_zone: true, rep_filter_arrival: true, notif_bell: true },
       act: { act_exit: true, act_in_zone: true, act_out_zone: true, act_arrival: true, act_money: true, act_edit_data: true },
     },
   };
 
   // بنەڕەت بۆ پیشەی نوێ دروستکراو — مینیمال، بەڕێوەبەر خۆی زیاد دەکات
   const NEW_DEFAULT = {
-    view: { tab_reports: true, tab_contacts: true, tab_settings: true },
+    view: { tab_reports: true, tab_markets: true, tab_contacts: true, tab_settings: true },
     act: {},
   };
 
@@ -120,6 +122,7 @@ const Perms = (() => {
     rep_filter_delegate: 'rep_filter_driver',
     rep_filter_vehicle: 'rep_filter_driver',
     admin_vehicles: 'admin_zones',
+    admin_trash: 'admin_zones',
   };
   const DEFAULT_ON = ['rep_search', 'rep_reset_filters', 'rep_view_mode', 'rep_totals', 'rep_print'];
 

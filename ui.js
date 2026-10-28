@@ -52,7 +52,7 @@ const UI = (() => {
     const str = toLatinDigits(String(v)).trim();
     // ئەگەر دەقی کۆکردنەوە/کەمکردنەوە بێت (10+20+30) کۆی گشتی هەڵبسەنگێنە
     if (hasOperator(str)) {
-      let s = str.replace(/[\s,]/g, '').replace(/٫/g, '.');
+      let s = str.replace(/[\s,،]/g, '').replace(/٫/g, '.');
       s = s.replace(/^\+/, '');
       if (s.startsWith('-')) s = '0' + s;
       if (/^\d+(\.\d+)?([+\-*/]\d+(\.\d+)?)*$/.test(s)) {
@@ -60,7 +60,9 @@ const UI = (() => {
         if (Number.isFinite(r)) return Math.round(r);
       }
     }
-    const withoutDecimals = str.split(/[\.,٫]/)[0];
+    // لابردنی فاریزەی هەزارەکان (commas) پێش جیاکردنەوەی پۆینت
+    const withoutCommas = str.replace(/[,،\s]/g, '');
+    const withoutDecimals = withoutCommas.split(/[\.٫]/)[0];
     const cleaned = withoutDecimals.replace(/[^\d-]/g, '');
     if (cleaned === '' || cleaned === '-') return 0;
     const n = parseInt(cleaned, 10);
@@ -68,15 +70,140 @@ const UI = (() => {
   }
 
   function fmtNum(v) {
-    if (v === null || v === undefined || v === '') return '—';
+    if (v === null || v === undefined || v === '' || v === '—') return '—';
     const n = cleanInt(v);
     return n.toLocaleString('en-US');
   }
 
   function fmtMoney(v) {
-    if (v === null || v === undefined || v === '') return '—';
+    if (v === null || v === undefined || v === '' || v === '—') return '—';
     const n = cleanInt(v);
     return n.toLocaleString('en-US') + ' د.ع';
+  }
+
+  /**
+   * فۆرماتکردنی دەقی ژمارەیی بە فاریزەی هەزارەکان (1,000,000)
+   * @param {string|number} val
+   * @param {boolean} [allowOperators=false]
+   */
+  function formatThousands(val, allowOperators = false) {
+    if (val === null || val === undefined || val === '') return '';
+    let s = toLatinDigits(String(val)).trim();
+    if (allowOperators) {
+      s = s.replace(/[^\d+\-*/]/g, '');
+    } else {
+      s = s.replace(/[^\d]/g, '');
+    }
+    s = s.replace(/[,،]/g, '');
+    return s.replace(/\d+/g, m => m.replace(/\B(?=(\d{3})+(?!\d))/g, ','));
+  }
+
+  /**
+   * ڕێکخستنی فاریزەی هەزارەکان لەکاتی نووسین لە خانە ژمارەییەکاندا
+   * بۆ نموونە: کێشی بار، ژمارەی پارچەکان، ژمارەی وەسڵ، پارەی هێنراوە
+   * لە کاتی نووسینی ژمارەدا لە دوای هەر سێ ژمارەیەک فاریزەیەک دروست دەبێت
+   * لەگەڵ پاراستنی شوێنی کۆرسەر، Backspace، Delete، و دەربڕینی ماتماتیکی (+ و -)
+   * @param {HTMLInputElement} inp
+   * @param {Object} [opts]
+   * @param {boolean} [opts.allowOperators=false]
+   */
+  function wireThousands(inp, opts = {}) {
+    if (!inp) return;
+    const allowOperators = !!opts.allowOperators;
+    inp.classList.add('num-input');
+
+    const handleInput = () => {
+      const orig = inp.value;
+      if (!orig) return;
+      const selEnd = inp.selectionEnd ?? orig.length;
+
+      // ژماردنی کارەکتەرە نا-فاریزەییەکان پێش کۆرسەر
+      let nonCommasBefore = 0;
+      for (let i = 0; i < selEnd; i++) {
+        if (orig[i] !== ',' && orig[i] !== '،') {
+          nonCommasBefore++;
+        }
+      }
+
+      const formatted = formatThousands(orig, allowOperators);
+      if (formatted === orig) return;
+
+      // دۆزینەوەی شوێنی نوێی کۆرسەر بەپێی کارەکتەرە نا-فاریزەییەکان
+      let newCursor = 0;
+      let count = 0;
+      while (newCursor < formatted.length && count < nonCommasBefore) {
+        if (formatted[newCursor] !== ',') {
+          count++;
+        }
+        newCursor++;
+      }
+
+      inp.value = formatted;
+      try {
+        inp.setSelectionRange(newCursor, newCursor);
+      } catch (_) {}
+    };
+
+    inp.addEventListener('input', handleInput);
+
+    // لە کاتی Backspace یان Delete لەسەر فاریزە، ژمارەکەی تەنیشت فاریزەکە بسڕێتەوە
+    inp.addEventListener('keydown', e => {
+      if (e.key === 'Backspace' && inp.selectionStart === inp.selectionEnd) {
+        const pos = inp.selectionStart;
+        if (pos > 0 && inp.value[pos - 1] === ',') {
+          e.preventDefault();
+          const before = inp.value.slice(0, pos - 2);
+          const after = inp.value.slice(pos);
+          inp.value = before + after;
+          const newPos = Math.max(0, pos - 2);
+          try {
+            inp.setSelectionRange(newPos, newPos);
+          } catch (_) {}
+          handleInput();
+        }
+      } else if (e.key === 'Delete' && inp.selectionStart === inp.selectionEnd) {
+        const pos = inp.selectionStart;
+        if (pos < inp.value.length && inp.value[pos] === ',') {
+          e.preventDefault();
+          const before = inp.value.slice(0, pos);
+          const after = inp.value.slice(pos + 2);
+          inp.value = before + after;
+          try {
+            inp.setSelectionRange(pos, pos);
+          } catch (_) {}
+          handleInput();
+        }
+      }
+    });
+
+    if (allowOperators) {
+      inp.addEventListener('blur', () => {
+        const raw = inp.value.trim();
+        if (hasOperator(raw)) {
+          inp.dataset.raw = raw;
+          inp.value = fmtNum(cleanInt(raw));
+        } else {
+          delete inp.dataset.raw;
+        }
+      });
+      inp.addEventListener('focus', () => {
+        if (inp.dataset.raw) inp.value = inp.dataset.raw;
+      });
+      if (inp.value && hasOperator(inp.value)) {
+        inp.dataset.raw = inp.value;
+        inp.value = fmtNum(cleanInt(inp.value));
+      }
+    }
+
+    // ئەگەر خانەکە پێشوەخت بەهای تێدابوو فۆرماتی بکە
+    if (inp.value && !hasOperator(inp.value)) {
+      inp.value = formatThousands(inp.value, allowOperators);
+    }
+
+    return {
+      format: val => formatThousands(val, allowOperators),
+      cleanVal: () => cleanInt(inp.dataset.raw || inp.value),
+    };
   }
 
   /* ---------------- بەروار و کات (کاتی ناوخۆیی) ---------------- */
@@ -807,6 +934,9 @@ const UI = (() => {
     shield: '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>',
     phone: '<path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>',
     badge: '<rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="M15 8h4"/><path d="M15 12h4"/><path d="M6 18c.6-1.8 1.8-2.6 3-2.6s2.4.8 3 2.6"/>',
+    market: '<path d="M2 9 4 4h9l2 5"/><path d="M2 9h13"/><path d="M3 9v11a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V9"/><path d="M6 21v-4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v4"/><path d="M18.5 2.5a3.5 3.5 0 0 0-3.5 3.5c0 2.6 3.5 6.5 3.5 6.5s3.5-3.9 3.5-6.5a3.5 3.5 0 0 0-3.5-3.5Z"/><circle cx="18.5" cy="6" r="1.1" fill="currentColor"/>',
+    markets: '<path d="M2 9 4 4h9l2 5"/><path d="M2 9h13"/><path d="M3 9v11a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V9"/><path d="M6 21v-4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v4"/><path d="M18.5 2.5a3.5 3.5 0 0 0-3.5 3.5c0 2.6 3.5 6.5 3.5 6.5s3.5-3.9 3.5-6.5a3.5 3.5 0 0 0-3.5-3.5Z"/><circle cx="18.5" cy="6" r="1.1" fill="currentColor"/>',
+    store: '<path d="m2 7 4.41-4.41A2 2 0 0 1 7.83 2h8.34a2 2 0 0 1 1.42.59L22 7"/><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><path d="M15 22v-4a2 2 0 0 0-2-2h-2a2 2 0 0 0-2 2v4"/><path d="M2 7h20"/>',
     gear: '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1 2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>',
     lock: '<rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>',
     palette: '<circle cx="13.5" cy="6.5" r=".5" fill="currentColor"/><circle cx="17.5" cy="10.5" r=".5" fill="currentColor"/><circle cx="8.5" cy="7.5" r=".5" fill="currentColor"/><circle cx="6.5" cy="12.5" r=".5" fill="currentColor"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"/>',
@@ -1080,7 +1210,7 @@ const UI = (() => {
     const target = e.target;
     if (!target || target.tagName !== 'INPUT') return;
     if (target.type === 'number' || target.inputMode === 'numeric' || target.classList?.contains('num-only')) {
-      if (e.key === '.' || e.key === ',' || e.key === '٫' || e.key === 'Decimal' || e.keyCode === 190 || e.keyCode === 110 || e.keyCode === 188) {
+      if (e.key === '.' || e.key === '٫' || e.key === 'Decimal' || e.keyCode === 190 || e.keyCode === 110) {
         e.preventDefault();
       }
     }
@@ -1090,8 +1220,8 @@ const UI = (() => {
     const target = e.target;
     if (!target || target.tagName !== 'INPUT') return;
     if (target.type === 'number' || target.inputMode === 'numeric' || target.classList?.contains('num-only')) {
-      if (target.value && /[\.,٫]/.test(target.value)) {
-        target.value = target.value.split(/[\.,٫]/)[0];
+      if (target.value && /[\.٫]/.test(target.value)) {
+        target.value = target.value.split(/[\.٫]/)[0];
       }
     }
   }, true);
@@ -1101,9 +1231,9 @@ const UI = (() => {
     if (!target || target.tagName !== 'INPUT') return;
     if (target.type === 'number' || target.inputMode === 'numeric' || target.classList?.contains('num-only')) {
       const text = (e.clipboardData || window.clipboardData)?.getData('text');
-      if (text && /[\.,٫]/.test(text)) {
+      if (text && /[\.٫]/.test(text)) {
         e.preventDefault();
-        const clean = toLatinDigits(text).split(/[\.,٫]/)[0].replace(/[^\d-]/g, '');
+        const clean = toLatinDigits(text).replace(/[,،\s]/g, '').split(/[\.٫]/)[0].replace(/[^\d-]/g, '');
         if (document.queryCommandSupported && document.queryCommandSupported('insertText')) {
           document.execCommand('insertText', false, clean);
         } else {
@@ -1297,6 +1427,7 @@ const UI = (() => {
     '👥': 'users', '⏳': 'hourglass', '⏱': 'clock', '📥': 'download', '📋': 'clipboard', '🖼': 'image',
     '📭': 'inbox', '🌙': 'moon', '☀': 'sun', '💡': 'bulb', '🎨': 'palette', '📏': 'ruler', '▶': 'play',
     '📦': 'package', '🔠': 'type', '⌨': 'keyboard', '📱': 'smartphone', '🧭': 'compass', '🔍': 'search',
+    '🏪': 'market', '🏬': 'market', '🛒': 'market',
   };
   const EMOJI_RE = /\u{1F9D1}\u200D\u2708\uFE0F?|[\u{1F300}-\u{1FAFF}\u2600-\u27BF\u2B50\u23E9-\u23FF\u232B\u229E\u2195\u2139\u25B6\u27F2]\uFE0F?/gu;
   const EMOJI_TEST = new RegExp(EMOJI_RE.source, 'u');
@@ -1378,12 +1509,97 @@ const UI = (() => {
   else initIconize();
 
 
+  /** پشکنینی هاوکاتبوونی (overlap) دوو گەشت لە کاتدا:
+   * ئەگەر لە هەمان کاتدا لە کاردا بووبن، کاتی دەرچوونیان یەک بووبێت، یان ماوەی گەشتەکەیان هاوبەش بێت دەبێتە true. */
+  function recordsTimeOverlap(r1, r2) {
+    if (!r1 || !r2) return false;
+    const s1 = timeToMinutes(r1.record_time);
+    const s2 = timeToMinutes(r2.record_time);
+
+    // ئەگەر کاتی دەرچوونی یەکێکیان دیار نەبوو، لەبەرئەوەی لە هەمان بەرواردان وەک هاوکات حیساب دەکرێت
+    if (s1 === null || s2 === null) return true;
+
+    // هەمان کاتی دەرچوون (دەستپێک)
+    if (s1 === s2) return true;
+
+    let e1 = timeToMinutes(r1.arrival_time);
+    let e2 = timeToMinutes(r2.arrival_time);
+
+    // ئەگەر کاتی گەشتنەوە کەمتر بێت لە دەستپێک (بۆ شەو تا بەرەبەیان)
+    if (e1 !== null && e1 < s1) e1 += 24 * 60;
+    if (e2 !== null && e2 < s2) e2 += 24 * 60;
+
+    if (s1 < s2) {
+      // r1 زووتر دەرچووە؛ ئەگەر تا کاتی دەرچوونی r2 نەگەشتبێتەوە دەبێتە دووبارە/هاوکات
+      return e1 === null || s2 < e1;
+    } else {
+      // r2 زووتر دەرچووە؛ ئەگەر تا کاتی دەرچوونی r1 نەگەشتبێتەوە دەبێتە دووبارە/هاوکات
+      return e2 === null || s1 < e2;
+    }
+  }
+
+  /** چاودێرم بە — Map ی ئەو تۆمارانەی لە هەمان بەروار و هەمان کاتدا یەکێک لە خانەکانی
+   *  (سایەق، دابەشکار، ژمارەی سەیارە) لە تۆمارێکی تردا دووبارە بووەتەوە،
+   *  تەنانەت ئەگەر کاتی گەشتنەوەشیان تۆمارکردبێت (چونکە نابێت لە هەمان بەروار و هەمان کات هەمان داتا هەبێت).
+   *  خانەی ناو دەکرێت چەند ناوی تێدابێت («و» / کۆما) و ئایدیی *_id ـیش دەگرێتەوە؛ پاشگری دوو/سێ لادەبرێت.
+   *  ئەگەر ئۆپشنەکە کوژێنرابێت Map ی بەتاڵ دەگەڕێنێتەوە. */
+  function dupWatchMap(rows) {
+    const out = new Map(); // ئایدی تۆمار → Set ی ناوی ئەو خانانەی دووبارە بوونەتەوە
+    if (Store.getSettings().watchDuplicates === false) return out;
+    const SEP = /(?:\s+و\s+|\s*\(\s*و\s*\)\s*|\s*[,،&+/]\s*)/;
+    const strip = s => norm(s).replace(/\s*(دوو|سێ)$/, '').trim();
+    const nameTokens = v => String(v || '').split(SEP).map(strip).filter(Boolean).map(n => 'n:' + n);
+    const idTokens = v => parseIdList(v).map(n => 'i:' + n);
+
+    const fields = [
+      r => [...nameTokens(r.driver), ...idTokens(r.driver_id)],
+      r => [...nameTokens(r.distributor), ...idTokens(r.distributor_id)],
+      r => { const v = norm(r.vehicle); return v ? ['n:' + v] : []; },
+    ];
+    const validRows = (rows || []).filter(r => r && typeof r === 'object');
+    validRows.forEach((r, idx) => {
+      if (r.id == null && !r._rowKey) r._rowKey = 'row_' + idx;
+    });
+    const rowId = r => (r.id != null ? r.id : r._rowKey);
+
+    ['driver', 'distributor', 'vehicle'].forEach((fieldName, fi) => {
+      const getTokens = fields[fi];
+      const groups = new Map();
+      validRows.forEach(r => {
+        new Set(getTokens(r)).forEach(t => {
+          const k = (r.record_date || '') + '|' + t;
+          if (!groups.has(k)) groups.set(k, []);
+          groups.get(k).push(r);
+        });
+      });
+      groups.forEach(list => {
+        if (list.length < 2) return;
+        for (let i = 0; i < list.length; i++) {
+          for (let j = i + 1; j < list.length; j++) {
+            const r1 = list[i], r2 = list[j];
+            const id1 = rowId(r1);
+            const id2 = rowId(r2);
+            if (id1 === id2) continue;
+            if (recordsTimeOverlap(r1, r2)) {
+              if (!out.has(id1)) out.set(id1, new Set());
+              out.get(id1).add(fieldName);
+              if (!out.has(id2)) out.set(id2, new Set());
+              out.get(id2).add(fieldName);
+            }
+          }
+        }
+      });
+    });
+    return out;
+  }
+
   return {
-    esc, toLatinDigits, cleanInt, hasOperator, fmtNum, fmtMoney, todayStr, monthStartStr, monthEndStr, nowTime, timeToMinutes, daysAgoStr, fmtDateHuman,
+    dupWatchMap, recordsTimeOverlap, esc, toLatinDigits, cleanInt, hasOperator, fmtNum, fmtMoney, todayStr, monthStartStr, monthEndStr, nowTime, timeToMinutes, daysAgoStr, fmtDateHuman,
     weekdayKu, toast, openModal, confirmDialog, autocomplete, avatarHtml, setLoading, btnLoading, sleep,
     norm, userMatches, parseIdList, recMatchesUser, calcDuration, durationMinutes, parseDurationMin, recordDurationMinutes, workTimeDisplay, fmtDuration, durationToHMM,
     sortUsers, openRecordFullscreen, openUserProfile, openPhoneOptions, avatarEditor, intlPhoneDigits, phoneChipHtml, maskSecretInputs, icon, backRegister, iconize: iconizeTree,
     ensureXlsx, animLayerHtml, btnScene, btnBusy,
-    fetchVisibleNotifications, openNotificationsPanel, refreshNotifBadge
+    fetchVisibleNotifications, openNotificationsPanel, refreshNotifBadge,
+    formatThousands, wireThousands
   };
 })();

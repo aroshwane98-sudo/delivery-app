@@ -25,6 +25,7 @@ const ReportsView = (() => {
     sort: { key: 'record_date', dir: 'desc' }, // ڕیزکردنی خشتە بە داگرتن لەسەر سەرپەڕە
     initializedDates: false,
     secondOnly: false, // تەنها باری دووەم پیشان بدە (بۆ سایەق/دابەشکار)
+    firstOnly: false,  // تەنها باری یەکەم پیشان بدە
     outZoneOnly: false, // تەنها تۆمارەکانی دەرێی زۆن (بۆ بەڕێوەبەر)
     arrivalOnly: false, // تەنها تۆمارەکانی گەشتنەوە (بۆ بەڕێوەبەر)
   };
@@ -48,6 +49,22 @@ const ReportsView = (() => {
     if (/(?:^|\s)دوو$/.test(d)) return 1;
     if (/(?:^|\s)سێ$/.test(d)) return 2;
     return 0;
+  };
+
+  /* دووگمەی بارەکان — سووڕانەوە: «١» هەموو دەرچوونەکان ← «٢» تەنها باری یەکەم ← «٠» تەنها باری دووەم ← «١» ...
+   * ژمارەکە نیشانی ئەو دۆخەیە کە لەسەر شاشەیە؛ داگرتن دەچێتە دۆخی دواتر (ئایکۆنەکە ژمارەی دۆخی نوێ پیشان دەدات). */
+  const cargoModeLabel = () => state.secondOnly ? '0' : (state.firstOnly ? '2' : '1');
+  const cargoModeTitle = () => state.secondOnly ? 'ئێستا: تەنها باری دووەم — داگرتن: هەموو دەرچوونەکان'
+    : (state.firstOnly ? 'ئێستا: تەنها باری یەکەم — داگرتن: تەنها باری دووەم' : 'ئێستا: هەموو دەرچوونەکان — داگرتن: تەنها باری یەکەم');
+  const cycleCargoMode = () => {
+    if (state.secondOnly) { state.secondOnly = false; state.firstOnly = false; }
+    else if (state.firstOnly) { state.firstOnly = false; state.secondOnly = true; }
+    else { state.firstOnly = true; }
+  };
+  const syncCargoBtn = btn => {
+    btn.textContent = cargoModeLabel();
+    btn.title = cargoModeTitle();
+    btn.classList.toggle('active', !!(state.firstOnly || state.secondOnly));
   };
 
   /* ---------------- فلتەری پێ بەپێی دەسەڵات ---------------- */
@@ -125,6 +142,9 @@ const ReportsView = (() => {
     }
     if (state.secondOnly) {
       rows = rows.filter(r => cargoIdxOf(r) >= 1);
+    }
+    if (state.firstOnly) {
+      rows = rows.filter(r => cargoIdxOf(r) === 0);
     }
     // فلتەری دەرێی زۆن — تۆمارەکانی دەرێی زۆن کردووە بەبێ گەشتنەوە
     if (state.outZoneOnly) {
@@ -256,7 +276,7 @@ const ReportsView = (() => {
           ${canReset ? `<button type="button" class="field-toggle-btn rep-view-btn" id="rep-reset-filters" title="پاککردنەوەی هەموو فلتەرەکان و گەڕانەوە بۆ ئەمڕۆ" style="height: 38px;">✖</button>` : ''}
           ${(canSecondOnly || canOutZone || canArrival) ? `
           <div class="rep-row1-chips">
-            ${canSecondOnly ? `<button class="field-toggle-btn rep-view-btn ${state.secondOnly ? 'active' : ''}" id="rep-second-only" type="button" title="تەنها باری دووەم">📦</button>` : ''}
+            ${canSecondOnly ? `<button class="field-toggle-btn rep-view-btn ${(state.firstOnly || state.secondOnly) ? 'active' : ''}" id="rep-second-only" type="button" title="${cargoModeTitle()}">${cargoModeLabel()}</button>` : ''}
             ${canOutZone ? `<button class="field-toggle-btn rep-view-btn ${state.outZoneOnly ? 'active' : ''}" id="rep-out-zone-only" type="button" title="دەرێی زۆن">🚏</button>` : ''}
             ${canArrival ? `<button class="field-toggle-btn rep-view-btn ${state.arrivalOnly ? 'active' : ''}" id="rep-arrival-only" type="button" title="گەشتنەوە">🏁</button>` : ''}
           </div>` : ''}
@@ -437,8 +457,8 @@ const ReportsView = (() => {
     $('#rep-del-filter', el)?.addEventListener('change', e => { state.delegateFilter = e.target.value; renderResults(); });
     $('#rep-veh-filter', el)?.addEventListener('change', e => { state.vehicleFilter = e.target.value; renderResults(); });
     $('#rep-second-only', el)?.addEventListener('click', e => {
-      state.secondOnly = !state.secondOnly;
-      e.currentTarget.classList.toggle('active', state.secondOnly);
+      cycleCargoMode();
+      syncCargoBtn(e.currentTarget);
       renderResults();
     });
     $('#rep-out-zone-only', el)?.addEventListener('click', e => {
@@ -478,6 +498,8 @@ const ReportsView = (() => {
 
   function renderResults() {
     const rows = visibleRows();
+    const dupMap = UI.dupWatchMap(state.rows);
+    const dupStyle = (r, f) => (dupMap.get(r.id) && dupMap.get(r.id).has(f)) ? 'color:#ef4444;font-weight:700' : '';
     const uR = App.getUser();
     // کرداری دەستکاری و سڕینەوە — بەپێی دەسەڵات
     const canEdit = Perms.canAct(uR, 'rep_edit');
@@ -523,11 +545,11 @@ const ReportsView = (() => {
     const COLS = [
       { key: 'record_date', label: 'بەروار', cls: 'nowrap', render: r => UI.esc(r.record_date || '—') },
       { key: 'weekday', label: 'ڕۆژی حەفتە', render: r => r.record_date ? UI.weekdayKu(new Date(r.record_date + 'T00:00:00')) : '—' },
-      { key: 'driver', label: 'شۆفێر', render: r => UI.esc(r.driver || '—') },
-      { key: 'distributor', label: 'دابەشکار', render: r => UI.esc(r.distributor || '—') },
+      { key: 'driver', label: 'شۆفێر', styleFn: r => dupStyle(r, 'driver'), render: r => UI.esc(r.driver || '—') },
+      { key: 'distributor', label: 'دابەشکار', styleFn: r => dupStyle(r, 'distributor'), render: r => UI.esc(r.distributor || '—') },
       { key: 'delegate', label: 'مەندوب', render: r => UI.esc(r.delegate || '—') },
       { key: 'zone', label: 'زۆن', render: r => UI.esc(r.zone || '—') },
-      { key: 'vehicle', label: 'سەیارە', render: r => UI.esc(r.vehicle || '—') },
+      { key: 'vehicle', label: 'سەیارە', styleFn: r => dupStyle(r, 'vehicle'), render: r => UI.esc(r.vehicle || '—') },
       { key: 'cargo_weight', label: 'کێش (کگم)', render: r => UI.fmtNum(r.cargo_weight) },
       { key: 'pieces_count', label: 'پارچە', render: r => UI.fmtNum(r.pieces_count) },
       { key: 'receipt_number', label: 'وەسڵ', render: r => UI.fmtNum(r.receipt_number) },
@@ -650,8 +672,9 @@ const ReportsView = (() => {
                     );
                     if (!ok) return;
                     try {
-                      await API.Records.remove(rec.id);
-                      UI.toast('تۆمارەکە سڕدرایەوە ✓', 'success');
+                      const done = await Trash.guardDelete('record', rec, `${rec.driver || '—'} — ${rec.zone || '—'} — ${rec.record_date || '—'}`, () => API.Records.remove(rec.id));
+                      if (!done) return;
+                      UI.toast('تۆمارەکە سڕدرایەوە و چووە ڕەشکراوەکان ✓', 'success');
                       load({ silent: true });
                     } catch (err) {
                       UI.toast('هەڵە لە سڕینەوە: ' + err.message, 'error', 4200);
@@ -706,6 +729,7 @@ const ReportsView = (() => {
     if (state.dayFilter) parts.push('ڕۆژ: ' + state.dayFilter);
     if (state.monthFilter) parts.push('مانگ: ' + state.monthFilter);
     if (state.secondOnly) parts.push('تەنها باری دووەم');
+    if (state.firstOnly) parts.push('تەنها باری یەکەم');
     if (state.outZoneOnly) parts.push('دەرێی زۆن');
     if (state.arrivalOnly) parts.push('گەشتنەوە');
     const filterText = parts.length ? parts.join(' — ') : 'هەموو تۆمارەکان';

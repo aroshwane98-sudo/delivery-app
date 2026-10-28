@@ -17,6 +17,7 @@ const App = (() => {
     truck: UI.icon('truck', 22),
     chart: UI.icon('chart', 22),
     target: UI.icon('target', 22),
+    markets: UI.icon('market', 22),
     shield: UI.icon('shield', 22),
     gear: UI.icon('gear', 22),
     phone: UI.icon('phone', 22),
@@ -30,6 +31,16 @@ const App = (() => {
     sc.src = 'view-target.js';
     sc.onload = () => fn();
     sc.onerror = () => UI.toast('view-target.js بار نەبوو', 'error');
+    document.head.appendChild(sc);
+  }
+
+  // view-markets.js ئەگەر لە index.html نەبێت، خۆکار بار دەکرێت
+  function withMarketsView(fn) {
+    if (typeof MarketsView !== 'undefined') return fn();
+    const sc = document.createElement('script');
+    sc.src = 'view-markets.js';
+    sc.onload = () => fn();
+    sc.onerror = () => UI.toast('view-markets.js بار نەبوو', 'error');
     document.head.appendChild(sc);
   }
 
@@ -53,6 +64,11 @@ const App = (() => {
       id: 'target', label: 'تارگێت', icon: ICONS.target, roles: 'ALL',
       render: el => withTargetView(() => TargetView.render(el)),
       onDeactivate: () => { try { typeof TargetView !== 'undefined' && TargetView.stop(); } catch (_) {} },
+    });
+    TABS.push({
+      id: 'markets', label: 'ماڕکێتەکان', icon: ICONS.markets, roles: 'ALL',
+      render: el => withMarketsView(() => MarketsView.render(el)),
+      onDeactivate: () => { try { typeof MarketsView !== 'undefined' && MarketsView.stop && MarketsView.stop(); } catch (_) {} },
     });
     TABS.push({
       id: 'contacts', label: 'پەیوەندی', icon: ICONS.phone, roles: 'ALL',
@@ -85,7 +101,7 @@ const App = (() => {
   function visibleTabs() {
     // بینینی تابەکان بەپێی دەسەڵاتەکان — بەڕێوەبەر هەمیشە هەموو شتێک دەبینێت (Perms خۆی bypass دەکات)
     const u = currentUser;
-    const keyById = { driver: 'tab_driver', reports: 'tab_reports', contacts: 'tab_contacts', target: 'tab_target', admin: 'tab_admin', settings: 'tab_settings' };
+    const keyById = { driver: 'tab_driver', reports: 'tab_reports', target: 'tab_target', markets: 'tab_markets', contacts: 'tab_contacts', admin: 'tab_admin', settings: 'tab_settings' };
     return TABS.filter(t => {
       if (t.id === 'professions') return isSupervisor(u);
       const k = keyById[t.id];
@@ -139,7 +155,7 @@ const App = (() => {
     syncTabBack(id);
 
     const page = $('#page');
-    page.className = 'page' + (id === 'admin' ? ' page-admin' : '') + ((id === 'settings' || id === 'contacts' || id === 'target') ? ' page-wide' : '');
+    page.className = 'page' + (id === 'admin' ? ' page-admin' : '') + ((id === 'settings' || id === 'contacts' || id === 'target' || id === 'markets') ? ' page-wide' : '');
     page.innerHTML = '';
     tab.render(page);
 
@@ -410,7 +426,7 @@ const App = (() => {
     const ok = await UI.confirmDialog('دڵنیاییت لە دەرچوون لە هەژمار؟', { danger: true, okLabel: 'بەڵێ، دەربچم', cancelLabel: 'پاشگەزبوونەوە' });
     if (!ok) return;
     if (tabBackUnreg) { const u = tabBackUnreg; tabBackUnreg = null; u(); }
-    ['driver', 'reports', 'contacts', 'target', 'admin', 'settings', 'professions'].forEach(id => {
+    ['driver', 'reports', 'target', 'markets', 'contacts', 'admin', 'settings', 'professions'].forEach(id => {
       try {
         const t = TABS.find(x => x.id === id);
         if (t && t.onDeactivate) t.onDeactivate();
@@ -561,5 +577,5 @@ const App = (() => {
   }
 
   document.addEventListener('DOMContentLoaded', boot);
-  return { switchTab, getUser: () => currentUser, renderHeader, logout };
+  return { switchTab, getUser: () => currentUser, getCurrentTab: () => currentTab, renderHeader, logout };
 })();

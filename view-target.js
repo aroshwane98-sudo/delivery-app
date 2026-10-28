@@ -33,7 +33,7 @@ const TargetView = (() => {
 
   // ژمارەی دەهەمی: هەموو ژمارەیەک وەردەگرێت (پۆینتیش)، شتی تر لادەبرێت
   const cleanDecimalText = v => {
-    let s = UI.toLatinDigits(String(v ?? '')).replace(/[٫,،]/g, '.').replace(/[^\d.]/g, '');
+    let s = UI.toLatinDigits(String(v ?? '')).replace(/[,،\s]/g, '').replace(/٫/g, '.').replace(/[^\d.]/g, '');
     const i = s.indexOf('.');
     if (i !== -1) s = s.slice(0, i + 1) + s.slice(i + 1).replace(/\./g, '');
     return s;
@@ -46,9 +46,7 @@ const TargetView = (() => {
 
   const bindDecimal = (inp, key) => {
     inp.addEventListener('input', () => {
-      const c = cleanDecimalText(inp.value);
-      if (c !== inp.value) inp.value = c;
-      state[key] = c;
+      state[key] = inp.value;
     });
   };
 
@@ -137,6 +135,7 @@ const TargetView = (() => {
     $('#tg-dfrom', el).addEventListener('change', e => { state.dayFrom = Number(e.target.value); });
     $('#tg-dto', el).addEventListener('change', e => { state.dayTo = Number(e.target.value); });
 
+    UI.wireThousands($('#tg-fixed', el), { allowOperators: false });
     bindDecimal($('#tg-fixed', el), 'fixed');
     bindDecimal($('#tg-rw', el), 'rateWeight');
     bindDecimal($('#tg-rp', el), 'ratePieces');
@@ -256,7 +255,7 @@ const TargetView = (() => {
     });
 
     const amt = $('#tg-ext-amount', body);
-    amt.addEventListener('input', () => { const c = cleanDecimalText(amt.value); if (c !== amt.value) amt.value = c; });
+    UI.wireThousands(amt, { allowOperators: false });
 
     const draw = () => {
       const q = UI.norm($('#tg-ext-search', body).value);

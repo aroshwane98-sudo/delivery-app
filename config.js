@@ -10,6 +10,7 @@ const CONFIG = {
   RECORDS_URL: 'https://rivwvzdjfotkjhpuwuaf.supabase.co/rest/v1',
   RECORDS_KEY: 'sb_publishable_Chpd_Xgyls9HJQJl3TPV3A_UMojpoGA',
   RECORDS_TABLE: 'delivery_records',
+  MARKETS_TABLE: 'market_locaetion',
 
   /* پڕۆژەی دووەم — خشتەی لیست بۆکسەکان (بەکارهێنەران و زۆنەکان) */
   LISTS_URL: 'https://gyxfgtoedunvkduslhld.supabase.co/rest/v1',

@@ -1,4 +1,4 @@
-﻿/* =========================================================
+/* =========================================================
  *  سیستەمی گەیاندن — ستایلەکان (تاریک / ڕوون، RTL، ڕیسپۆنسیڤ)
  * ========================================================= */
 
@@ -2870,6 +2870,11 @@ html.hide-icons .toast-ico .lic { display: inline-block !important; }
 .expr-plus-btn.show { display: inline-flex; }
 .expr-plus-btn:active { transform: translateY(-50%) scale(0.92); }
 
+/* خانە ژمارەییەکان — ڕێکخستنی فاریزە، ئاڕاستە و دەقی placeholder */
+.num-input { text-align: right; font-variant-numeric: tabular-nums; }
+.num-input:placeholder-shown { direction: rtl; }
+.num-input:not(:placeholder-shown) { direction: ltr; }
+
 /* ---------- فۆڕمی تارگێت ---------- */
 .target-view .tg-row { display: flex; gap: 12px; }
 .target-view .tg-actions-row { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 8px; }
@@ -2892,3 +2897,983 @@ html.hide-icons .toast-ico .lic { display: inline-block !important; }
 .tg-table tfoot td { font-weight: 800; background: color-mix(in srgb, var(--accent) 8%, var(--surface)); }
 .tg-export { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
 .tg-export .btn { flex: 1 1 160px; }
+
+/* ==================== شۆڕت کەتەکانی کیبۆرد (دیسکتۆپ) ==================== */
+.shortcuts-card {
+  break-inside: avoid;
+}
+
+@media (max-width: 991px) {
+  .shortcuts-card {
+    display: none !important;
+  }
+}
+
+.shortcuts-content-wrap {
+  margin-top: 6px;
+  animation: fadeIn 0.2s ease-out;
+}
+
+.shortcuts-status-banner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  margin-top: 10px;
+  border: 1px solid var(--border);
+  font-size: 0.86rem;
+}
+
+.shortcuts-status-banner.status-desktop {
+  background: color-mix(in srgb, #10b981 12%, var(--card-bg, #1a2332));
+  border-color: color-mix(in srgb, #10b981 35%, var(--border, #2a3a4e));
+  color: var(--text);
+}
+
+.shortcuts-status-banner.status-mobile {
+  background: color-mix(in srgb, #f59e0b 12%, var(--card-bg, #1a2332));
+  border-color: color-mix(in srgb, #f59e0b 35%, var(--border, #2a3a4e));
+  color: var(--text);
+}
+
+.shortcuts-status-banner .status-icon {
+  font-size: 1.6rem;
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+.shortcuts-status-banner .status-txt {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.shortcuts-status-banner .status-txt strong {
+  font-weight: 700;
+  font-size: 0.88rem;
+}
+
+.shortcuts-status-banner .status-txt span {
+  font-size: 0.79rem;
+  color: var(--muted);
+  line-height: 1.35;
+}
+
+.shortcut-category-group {
+  margin-top: 12px;
+}
+
+.shortcut-category-title {
+  margin: 10px 0 6px;
+  display: flex;
+  align-items: center;
+}
+
+.shortcut-category-title .cat-pill {
+  background: var(--surface-2, rgba(255, 255, 255, 0.05));
+  padding: 3px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  color: var(--accent);
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.shortcuts-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.shortcut-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: var(--surface-2, rgba(255, 255, 255, 0.03));
+  border: 1px solid var(--border);
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.shortcut-item:hover {
+  background: color-mix(in srgb, var(--accent) 6%, var(--surface-2, rgba(255, 255, 255, 0.04)));
+  border-color: color-mix(in srgb, var(--accent) 30%, var(--border));
+}
+
+.shortcut-item-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  flex: 1;
+}
+
+.shortcut-item-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+  color: var(--accent);
+  flex-shrink: 0;
+}
+
+.shortcut-item-name {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.shortcut-item-ctrl {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+/* دووگمەی کیبۆرد (KBD) */
+.shortcut-kbd {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3px 8px;
+  min-width: 34px;
+  height: 26px;
+  font-family: inherit;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--text);
+  direction: ltr;
+  background: var(--surface-2, rgba(255, 255, 255, 0.08));
+  border: 1px solid var(--border);
+  border-bottom-width: 2.5px;
+  border-radius: 6px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12);
+  letter-spacing: 0.3px;
+  white-space: nowrap;
+}
+
+.shortcut-kbd-empty {
+  font-size: 0.78rem;
+  color: var(--muted);
+  padding: 3px 6px;
+  font-style: italic;
+  white-space: nowrap;
+}
+
+.shortcut-kbd-big {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 20px;
+  min-width: 70px;
+  height: 48px;
+  font-size: 1.25rem;
+  font-weight: 800;
+  direction: ltr;
+  color: #fff;
+  background: var(--accent);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-bottom-width: 3.5px;
+  border-radius: 12px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.28);
+  animation: popIn 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.btn-shortcut-del {
+  color: var(--muted);
+  padding: 4px 8px;
+  font-size: 0.9rem;
+}
+.btn-shortcut-del:hover {
+  color: #ef4444;
+}
+
+/* کارتی وەرگرتنی کلیل لە مۆدالدا */
+.shortcut-modal-body {
+  padding: 4px 0;
+}
+
+.shortcut-modal-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.shortcut-modal-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--accent) 18%, transparent);
+  color: var(--accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.shortcut-capture-card {
+  position: relative;
+  margin-top: 10px;
+  padding: 24px 16px;
+  background: var(--surface-2, rgba(255, 255, 255, 0.04));
+  border: 2px dashed var(--accent);
+  border-radius: 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  outline: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.shortcut-capture-card:focus {
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 30%, transparent);
+  background: color-mix(in srgb, var(--accent) 5%, var(--surface-2, rgba(255, 255, 255, 0.04)));
+}
+
+.shortcut-capture-display {
+  min-height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.capture-placeholder {
+  font-size: 0.95rem;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.shortcut-conflict-alert {
+  margin-top: 10px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: rgba(239, 68, 68, 0.12);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: #f87171;
+  font-size: 0.83rem;
+  line-height: 1.45;
+}
+
+@keyframes popIn {
+  from { transform: scale(0.8); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+/* =========================================================
+ *  فۆڕمی ماڕکێتەکان — Markets View Styling
+ * ========================================================= */
+
+.markets-view {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.mkt-custom-page {
+  padding-bottom: calc(140px + env(safe-area-inset-bottom)) !important;
+}
+
+/* کارت و گەڕانی سەرەوە بۆ کۆدی ماڕکێت */
+.mkt-top-search-card {
+  padding: 16px 18px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+}
+
+.mkt-search-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+
+.mkt-search-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.mkt-search-title h3 {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.mkt-search-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--accent) 15%, transparent);
+  color: var(--accent);
+}
+
+.mkt-top-counts {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.mkt-top-counts .chip {
+  font-size: 0.78rem;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  color: var(--muted);
+}
+
+.mkt-top-counts .chip-ok {
+  background: color-mix(in srgb, #10b981 12%, transparent);
+  border-color: color-mix(in srgb, #10b981 30%, transparent);
+  color: #10b981;
+}
+
+.mkt-search-input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.mkt-input-search-ico {
+  position: absolute;
+  right: 14px;
+  color: var(--muted);
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+}
+
+.mkt-code-search-input {
+  width: 100%;
+  padding: 13px 44px 13px 40px;
+  font-size: 1.05rem;
+  font-weight: 600;
+  background: var(--input-bg, var(--surface-2));
+  border: 2px solid var(--border);
+  border-radius: 12px;
+  color: var(--text);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.mkt-code-search-input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 25%, transparent);
+  outline: none;
+}
+
+.mkt-clear-search-btn {
+  position: absolute;
+  left: 12px;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: none;
+  background: var(--surface-2);
+  color: var(--muted);
+  font-size: 0.85rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+
+.mkt-clear-search-btn:hover {
+  background: var(--border);
+  color: var(--text);
+}
+
+.mkt-quick-filters {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+/* باڕی ئاگاداری گرووپی ماپسمی */
+.mkt-group-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 18px;
+  border-radius: var(--radius);
+  background: linear-gradient(135deg, color-mix(in srgb, var(--accent) 14%, var(--surface)) 0%, var(--surface) 100%);
+  border: 1.5px solid color-mix(in srgb, var(--accent) 45%, var(--border));
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.1);
+  flex-wrap: wrap;
+}
+
+.mkt-group-banner-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.mkt-group-banner-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background: var(--accent);
+  color: #fff;
+}
+
+.mkt-group-banner-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* لیستی ماڕکێتەکان */
+.mkt-list-container {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.mkt-rows-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.mkt-row-item {
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  padding: 14px 16px;
+  transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.mkt-row-item:hover {
+  border-color: color-mix(in srgb, var(--accent) 35%, var(--border));
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+}
+
+.mkt-row-item.in-group {
+  border: 2px solid var(--accent);
+  background: color-mix(in srgb, var(--accent) 6%, var(--surface));
+}
+
+.mkt-row-main {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 16px;
+}
+
+/* کۆدی ماڕکێت — account_code بەرچاو */
+.mkt-code-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-width: 76px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--accent) 12%, var(--surface-2));
+  border: 1px solid color-mix(in srgb, var(--accent) 26%, transparent);
+  text-align: center;
+}
+
+.mkt-code-lbl {
+  font-size: 0.68rem;
+  color: var(--muted);
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.mkt-code-val {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: var(--accent);
+  letter-spacing: 0.5px;
+}
+
+.mkt-details-box {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.mkt-name-title-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.mkt-account-name {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1.3;
+}
+
+.mkt-gps-badge {
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.mkt-gps-badge.ok {
+  background: color-mix(in srgb, #10b981 15%, transparent);
+  color: #10b981;
+  border: 1px solid color-mix(in srgb, #10b981 30%, transparent);
+}
+
+.mkt-gps-badge.missing {
+  background: color-mix(in srgb, #f59e0b 15%, transparent);
+  color: #f59e0b;
+  border: 1px solid color-mix(in srgb, #f59e0b 30%, transparent);
+}
+
+.mkt-sub-info-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 0.82rem;
+  color: var(--muted);
+  flex-wrap: wrap;
+}
+
+.mkt-nh-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--text);
+}
+
+.mkt-coords-text {
+  font-family: monospace, sans-serif;
+  font-size: 0.78rem;
+  direction: ltr;
+  opacity: 0.8;
+}
+
+.mkt-phone-wrap {
+  display: inline-flex;
+  align-items: center;
+}
+
+.mkt-no-phone {
+  font-size: 0.76rem;
+  color: var(--muted);
+  font-style: italic;
+}
+
+.mkt-row-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.mkt-toggle-group-btn {
+  font-weight: 700;
+  font-size: 0.82rem;
+  padding: 6px 12px;
+}
+
+/* باڕی خوارەوە بۆ دوو دوگمەکە (کامێرا و ماڕکێتی نوێ) */
+.mkt-bottom-bar {
+  position: fixed;
+  bottom: calc(68px + env(safe-area-inset-bottom));
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 45;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 18px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--surface) 92%, transparent);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1.5px solid color-mix(in srgb, var(--border) 80%, var(--accent));
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.35);
+  max-width: 92vw;
+}
+
+.mkt-bbar-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 11px 22px;
+  border-radius: 999px;
+  border: none;
+  font-size: 0.95rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: transform 0.15s ease, filter 0.15s ease, box-shadow 0.15s ease;
+  user-select: none;
+  position: relative;
+  font-family: inherit;
+}
+
+.mkt-bbar-btn:hover {
+  transform: translateY(-2px);
+}
+
+.mkt-bbar-btn:active {
+  transform: scale(0.96);
+}
+
+.mkt-cam-btn {
+  background: linear-gradient(135deg, #0ea5e9 0%, #3b82f6 100%);
+  color: #ffffff;
+  box-shadow: 0 4px 16px rgba(14, 165, 233, 0.4);
+}
+
+.mkt-new-btn {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: #ffffff;
+  box-shadow: 0 4px 16px rgba(16, 185, 129, 0.4);
+}
+
+.mkt-bbar-ico {
+  display: flex;
+  align-items: center;
+}
+
+.mkt-bbar-badge {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #ef4444;
+  color: #fff;
+  font-size: 0.74rem;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid var(--surface);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+}
+
+
+/* مۆدالی کامێرا و ماپسمی */
+.mkt-cam-modal-body {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.mkt-cam-intro {
+  font-size: 0.88rem;
+}
+
+.mkt-cam-actions-box {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.mkt-cam-capture-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 14px 20px;
+  font-size: 1.05rem;
+  font-weight: 700;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #0ea5e9 0%, #2563eb 100%);
+  color: #ffffff;
+  box-shadow: 0 4px 18px rgba(14, 165, 233, 0.3);
+}
+
+.mkt-cam-capture-btn:hover {
+  filter: brightness(1.05);
+}
+
+.mkt-cam-input-manual-row {
+  display: flex;
+  gap: 8px;
+}
+
+.mkt-cam-input-manual-row input {
+  flex: 1;
+  border-radius: 10px;
+  font-size: 0.9rem;
+}
+
+.mkt-thumbs-preview {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  padding: 8px 4px;
+  scrollbar-width: thin;
+}
+
+.mkt-thumb-box {
+  position: relative;
+  width: 88px;
+  height: 88px;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1.5px solid var(--border);
+  flex-shrink: 0;
+  background: #000;
+}
+
+.mkt-thumb-box img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.mkt-thumb-status {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: rgba(0, 0, 0, 0.75);
+  color: #fff;
+  font-size: 0.65rem;
+  padding: 2px 4px;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.mkt-thumb-status.ok {
+  background: rgba(16, 185, 129, 0.9);
+}
+
+.mkt-scanned-group-wrap {
+  border-top: 1px dashed var(--border);
+  padding-top: 12px;
+}
+
+.mkt-group-head-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.mkt-group-head-row h4 {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+.mkt-group-items-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 240px;
+  overflow-y: auto;
+  padding-right: 2px;
+}
+
+.mkt-group-empty {
+  padding: 16px;
+  text-align: center;
+  font-size: 0.85rem;
+  background: var(--surface-2);
+  border-radius: 8px;
+}
+
+.mkt-group-card-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+}
+
+.mkt-g-index {
+  font-weight: 800;
+  font-size: 0.78rem;
+  color: var(--muted);
+  min-width: 24px;
+}
+
+.mkt-g-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.mkt-g-code-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.mkt-g-code-chip {
+  font-size: 0.76rem;
+  font-weight: 800;
+  padding: 1px 6px;
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--accent) 18%, transparent);
+  color: var(--accent);
+}
+
+.mkt-g-sub {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.78rem;
+  color: var(--muted);
+  margin-top: 2px;
+}
+
+/* مۆدالی فۆڕمی ماڕکێت */
+.mkt-modal-body {
+  padding: 4px 0;
+}
+
+.mkt-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.mkt-code-field-highlight {
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--accent) 8%, var(--surface-2));
+  border: 1.5px solid color-mix(in srgb, var(--accent) 30%, var(--border));
+}
+
+.mkt-code-field-highlight label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-weight: 700;
+}
+
+.mkt-form-row {
+  display: flex;
+  gap: 12px;
+}
+
+.mkt-form-row .field {
+  flex: 1;
+  margin-bottom: 0;
+}
+
+.mkt-loc-label-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.mkt-gps-btn {
+  padding: 2px 8px;
+  font-size: 0.76rem;
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+}
+
+.mkt-gps-btn:hover {
+  background: color-mix(in srgb, var(--accent) 22%, transparent);
+}
+
+/* حاڵەتی بەتاڵ */
+.mkt-empty {
+  padding: 42px 20px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.mkt-empty .empty-ico {
+  font-size: 2.8rem;
+  margin-bottom: 4px;
+}
+
+/* ڕێکخستنی مۆبایل */
+@media (max-width: 600px) {
+  .bottom-nav {
+    gap: 2px;
+    padding: 6px 3px calc(6px + env(safe-area-inset-bottom));
+  }
+  .bottom-nav .nav-btn {
+    padding: 5px 2px;
+    font-size: 0.65rem;
+    border-radius: 9px;
+  }
+  .bottom-nav .nav-ico svg {
+    width: 20px;
+    height: 20px;
+  }
+  .mkt-row-main {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+  .mkt-code-box {
+    flex-direction: row;
+    justify-content: space-between;
+    width: 100%;
+    padding: 6px 12px;
+  }
+  .mkt-row-actions {
+    width: 100%;
+    justify-content: space-between;
+    border-top: 1px dashed color-mix(in srgb, var(--border) 60%, transparent);
+    padding-top: 8px;
+  }
+  .mkt-bottom-bar {
+    bottom: calc(58px + env(safe-area-inset-bottom));
+    width: 94vw;
+    padding: 6px 10px;
+    gap: 8px;
+    justify-content: stretch;
+  }
+  .mkt-bbar-btn {
+    flex: 1;
+    padding: 10px 14px;
+    font-size: 0.88rem;
+  }
+  .mkt-form-row {
+    flex-direction: column;
+    gap: 12px;
+  }
+}
+
+

@@ -688,5 +688,62 @@ const API = (() => {
     return gw('users.migrateAvatars', {});
   }
 
-  return { Records, Lists, Notifications, Professions, login, loginOptions, changeOwnPin, uploadAvatar, migrateAvatars, gatewayActive: gwOn };
+  /* ---------------- خشتەی ماڕکێتەکان (public.market_locaetion) ---------------- */
+  const Markets = {
+    async list() {
+      if (gwOn()) {
+        try {
+          const res = await gw('markets.list', {});
+          if (Array.isArray(res)) return res;
+        } catch (e) {
+          console.warn('Gateway markets.list failed, falling back to direct REST:', e);
+        }
+      }
+      return request(CONFIG.RECORDS_URL, CONFIG.RECORDS_KEY,
+        `/${CONFIG.MARKETS_TABLE || 'market_locaetion'}?select=*&order=account_name`);
+    },
+
+    async insert(row) {
+      if (gwOn()) {
+        try {
+          return await gw('markets.insert', { row });
+        } catch (e) {
+          console.warn('Gateway markets.insert failed, falling back to direct REST:', e);
+        }
+      }
+      const rows = await request(CONFIG.RECORDS_URL, CONFIG.RECORDS_KEY,
+        `/${CONFIG.MARKETS_TABLE || 'market_locaetion'}`,
+        { method: 'POST', body: row, prefer: 'return=representation' });
+      return rows && rows[0] ? rows[0] : row;
+    },
+
+    async update(accountCode, patch) {
+      if (gwOn()) {
+        try {
+          return await gw('markets.update', { account_code: accountCode, patch });
+        } catch (e) {
+          console.warn('Gateway markets.update failed, falling back to direct REST:', e);
+        }
+      }
+      const rows = await request(CONFIG.RECORDS_URL, CONFIG.RECORDS_KEY,
+        `/${CONFIG.MARKETS_TABLE || 'market_locaetion'}?account_code=eq.${encodeURIComponent(accountCode)}`,
+        { method: 'PATCH', body: patch, prefer: 'return=representation' });
+      return rows && rows[0] ? rows[0] : patch;
+    },
+
+    async delete(accountCode) {
+      if (gwOn()) {
+        try {
+          return await gw('markets.delete', { account_code: accountCode });
+        } catch (e) {
+          console.warn('Gateway markets.delete failed, falling back to direct REST:', e);
+        }
+      }
+      return request(CONFIG.RECORDS_URL, CONFIG.RECORDS_KEY,
+        `/${CONFIG.MARKETS_TABLE || 'market_locaetion'}?account_code=eq.${encodeURIComponent(accountCode)}`,
+        { method: 'DELETE' });
+    },
+  };
+
+  return { Records, Lists, Notifications, Professions, Markets, login, loginOptions, changeOwnPin, uploadAvatar, migrateAvatars, gatewayActive: gwOn };
 })();

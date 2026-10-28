@@ -84,6 +84,8 @@ const DriverView = (() => {
   const wireExprField = inp => {
     if (!inp) return;
 
+    UI.wireThousands(inp, { allowOperators: true });
+
     // دووگمەی + لەناو خانەکە (لای چەپ) — دوای ژمارە دەرئەکەوێت و + زیاد دەکات
     const wrap = document.createElement('div');
     wrap.className = 'expr-wrap';
@@ -122,7 +124,7 @@ const DriverView = (() => {
       const raw = inp.value.trim();
       if (UI.hasOperator(raw)) {
         inp.dataset.raw = raw;
-        inp.value = String(UI.cleanInt(raw));
+        inp.value = UI.fmtNum(UI.cleanInt(raw));
       } else {
         delete inp.dataset.raw;
       }
@@ -138,7 +140,10 @@ const DriverView = (() => {
   };
   // ئەگەر ستوونە ژمارەییەکان لە سەپابەیس کرابنە text، دەقەکە دەنێرین؛ ئەگینا کۆی گشتی
   const numericColsAreText = () => (records || []).some(r => typeof r.cargo_weight === 'string');
-  const sendNumeric = raw => numericColsAreText() ? raw : UI.cleanInt(raw);
+  const sendNumeric = raw => {
+    if (numericColsAreText() && UI.hasOperator(raw)) return raw;
+    return UI.cleanInt(raw);
+  };
 
   const createNameGroup = (opts = {}) => {
     const title = opts.title || '';
@@ -1012,8 +1017,10 @@ const DriverView = (() => {
       ${!moneyAlreadySet ? '<p class="hint" style="margin:0 0 6px">⚠️ تێبینی: ئەمە تۆمارکردنی یەکجارە — پاش پاشەکەوتکردن، خانەکە قفڵ دەبێت و چیتر ناگۆڕدرێت.</p>' : ''}
       <div class="field">
         <label>پارەی هێنراوە</label>
-        <input id="f-money" type="number" min="0" step="1" inputmode="numeric" value="" placeholder="بڕی پارە بنووسە (د.ع)">
+        <input id="f-money" type="text" inputmode="numeric" value="${moneyAlreadySet ? UI.fmtNum(active.collected_money) : ''}" placeholder="بڕی پارە بنووسە (د.ع)">
       </div>`;
+
+    UI.wireThousands($('#f-money', body), { allowOperators: true });
 
     const { close } = UI.openModal({
       title: '💰 پارەی هێنراوە',
@@ -1031,6 +1038,10 @@ const DriverView = (() => {
             const money = UI.cleanInt(raw);
             if (Number.isNaN(money) || money < 0) {
               UI.toast('تکایە بڕێکی ژمارەیی دروست بنووسە', 'warning');
+              return;
+            }
+            if (money > 99999999) {
+              UI.toast('بڕی پارەی هێنراوە ناتوانێت لە ٩٩،٩٩٩،٩٩٩ زیاتر بێت', 'warning');
               return;
             }
             UI.btnBusy(saveBtn, 'money', true, 'پاشەکەوت دەکرێت...');
@@ -1136,11 +1147,11 @@ const DriverView = (() => {
           <div class="field"><label>کاتی دەرچوون *</label><input id="f-time" type="time" value="${rec.record_time || ''}"></div>
         </div>
         <div class="field-row">
-          <div class="field"><label>کێشی بار (کگم) *</label><input id="f-weight" type="text" inputmode="numeric" value="${UI.esc(rec.cargo_weight ?? '')}"></div>
-          <div class="field"><label>ژمارەی پارچەکان *</label><input id="f-pieces" type="text" inputmode="numeric" value="${UI.esc(rec.pieces_count ?? '')}"></div>
+          <div class="field"><label>کێشی بار (کگم) *</label><input id="f-weight" type="text" inputmode="numeric" value="${UI.esc(rec.cargo_weight ? (UI.hasOperator(rec.cargo_weight) ? rec.cargo_weight : UI.fmtNum(rec.cargo_weight)) : '')}"></div>
+          <div class="field"><label>ژمارەی پارچەکان *</label><input id="f-pieces" type="text" inputmode="numeric" value="${UI.esc(rec.pieces_count ? (UI.hasOperator(rec.pieces_count) ? rec.pieces_count : UI.fmtNum(rec.pieces_count)) : '')}"></div>
         </div>
-        <div class="field"><label>ژمارەی وەسڵ *</label><input id="f-receipt" type="text" inputmode="numeric" value="${UI.esc(rec.receipt_number ?? '')}"></div>
-        <div class="field"><label>💰 پارەی هێنراوە (د.ع)</label><input id="f-money" type="number" min="0" step="1" inputmode="numeric" value="${Number(rec.collected_money || 0) > 0 ? UI.cleanInt(rec.collected_money) : ''}" placeholder="بەتاڵ = تۆمار نەکراوە"></div>
+        <div class="field"><label>ژمارەی وەسڵ *</label><input id="f-receipt" type="text" inputmode="numeric" value="${UI.esc(rec.receipt_number ? (UI.hasOperator(rec.receipt_number) ? rec.receipt_number : UI.fmtNum(rec.receipt_number)) : '')}"></div>
+        <div class="field"><label>💰 پارەی هێنراوە (د.ع)</label><input id="f-money" type="text" inputmode="numeric" value="${Number(rec.collected_money || 0) > 0 ? UI.fmtNum(rec.collected_money) : ''}" placeholder="بەتاڵ = تۆمار نەکراوە"></div>
 
         <div class="date-range-compact" style="margin-top:10px">
           <div class="field compact-field"><label>📍 کاتی ناو زۆن</label><input type="time" id="f-in-zone" value="${rec.in_zone_time || ''}"></div>
@@ -1218,6 +1229,7 @@ const DriverView = (() => {
 
     if (!lockedFields.includes('vehicle')) UI.autocomplete($('#f-vehicle', body), () => vehicles);
     ['#f-weight', '#f-pieces', '#f-receipt'].forEach(id => wireExprField($(id, body)));
+    UI.wireThousands($('#f-money', body), { allowOperators: true });
 
     const { close } = UI.openModal({
       title: sup ? '✏️ دەستکاریکردنی داتا' : '✏️ دەستکاریکردنی داتای ئەمڕۆ',
@@ -1260,6 +1272,11 @@ const DriverView = (() => {
             // پارەی هێنراوە — بەتاڵ واتە ٠
             const moneyRaw = $('#f-money', body).value.trim();
             const money = moneyRaw === '' ? 0 : UI.cleanInt(moneyRaw);
+            if (money > 99999999) {
+              $('#f-money', body)?.classList.add('invalid');
+              UI.toast('بڕی پارەی هێنراوە ناتوانێت لە ٩٩،٩٩٩،٩٩٩ زیاتر بێت', 'warning');
+              return;
+            }
 
             const missingName = (!driverVals.length && !lockedFields.includes('driver'))
               || (!distribVals.length && !lockedFields.includes('distributor'))
