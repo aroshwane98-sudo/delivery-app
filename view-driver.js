@@ -347,13 +347,13 @@ const DriverView = (() => {
         allTodayRecords = cleanedToday;
       }
 
-      // هاوتاکردنی پێشاندانی دەرچوون بۆ هەردوو پیشەی سایەق و دابەشکار —
+      // هاوتاکردنی پێشاندانی دەرچوون بۆ هەموو بەشداربووان (سایەق، هاو-سایەق، دابەشکار، مەندوب) —
       // سەرەتا بە ئایدی usersv2 (ورد)، ئەگەر تۆمارەکە ئایدی نەبوو بە ناو (تۆمارە کۆنەکان)
-      if (isDistributor()) {
-        records = cleanedToday.filter(r => UI.recMatchesUser(r, 'distributor', u));
-      } else {
-        records = cleanedToday.filter(r => UI.recMatchesUser(r, 'driver', u));
-      }
+      records = cleanedToday.filter(r =>
+        UI.recMatchesUser(r, 'driver', u) ||
+        UI.recMatchesUser(r, 'distributor', u) ||
+        UI.recMatchesUser(r, 'delegate', u)
+      );
       // ڕیفرێشی خۆکار — ئەگەر داتاکە نەگۆڕابێت دووبارە ڕێندەر مەکەرەوە (خێرایی + بێ لەرینەوە)
       const sig = JSON.stringify([records, allTodayRecords]);
       if (silent && sig === lastRenderSig) { checkPendingLockAction(); return; }

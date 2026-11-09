@@ -952,6 +952,7 @@ const UI = (() => {
     user: '<path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>',
     map: '<polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 18"/><line x1="9" x2="9" y1="3" y2="18"/><line x1="15" x2="15" y1="6" y2="21"/>',
     package: '<path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/>',
+    briefcase: '<rect width="20" height="14" x="2" y="7" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>',
     bulb: '<path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/>',
     columns: '<rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><line x1="12" x2="12" y1="3" y2="21"/>',
     /* — ئایکۆنە زیادەکان — هەموو ئایکۆنەکانی سیستەم بە یەک ستایل (SVG) — */
@@ -1427,6 +1428,7 @@ const UI = (() => {
     '👥': 'users', '⏳': 'hourglass', '⏱': 'clock', '📥': 'download', '📋': 'clipboard', '🖼': 'image',
     '📭': 'inbox', '🌙': 'moon', '☀': 'sun', '💡': 'bulb', '🎨': 'palette', '📏': 'ruler', '▶': 'play',
     '📦': 'package', '🔠': 'type', '⌨': 'keyboard', '📱': 'smartphone', '🧭': 'compass', '🔍': 'search',
+    '💼': 'briefcase', '🧑‍💼': 'briefcase', '🙋': 'badge',
     '🏪': 'market', '🏬': 'market', '🛒': 'market',
   };
   const EMOJI_RE = /\u{1F9D1}\u200D\u2708\uFE0F?|[\u{1F300}-\u{1FAFF}\u2600-\u27BF\u2B50\u23E9-\u23FF\u232B\u229E\u2195\u2139\u25B6\u27F2]\uFE0F?/gu;

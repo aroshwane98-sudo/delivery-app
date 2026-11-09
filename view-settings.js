@@ -1183,6 +1183,7 @@ const SettingsView = (() => {
       { s: { r: 1, c: 1 }, e: { r: 1, c: 2 } },
     ];
     const wb = XLSX.utils.book_new();
+    wb.Workbook = { Views: [{ RTL: true }] };
     XLSX.utils.book_append_sheet(wb, ws, `باک ${dayStr}`.slice(0, 31));
     return { wb, count: records.length };
   }

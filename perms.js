@@ -46,6 +46,7 @@ const Perms = (() => {
     { group: 'reports', key: 'rep_reset_filters',      icon: '✖', label: 'دوگمەی پاککردنەوەی فلتەرەکان', type: 'view' },
     { group: 'reports', key: 'rep_view_mode',          icon: '🗄️', label: 'گۆڕینی شێوازی پیشاندان (کارت / خشتە)', type: 'view' },
     { group: 'reports', key: 'rep_totals',             icon: '🧮', label: 'کارتەکانی کۆی گشتی (تۆتاڵ)', type: 'view' },
+    { group: 'reports', key: 'rep_excel',              icon: '📊', label: 'دوگمەی بەئێکسڵکردن لە ڕاپۆرت', type: 'act' },
     { group: 'reports', key: 'rep_print',              icon: '🖨️', label: 'پرێنتکردنی ڕاپۆرت',        type: 'act' },
     { group: 'reports', key: 'rep_edit',           icon: '✏️', label: 'دەستکاریکردنی تۆمار',    type: 'act' },
     { group: 'reports', key: 'rep_delete',         icon: '🗑', label: 'سڕینەوەی تۆمار',         type: 'act' },

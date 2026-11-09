@@ -215,8 +215,8 @@ const API = (() => {
     const all = (users || []).filter(u => normName(u.username) === target);
     if (!all.length) return null;
     if (all.length === 1) return all[0];
-    const byProf = all.filter(u => u.profession === profession);
-    return byProf.length === 1 ? byProf[0] : null;
+    const byProf = all.filter(u => u.profession === profession || (profession === CONFIG.PROFESSION_DRIVER && u.profession === CONFIG.PROFESSION_ASSISTANT));
+    return byProf.length === 1 ? byProf[0] : all[0];
   }
 
   /**
@@ -224,7 +224,7 @@ const API = (() => {
    * بەتاڵ دەگەڕێتەوە ئەگەر هیچ بەشێک نەدۆزرێتەوە.
    */
   function resolveIdsForField(users, value, profession) {
-    const parts = String(value || '').split(/\s+و\s+/).map(p => p.trim()).filter(Boolean);
+    const parts = String(value || '').split(/(?:\s+و\s+|\s*[,،&+/]\s*)/).map(p => p.trim()).filter(Boolean);
     if (!parts.length) return '';
     const ids = parts
       .map(p => { const u = resolveNameToUser(users, p, profession); return u ? String(u.id) : ''; })
@@ -508,34 +508,121 @@ const API = (() => {
 
     async insertVehicle(row) {
       if (gwOn()) {
-        const r = await gw('lists.insertVehicle', { row });
-        if (typeof Store !== 'undefined' && Store.invalidateLists) Store.invalidateLists();
-        return r;
+        try {
+          const r = await gw('lists.insertVehicle', { row });
+          if (typeof Store !== 'undefined' && Store.invalidateLists) Store.invalidateLists();
+          return r;
+        } catch (err) {
+          // ئەگەر فەنکشنی دەروازە لە Supabase هێشتا نوێ نەکراوەتەوە، هەوڵی ڕاستەوخۆ دەدات
+          if (err && (err.code === 'UNKNOWN_OP' || err.status === 404)) {
+            console.warn('دەروازە lists.insertVehicle ی نییە، هەوڵی ڕاستەوخۆ دەدرێت:', err);
+            return this._directInsertVehicle(row);
+          }
+          throw err;
+        }
       }
-      const rows = await request(CONFIG.LISTS_URL, CONFIG.LISTS_KEY,
-        `/${CONFIG.VEHICLES_TABLE}`, { method: 'POST', body: row, prefer: 'return=representation' });
-      if (typeof Store !== 'undefined' && Store.invalidateLists) Store.invalidateLists();
-      return rows && rows[0] ? rows[0] : null;
+      return this._directInsertVehicle(row);
+    },
+
+    async _directInsertVehicle(row) {
+      const CANDIDATE_COLS = ['vehicle_number', 'name', 'plate_number', 'vehicle', 'number', 'plate'];
+      let val = null;
+      for (const k of CANDIDATE_COLS) {
+        if (row && row[k] !== undefined && row[k] !== null && String(row[k]).trim()) {
+          val = row[k];
+          break;
+        }
+      }
+      try {
+        const rows = await request(CONFIG.LISTS_URL, CONFIG.LISTS_KEY,
+          `/${CONFIG.VEHICLES_TABLE}`, { method: 'POST', body: row, prefer: 'return=representation' });
+        if (typeof Store !== 'undefined' && Store.invalidateLists) Store.invalidateLists();
+        return rows && rows[0] ? rows[0] : null;
+      } catch (err) {
+        const msg = String(err && err.message ? err.message : '');
+        if (((err && err.code === 'PGRST204') || msg.includes('column') || msg.includes('PGRST204')) && val != null) {
+          for (const col of CANDIDATE_COLS) {
+            if (row && row[col] !== undefined) continue;
+            try {
+              const rows = await request(CONFIG.LISTS_URL, CONFIG.LISTS_KEY,
+                `/${CONFIG.VEHICLES_TABLE}`, { method: 'POST', body: { [col]: val }, prefer: 'return=representation' });
+              if (typeof Store !== 'undefined' && Store.invalidateLists) Store.invalidateLists();
+              return rows && rows[0] ? rows[0] : null;
+            } catch (_) {}
+          }
+        }
+        if (typeof Store !== 'undefined' && Store.invalidateLists) Store.invalidateLists();
+        throw err;
+      }
     },
 
     async updateVehicle(id, patch) {
       if (gwOn()) {
-        const r = await gw('lists.updateVehicle', { id, patch });
-        if (typeof Store !== 'undefined' && Store.invalidateLists) Store.invalidateLists();
-        return r;
+        try {
+          const r = await gw('lists.updateVehicle', { id, patch });
+          if (typeof Store !== 'undefined' && Store.invalidateLists) Store.invalidateLists();
+          return r;
+        } catch (err) {
+          if (err && (err.code === 'UNKNOWN_OP' || err.status === 404)) {
+            console.warn('دەروازە lists.updateVehicle ی نییە، هەوڵی ڕاستەوخۆ دەدرێت:', err);
+            return this._directUpdateVehicle(id, patch);
+          }
+          throw err;
+        }
       }
-      const rows = await request(CONFIG.LISTS_URL, CONFIG.LISTS_KEY,
-        `/${CONFIG.VEHICLES_TABLE}?id=eq.${encodeURIComponent(id)}`,
-        { method: 'PATCH', body: patch, prefer: 'return=representation' });
-      if (typeof Store !== 'undefined' && Store.invalidateLists) Store.invalidateLists();
-      return rows && rows[0] ? rows[0] : null;
+      return this._directUpdateVehicle(id, patch);
+    },
+
+    async _directUpdateVehicle(id, patch) {
+      const CANDIDATE_COLS = ['vehicle_number', 'name', 'plate_number', 'vehicle', 'number', 'plate'];
+      let val = null;
+      for (const k of CANDIDATE_COLS) {
+        if (patch && patch[k] !== undefined && patch[k] !== null && String(patch[k]).trim()) {
+          val = patch[k];
+          break;
+        }
+      }
+      try {
+        const rows = await request(CONFIG.LISTS_URL, CONFIG.LISTS_KEY,
+          `/${CONFIG.VEHICLES_TABLE}?id=eq.${encodeURIComponent(id)}`,
+          { method: 'PATCH', body: patch, prefer: 'return=representation' });
+        if (typeof Store !== 'undefined' && Store.invalidateLists) Store.invalidateLists();
+        return rows && rows[0] ? rows[0] : null;
+      } catch (err) {
+        const msg = String(err && err.message ? err.message : '');
+        if (((err && err.code === 'PGRST204') || msg.includes('column') || msg.includes('PGRST204')) && val != null) {
+          for (const col of CANDIDATE_COLS) {
+            if (patch && patch[col] !== undefined) continue;
+            try {
+              const rows = await request(CONFIG.LISTS_URL, CONFIG.LISTS_KEY,
+                `/${CONFIG.VEHICLES_TABLE}?id=eq.${encodeURIComponent(id)}`,
+                { method: 'PATCH', body: { [col]: val }, prefer: 'return=representation' });
+              if (typeof Store !== 'undefined' && Store.invalidateLists) Store.invalidateLists();
+              return rows && rows[0] ? rows[0] : null;
+            } catch (_) {}
+          }
+        }
+        if (typeof Store !== 'undefined' && Store.invalidateLists) Store.invalidateLists();
+        throw err;
+      }
     },
 
     async deleteVehicle(id) {
       if (gwOn()) {
-        const r = await gw('lists.deleteVehicle', { id });
-        if (typeof Store !== 'undefined' && Store.invalidateLists) Store.invalidateLists();
-        return r;
+        try {
+          const r = await gw('lists.deleteVehicle', { id });
+          if (typeof Store !== 'undefined' && Store.invalidateLists) Store.invalidateLists();
+          return r;
+        } catch (err) {
+          if (err && (err.code === 'UNKNOWN_OP' || err.status === 404)) {
+            console.warn('دەروازە lists.deleteVehicle ی نییە، هەوڵی ڕاستەوخۆ دەدرێت:', err);
+            const res = await request(CONFIG.LISTS_URL, CONFIG.LISTS_KEY,
+              `/${CONFIG.VEHICLES_TABLE}?id=eq.${encodeURIComponent(id)}`, { method: 'DELETE' });
+            if (typeof Store !== 'undefined' && Store.invalidateLists) Store.invalidateLists();
+            return res;
+          }
+          throw err;
+        }
       }
       const res = await request(CONFIG.LISTS_URL, CONFIG.LISTS_KEY,
         `/${CONFIG.VEHICLES_TABLE}?id=eq.${encodeURIComponent(id)}`, { method: 'DELETE' });
@@ -699,8 +786,19 @@ const API = (() => {
           console.warn('Gateway markets.list failed, falling back to direct REST:', e);
         }
       }
-      return request(CONFIG.RECORDS_URL, CONFIG.RECORDS_KEY,
-        `/${CONFIG.MARKETS_TABLE || 'market_locaetion'}?select=*&order=account_name`);
+      // هێنانی هەموو ماڕکێتەکان (تەنانەت ئەگەر ٥,٠٠٠+ بن) بە لاپەڕەبەندی
+      const pageSize = 1000;
+      let all = [];
+      let offset = 0;
+      while (true) {
+        const rows = await request(CONFIG.RECORDS_URL, CONFIG.RECORDS_KEY,
+          `/${CONFIG.MARKETS_TABLE || 'market_locaetion'}?select=*&order=account_code.asc&limit=${pageSize}&offset=${offset}`);
+        if (!Array.isArray(rows) || !rows.length) break;
+        all.push(...rows);
+        if (rows.length < pageSize) break;
+        offset += pageSize;
+      }
+      return all;
     },
 
     async insert(row) {
@@ -742,6 +840,41 @@ const API = (() => {
       return request(CONFIG.RECORDS_URL, CONFIG.RECORDS_KEY,
         `/${CONFIG.MARKETS_TABLE || 'market_locaetion'}?account_code=eq.${encodeURIComponent(accountCode)}`,
         { method: 'DELETE' });
+    },
+
+    async search(rawQuery) {
+      const q = String(rawQuery || '').trim().replace(/^[#＃]/, '');
+      if (!q) return [];
+      const latin = (typeof UI !== 'undefined' ? UI.toLatinDigits(q) : q).trim();
+      const digitsOnly = latin.replace(/\D/g, '');
+      const isPureNumber = digitsOnly.length > 0 && digitsOnly === latin;
+
+      const table = CONFIG.MARKETS_TABLE || 'market_locaetion';
+
+      try {
+        if (isPureNumber) {
+          if (digitsOnly.length < 8) {
+            // بەراوردی تەواوی کۆدی ماڕکێت (ڕێک ئەو کۆدە دەهێنێت نەک 12 و 24)
+            const rows = await request(CONFIG.RECORDS_URL, CONFIG.RECORDS_KEY,
+              `/${table}?select=*&account_code=eq.${encodeURIComponent(digitsOnly)}`);
+            return Array.isArray(rows) ? rows : [];
+          } else {
+            // بۆ ژمارەی تەلەفۆن یان زیاتر لە ٨ ژمارە
+            const rows = await request(CONFIG.RECORDS_URL, CONFIG.RECORDS_KEY,
+              `/${table}?select=*&or=(account_code.eq.${encodeURIComponent(digitsOnly)},phone.like.*${encodeURIComponent(digitsOnly)}*)&limit=50`);
+            return Array.isArray(rows) ? rows : [];
+          }
+        }
+
+        // بۆ گەڕانی دەق (ناوی ماڕکێت یان ناوی گەڕەک/زۆن)
+        const enc = encodeURIComponent(q);
+        const rows = await request(CONFIG.RECORDS_URL, CONFIG.RECORDS_KEY,
+          `/${table}?select=*&or=(account_name.ilike.*${enc}*,neighborhood.ilike.*${enc}*)&order=account_code.asc&limit=50`);
+        return Array.isArray(rows) ? rows : [];
+      } catch (err) {
+        console.warn('هەڵە لە گەڕانی ماڕکێت لە سەب بەیس:', err);
+        return [];
+      }
     },
   };
 

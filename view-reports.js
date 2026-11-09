@@ -43,11 +43,18 @@ const ReportsView = (() => {
     return { from: `${y}-${mm}-01`, to: `${y}-${mm}-${String(last).padStart(2, '0')}` };
   }
 
-  // ئایا تۆمارەکە باری دووەم/سێیەمە؟ — بەپێی پاشگری ناوی شۆفێر («دوو»/«سێ»)
+  // ئایا تۆمارەکە باری دووەم/سێیەمە؟ — بەپێی پاشگری ناوی شۆفێر، دابەشکار یان مەندوب («دوو»/«سێ»)
   const cargoIdxOf = r => {
-    const d = String((r && r.driver) || '').replace(/\s*\+\s*$/, '').trim();
-    if (/(?:^|\s)دوو$/.test(d)) return 1;
-    if (/(?:^|\s)سێ$/.test(d)) return 2;
+    if (!r) return 0;
+    const d = String(r.driver || '').replace(/\s*\+\s*$/, '').trim();
+    if (/(?:^|\s)دوو$/.test(d) || /\bدوو\b/.test(d)) return 1;
+    if (/(?:^|\s)سێ$/.test(d) || /\bسێ\b/.test(d)) return 2;
+    const dist = String(r.distributor || '').replace(/\s*\+\s*$/, '').trim();
+    if (/(?:^|\s)دوو$/.test(dist) || /\bدوو\b/.test(dist)) return 1;
+    if (/(?:^|\s)سێ$/.test(dist) || /\bسێ\b/.test(dist)) return 2;
+    const del = String(r.delegate || '').replace(/\s*\+\s*$/, '').trim();
+    if (/(?:^|\s)دوو$/.test(del) || /\bدوو\b/.test(del)) return 1;
+    if (/(?:^|\s)سێ$/.test(del) || /\bسێ\b/.test(del)) return 2;
     return 0;
   };
 
@@ -92,11 +99,11 @@ const ReportsView = (() => {
         return false;
       });
     }
-    if (u.profession === CONFIG.PROFESSION_DRIVER) {
-      return rows.filter(r => UI.recMatchesUser(r, 'driver', u));
+    if (u.profession === CONFIG.PROFESSION_DRIVER || u.profession === CONFIG.PROFESSION_ASSISTANT) {
+      return rows.filter(r => UI.recMatchesUser(r, 'driver', u) || UI.recMatchesUser(r, 'distributor', u));
     }
     if (u.profession === CONFIG.PROFESSION_DISTRIBUTOR) {
-      return rows.filter(r => UI.recMatchesUser(r, 'distributor', u));
+      return rows.filter(r => UI.recMatchesUser(r, 'distributor', u) || UI.recMatchesUser(r, 'driver', u));
     }
     if (u.profession === CONFIG.PROFESSION_DELEGATE) {
       return rows.filter(r => UI.recMatchesUser(r, 'delegate', u));
@@ -246,6 +253,7 @@ const ReportsView = (() => {
     const canViewMode = Perms.canView(u0, 'rep_view_mode');
     const canTotals = Perms.canView(u0, 'rep_totals');
     const canPrint = Perms.canAct(u0, 'rep_print');
+    const canExcel = Perms.canAct(u0, 'rep_excel');
     const desktopLayout = Perms.canView(u0, 'rep_desktop_layout');
     el.classList.toggle('rep-desktop', desktopLayout);
     if (!state.initializedDates) {
@@ -271,6 +279,7 @@ const ReportsView = (() => {
             <div class="field compact-field"><label>لە بەروار</label><input type="date" id="rep-from" value="${state.from}"></div>
             <div class="field compact-field"><label>بۆ بەروار</label><input type="date" id="rep-to" value="${state.to}"></div>
           </div>
+          ${canExcel ? `<button class="btn btn-ghost btn-sm" id="rep-excel-btn" type="button" title="هەناردەکردنی بەکارهێنەران بۆ ئێکسڵ">📊 بەئێکسڵکردن</button>` : ''}
           ${canPrint ? `<button class="btn btn-ghost btn-sm" id="rep-print" title="پرێنتکردنی داتای فلتەرکراو">🖨️ پرێنتکردن</button>` : ''}
           <button class="field-toggle-btn rep-view-btn" id="rep-refresh" title="نوێکردنەوە" type="button">⚡</button>
           ${canReset ? `<button type="button" class="field-toggle-btn rep-view-btn" id="rep-reset-filters" title="پاککردنەوەی هەموو فلتەرەکان و گەڕانەوە بۆ ئەمڕۆ" style="height: 38px;">✖</button>` : ''}
@@ -392,6 +401,11 @@ const ReportsView = (() => {
     $('#rep-to', el).addEventListener('change', e => { state.to = e.target.value; clearMonthSel(el); load(); });
     $('#rep-search', el)?.addEventListener('input', e => { state.search = e.target.value; renderResults(); });
     $('#rep-refresh', el).addEventListener('click', () => load());
+    $('#rep-excel-btn', el)?.addEventListener('click', () => {
+      if (typeof AdminView !== 'undefined' && AdminView.openExcelExportModal) {
+        AdminView.openExcelExportModal({ from: state.from, to: state.to, records: state.records });
+      }
+    });
     $('#rep-print', el)?.addEventListener('click', () => printReportRecords());
 
     $('#rep-reset-filters', el)?.addEventListener('click', () => {

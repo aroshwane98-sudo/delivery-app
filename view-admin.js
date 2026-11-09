@@ -57,11 +57,18 @@ const AdminView = (() => {
     .replace(/[أإآ]/g, 'ا').replace(/ى/g, 'ی').replace(/ك/g, 'ک')
     .replace(/\s+/g, ' ').trim().toLowerCase();
 
-  // ئایا تۆمارەکە باری دووەم/سێیەمە؟ — بەپێی پاشگری ناوی شۆفێر («دوو»/«سێ»)
+  // ئایا تۆمارەکە باری دووەم/سێیەمە؟ — بەپێی پاشگری ناوی شۆفێر، دابەشکار یان مەندوب («دوو»/«سێ»)
   const cargoIdxOf = r => {
-    const d = String((r && r.driver) || '').replace(/\s*\+\s*$/, '').trim();
-    if (/(?:^|\s)دوو$/.test(d)) return 1;
-    if (/(?:^|\s)سێ$/.test(d)) return 2;
+    if (!r) return 0;
+    const d = String(r.driver || '').replace(/\s*\+\s*$/, '').trim();
+    if (/(?:^|\s)دوو$/.test(d) || /\bدوو\b/.test(d)) return 1;
+    if (/(?:^|\s)سێ$/.test(d) || /\bسێ\b/.test(d)) return 2;
+    const dist = String(r.distributor || '').replace(/\s*\+\s*$/, '').trim();
+    if (/(?:^|\s)دوو$/.test(dist) || /\bدوو\b/.test(dist)) return 1;
+    if (/(?:^|\s)سێ$/.test(dist) || /\bسێ\b/.test(dist)) return 2;
+    const del = String(r.delegate || '').replace(/\s*\+\s*$/, '').trim();
+    if (/(?:^|\s)دوو$/.test(del) || /\bدوو\b/.test(del)) return 1;
+    if (/(?:^|\s)سێ$/.test(del) || /\bسێ\b/.test(del)) return 2;
     return 0;
   };
 
@@ -534,7 +541,7 @@ const AdminView = (() => {
       }
     });
     $('#admin-print-btn', wrap).addEventListener('click', () => printRecords());
-    $('#admin-excel-btn', wrap).addEventListener('click', () => openExcelExportModal());
+    $('#admin-excel-btn', wrap).addEventListener('click', () => openExcelExportModal({ from: state.from, to: state.to, records: state.records }));
     $('#admin-fix-ids-btn', wrap).addEventListener('click', () => runUserIdBackfill());
     $('#admin-add-rec-btn', wrap).addEventListener('click', () => openRecordModal());
 
@@ -569,12 +576,12 @@ const AdminView = (() => {
 
     const totalsCardsHtml = (list, totals) => {
       const totalCards = {
-        trips:    { val: UI.fmtNum(list.length), lbl: 'گەشت' },
-        weight:   { val: UI.fmtNum(totals.weight), lbl: 'کۆی کێش (کگم)' },
-        pieces:   { val: UI.fmtNum(totals.pieces), lbl: 'کۆی پارچە' },
+        trips: { val: UI.fmtNum(list.length), lbl: 'گەشت' },
+        weight: { val: UI.fmtNum(totals.weight), lbl: 'کۆی کێش (کگم)' },
+        pieces: { val: UI.fmtNum(totals.pieces), lbl: 'کۆی پارچە' },
         receipts: { val: UI.fmtNum(totals.receipts), lbl: 'کۆی وەسڵ' },
         workTime: { val: UI.fmtDuration(totals.workCount ? totals.workMins : null), lbl: `کۆی کاتی کارکردن (${totals.workCount} گەشت)`, style: 'font-size:0.98rem' },
-        money:    { val: UI.fmtNum(totals.money), lbl: 'کۆی پارە (د.ع)', accent: true },
+        money: { val: UI.fmtNum(totals.money), lbl: 'کۆی پارە (د.ع)', accent: true },
       };
       return CONFIG.TOTAL_CARDS
         .filter(c => totalCards[c.key] && !Store.isTotalHidden(c.key))
@@ -639,7 +646,7 @@ const AdminView = (() => {
             </thead>
             <tbody>
               ${!rows.length ? `<tr><td colspan="${colCount}" style="text-align:center;padding:30px;color:var(--muted)">هیچ تۆمارێک بەردەست نییە.</td></tr>` :
-                rows.map(r => `<tr class="clickable-row" data-id="${r.id}">${rowCells(r)}</tr>`).join('')}
+        rows.map(r => `<tr class="clickable-row" data-id="${r.id}">${rowCells(r)}</tr>`).join('')}
             </tbody>
           </table>
         </div>
@@ -708,7 +715,7 @@ const AdminView = (() => {
       return { first: parts[0], second: parts.slice(1).join(' و ') };
     };
     const distParts = splitCombined(rec?.distributor);
-    const delParts  = splitCombined(rec?.delegate);
+    const delParts = splitCombined(rec?.delegate);
     const zoneParts = splitCombined(rec?.zone);
     const secAttrs = p => p.second ? '' : 'style="display:none"';
 
@@ -793,7 +800,7 @@ const AdminView = (() => {
     Store.loadLists().then(ls => {
       const vList = Store.visible('vehicles', ls?.vehicles).map(v => ({ label: Store.vehicleLabel(v) })).filter(v => v.label);
       UI.autocomplete($('#m-rec-veh', body), () => vList);
-    }).catch(() => {});
+    }).catch(() => { });
 
     setupSecondFieldToggle(body, '#btn-toggle-dist2', '#wrap-dist2', '#m-rec-dist-2');
     setupSecondFieldToggle(body, '#btn-toggle-del2', '#wrap-del2', '#m-rec-del-2');
@@ -819,8 +826,8 @@ const AdminView = (() => {
             // پێکەوەنانەوەی دووەمەکان بە «و» — هەمان شێوازی فۆڕمی دەستکاری داتا
             const joinSecond = (first, second) => second ? `${first} و ${second}` : first;
             const dist1 = val('#m-rec-dist');
-            const del1  = val('#m-rec-del');
-            const z1    = val('#m-rec-zn');
+            const del1 = val('#m-rec-del');
+            const z1 = val('#m-rec-zn');
 
             const data = {
               record_date: val('#m-rec-date') || UI.todayStr(),
@@ -1207,35 +1214,52 @@ const AdminView = (() => {
 
   /* ---------------- بەئێکسڵکردن بەپێی بەکارهێنەران (فرە-شیت) ---------------- */
 
-  async function openExcelExportModal() {
+  async function openExcelExportModal(initial = {}) {
     // کتێبخانەی ئێکسڵ خاوەنکار بار دەکرێت — تەنها کاتی هەناردە
     try { await UI.ensureXlsx(); } catch (err) { UI.toast(err.message, 'error'); return; }
 
-    let exportFrom = state.from || UI.daysAgoStr(6);
-    let exportTo = state.to || UI.todayStr();
+    let allUsers = state.users;
+    if (!allUsers || !allUsers.length) {
+      const ls = await Store.loadLists();
+      allUsers = ls.users || [];
+      state.users = allUsers;
+    }
+
+    let exportFrom = (initial && initial.from) || state.from || UI.daysAgoStr(6);
+    let exportTo = (initial && initial.to) || state.to || UI.todayStr();
+    let passedRecords = (initial && initial.records) || null;
     let userSearch = '';
 
+    let includeSummary = true;
+    let includeSecond = true;
+    let includeAlone = true;
+    let enableDelay = false;
+    let delayHour = '16:00';
+
     // کۆمەڵەی یوسەرە هەڵبژێردراوەکان — لە سەرەتادا هەموویان هەڵبژێردراون
-    const selectedUsers = new Set(state.users.map(u => u.username));
+    const selectedUsers = new Set(allUsers.map(u => u.username));
 
     const body = document.createElement('div');
 
     function renderModalContent() {
       // ژماردنی تۆمارەکانی هەر بەکارهێنەرێک لە داتای بەردەستدا
       const userCounts = {};
-      state.users.forEach(u => {
-        userCounts[u.username] = state.records.filter(r => userMatchesRecord(u, r)).length;
+      const knownRecords = (passedRecords && passedRecords.length)
+        ? passedRecords
+        : ((state.records && state.records.length) ? state.records : []);
+      allUsers.forEach(u => {
+        userCounts[u.username] = knownRecords.filter(r => userMatchesRecord(u, r)).length;
       });
 
       const q = norm(userSearch);
-      const filteredList = state.users.filter(u => {
+      const filteredList = allUsers.filter(u => {
         if (!q) return true;
         return norm(u.username).includes(q) || norm(u.profession).includes(q);
       });
 
       body.innerHTML = `
         <div class="excel-modal-desc">
-          دیاریکردنی ئەو بەکارهێنەرانەی دەتەوێت هەناردەی فایلی ئێکسڵ (.xlsx) بکرێن. بۆ هەر بەکارهێنەرێک <b>شیتێکی سەربەخۆ</b> بە خشتەی مۆدێرن بە ئاراستەی ڕاست بۆ چەپ (RTL) دروست دەکرێت.
+         
         </div>
 
         <div class="excel-date-box">
@@ -1256,23 +1280,26 @@ const AdminView = (() => {
             <input type="search" id="ex-user-search" placeholder="گەڕان بەدوای یوسەر..." value="${UI.esc(userSearch)}">
           </div>
           <div class="excel-quick-btns">
-            <button type="button" class="btn btn-ghost btn-sm" id="ex-select-all">✓ هەمووان</button>
-            <button type="button" class="btn btn-ghost btn-sm" id="ex-deselect-all">✕ هیچ</button>
-            <button type="button" class="btn btn-ghost btn-sm" id="ex-only-active" title="تەنها ئەوانەی تۆماریان هەیە">🚚 چالاکەکان</button>
+            <button type="button" class="btn btn-ghost btn-sm" id="ex-select-all" title="دیاریکردنی هەمووان">${UI.icon('check', 14)} هەمووان</button>
+            <button type="button" class="btn btn-ghost btn-sm" id="ex-only-drivers" title=" سایەقەکان">${UI.icon('truck', 14)}  سایەق</button>
+            <button type="button" class="btn btn-ghost btn-sm" id="ex-only-distributors" title=" دابەشکارەکان">${UI.icon('briefcase', 14)}  دابەشکار</button>
+            <button type="button" class="btn btn-ghost btn-sm" id="ex-only-delegates" title=" مەندوبەکان">${UI.icon('badge', 14)}  مەندووب</button>
+            <button type="button" class="btn btn-ghost btn-sm" id="ex-deselect-all" title="لابردنی دیاریکراوەکان">${UI.icon('x', 14)} هیچ</button>
+            <button type="button" class="btn btn-ghost btn-sm" id="ex-only-active" title=" ئەوانەی تۆماریان هەیە">${UI.icon('zap', 14)} چالاکەکان</button>
           </div>
         </div>
 
         <div style="font-size:0.8rem;color:var(--muted);margin-bottom:6px;display:flex;justify-content:space-between">
           <span>لیستی بەکارهێنەران (${filteredList.length})</span>
-          <span>دیاریکراو: <b id="ex-selected-count" style="color:var(--accent)">${selectedUsers.size}</b> لە ${state.users.length}</span>
+          <span>دیاریکراو: <b id="ex-selected-count" style="color:var(--accent)">${selectedUsers.size}</b> لە ${allUsers.length}</span>
         </div>
 
         <div class="excel-users-grid" id="ex-users-container">
           ${!filteredList.length ? `<div style="grid-column:1/-1;text-align:center;padding:20px;color:var(--muted)">هیچ بەکارهێنەرێک نەدۆزرایەوە</div>` :
-            filteredList.map(u => {
-              const isChecked = selectedUsers.has(u.username);
-              const count = userCounts[u.username] || 0;
-              return `
+          filteredList.map(u => {
+            const isChecked = selectedUsers.has(u.username);
+            const count = userCounts[u.username] || 0;
+            return `
                 <label class="excel-user-card ${isChecked ? 'selected' : ''}" data-username="${UI.esc(u.username)}">
                   <input type="checkbox" class="ex-user-chk" value="${UI.esc(u.username)}" ${isChecked ? 'checked' : ''}>
                   ${UI.avatarHtml(u, 32)}
@@ -1284,14 +1311,37 @@ const AdminView = (() => {
                     </div>
                   </div>
                 </label>`;
-            }).join('')}
+          }).join('')}
         </div>
 
         <div class="excel-options-box">
           <label class="excel-option-row">
-            <input type="checkbox" id="ex-include-summary" checked>
-            <span>زیادکردنی شیتێکی سەرەکی (پوختەی گشتی هەموو یوسەرەکان لە یەک شیتدا)</span>
+            <input type="checkbox" id="ex-include-summary" ${includeSummary ? 'checked' : ''}>
+            <span>پوختەی گشتی </span>
           </label>
+          <label class="excel-option-row">
+            <input type="checkbox" id="ex-include-second" ${includeSecond ? 'checked' : ''}>
+            <span>باری دووەم </span>
+          </label>
+          <label class="excel-option-row">
+            <input type="checkbox" id="ex-include-alone" ${includeAlone ? 'checked' : ''}>
+            <span>بەتەنها دەرچوون </span>
+          </label>
+          <label class="excel-option-row">
+            <input type="checkbox" id="ex-enable-delay" ${enableDelay ? 'checked' : ''}>
+            <span>کاتی تاخیربوون </span>
+          </label>
+          <div id="ex-delay-time-wrap" style="display:${enableDelay ? 'flex' : 'none'};align-items:center;gap:10px;padding-right:27px;margin-top:2px;flex-wrap:wrap">
+            <label for="ex-delay-hour" style="font-size:0.84rem;color:var(--text);font-weight:600">سەعاتی دیاریکراو (٢٤ سەعات):</label>
+            <select id="ex-delay-hour" class="input input-sm" style="width:110px;font-weight:700;direction:ltr">
+              ${Array.from({ length: 24 }, (_, h) => {
+            const val = String(h).padStart(2, '0') + ':00';
+            const sel = val === delayHour ? 'selected' : '';
+            return `<option value="${val}" ${sel}>${val}</option>`;
+          }).join('')}
+            </select>
+            <span class="muted" style="font-size:0.75rem">(تەنها ئەو ڕۆژانە وەردەگرێت کە دوای ئەم سەعاتە گەشتنەوەیان تۆمارکراوە)</span>
+          </div>
         </div>
       `;
 
@@ -1313,7 +1363,33 @@ const AdminView = (() => {
       $('#ex-to', body)?.addEventListener('change', e => { exportTo = e.target.value; });
 
       $('#ex-select-all', body)?.addEventListener('click', () => {
-        state.users.forEach(u => selectedUsers.add(u.username));
+        allUsers.forEach(u => selectedUsers.add(u.username));
+        renderModalContent();
+      });
+
+      $('#ex-only-drivers', body)?.addEventListener('click', () => {
+        selectedUsers.clear();
+        allUsers.forEach(u => {
+          if (u.profession === CONFIG.PROFESSION_DRIVER) selectedUsers.add(u.username);
+        });
+        renderModalContent();
+      });
+
+      $('#ex-only-distributors', body)?.addEventListener('click', () => {
+        selectedUsers.clear();
+        allUsers.forEach(u => {
+          if (u.profession === CONFIG.PROFESSION_DISTRIBUTOR) selectedUsers.add(u.username);
+        });
+        renderModalContent();
+      });
+
+      $('#ex-only-delegates', body)?.addEventListener('click', () => {
+        selectedUsers.clear();
+        allUsers.forEach(u => {
+          if (u.profession === CONFIG.PROFESSION_DELEGATE || u.profession === 'مەندووب' || u.profession === 'مەندوب') {
+            selectedUsers.add(u.username);
+          }
+        });
         renderModalContent();
       });
 
@@ -1324,11 +1400,21 @@ const AdminView = (() => {
 
       $('#ex-only-active', body)?.addEventListener('click', () => {
         selectedUsers.clear();
-        state.users.forEach(u => {
+        allUsers.forEach(u => {
           if ((userCounts[u.username] || 0) > 0) selectedUsers.add(u.username);
         });
         renderModalContent();
       });
+
+      $('#ex-include-summary', body)?.addEventListener('change', e => { includeSummary = e.target.checked; });
+      $('#ex-include-second', body)?.addEventListener('change', e => { includeSecond = e.target.checked; });
+      $('#ex-include-alone', body)?.addEventListener('change', e => { includeAlone = e.target.checked; });
+      $('#ex-enable-delay', body)?.addEventListener('change', e => {
+        enableDelay = e.target.checked;
+        const w = $('#ex-delay-time-wrap', body);
+        if (w) w.style.display = enableDelay ? 'flex' : 'none';
+      });
+      $('#ex-delay-hour', body)?.addEventListener('change', e => { delayHour = e.target.value; });
 
       body.querySelectorAll('.ex-user-chk').forEach(chk => {
         chk.addEventListener('change', () => {
@@ -1346,7 +1432,7 @@ const AdminView = (() => {
     renderModalContent();
 
     const { close } = UI.openModal({
-      title: '📊 هەناردەکردنی تۆمارەکان بۆ ئێکسڵ (Excel)',
+      title: '📊 بە ئێکسڵکردن',
       size: 'lg',
       body,
       actions: [
@@ -1366,7 +1452,9 @@ const AdminView = (() => {
             try {
               // هێنانی تۆمارەکانی مەودای بەروار
               let exportRecords = [];
-              if (exportFrom === state.from && exportTo === state.to && state.records.length) {
+              if (passedRecords && passedRecords.length && exportFrom === initial.from && exportTo === initial.to) {
+                exportRecords = passedRecords;
+              } else if (exportFrom === state.from && exportTo === state.to && state.records && state.records.length) {
                 exportRecords = state.records;
               } else {
                 const params = { select: '*', order: 'record_date.desc,id.desc' };
@@ -1378,46 +1466,75 @@ const AdminView = (() => {
               }
 
               const wb = XLSX.utils.book_new();
+              wb.Workbook = { Views: [{ RTL: true }] };
               const dateRangeStr = (exportFrom && exportTo)
                 ? `لە ${exportFrom} بۆ ${exportTo}`
                 : (exportFrom ? `لە ${exportFrom} بەرەو سەرەوە` : (exportTo ? `تا ${exportTo}` : 'هەموو بەروارەکان'));
 
-              const includeSummary = $('#ex-include-summary', body)?.checked ?? true;
+              const delayMinutes = enableDelay ? UI.timeToMinutes(delayHour) : null;
 
               // ١. شیتی پوختەی گشتی
               if (includeSummary) {
+                const summaryHeaders = [
+                  '#',
+                  'ناوی بەکارهێنەر',
+                  'پیشە',
+                  'ژمارەی گەشت',
+                  'کۆی کێش (کگم)',
+                  'کۆی پارچە',
+                  'کۆی وەسڵ',
+                  'کۆی پارەی هێنراوە (د.ع)'
+                ];
+                if (includeAlone) summaryHeaders.push('بەتەنیا دەرچوون');
+                if (includeSecond) summaryHeaders.push('باری دووەم');
+                if (enableDelay) summaryHeaders.push(`کاتی تاخیربوون (دوای ${delayHour})`);
+
                 const summaryRows = [
                   ['سیستەمی گەیاندن — پوختەی گشتی بەکارهێنەران'],
                   ['مەودای بەروار:', dateRangeStr, '', 'بەرواری دەرهێنان:', `${UI.todayStr()} ${UI.nowTime()}`],
                   [],
-                  ['#', 'ناوی بەکارهێنەر', 'پیشە', 'ژمارەی گەشت', 'کۆی کێش (کگم)', 'کۆی پارچە', 'کۆی وەسڵ', 'کۆی پارەی هێنراوە (د.ع)', 'بەتەنیا دەرچوون', 'باری دووەم']
+                  summaryHeaders
                 ];
 
-                let grandTrips = 0, grandWeight = 0, grandPieces = 0, grandReceipts = 0, grandMoney = 0, grandAlone = 0, grandSecond = 0;
+                let grandTrips = 0, grandWeight = 0, grandPieces = 0, grandReceipts = 0, grandMoney = 0;
+                let grandAlone = 0, grandSecond = 0, grandLateMins = 0;
 
-                const sortedSelectedUsers = state.users.filter(u => selectedUsers.has(u.username));
+                const sortedSelectedUsers = allUsers.filter(u => selectedUsers.has(u.username));
                 sortedSelectedUsers.forEach((u, idx) => {
-                  const uRecs = exportRecords.filter(r => userMatchesRecord(u, r));
+                  let uRecs = exportRecords.filter(r => userMatchesRecord(u, r));
+                  if (!includeSecond) {
+                    uRecs = uRecs.filter(r => cargoIdxOf(r) === 0);
+                  }
                   const uWeight = uRecs.reduce((s, r) => s + UI.cleanInt(r.cargo_weight), 0);
                   const uPieces = uRecs.reduce((s, r) => s + UI.cleanInt(r.pieces_count), 0);
                   const uReceipts = uRecs.reduce((s, r) => s + UI.cleanInt(r.receipt_number), 0);
                   const uMoney = uRecs.reduce((s, r) => s + UI.cleanInt(r.collected_money), 0);
 
                   // بەتەنیا دەرچوون: خانەی دابەشکار «بەتەنها» بێت، و خانەی سایەق تەنها ناوی ئەم یوسەرە بێت
-                  // (پاشگری «دوو» ڕێگەپێدراوە؛ «و» + ناوی یوسەرێکی تر = بەتەنها نییە)
                   const uAlone = uRecs.filter(r => isAloneTrip(r) && UI.recMatchesUser(r, 'driver', u)).length;
-                  // باری دووەم: تۆمارێک کە یوسەر وەک سایەق باری دووەم (یان سێیەم) بردووە — هاوشێوەی دووگمەی «تەنها باری دووەم»
-                  const uSecond = uRecs.filter(r => UI.recMatchesUser(r, 'driver', u) && cargoIdxOf(r) >= 1).length;
+                  // باری دووەم: تۆمارێک کە یوسەر (شۆفێر، دابەشکار، مەندوب) باری دووەم (یان سێیەم) بووە
+                  const uSecond = uRecs.filter(r => cargoIdxOf(r) >= 1).length;
+
+                  let uLateMins = 0;
+                  if (enableDelay && delayMinutes !== null) {
+                    uRecs.forEach(r => {
+                      const arr = UI.timeToMinutes(r.arrival_time);
+                      if (arr !== null && arr > delayMinutes) {
+                        uLateMins += (arr - delayMinutes);
+                      }
+                    });
+                  }
 
                   grandTrips += uRecs.length;
-                  grandAlone += uAlone;
-                  grandSecond += uSecond;
                   grandWeight += uWeight;
                   grandPieces += uPieces;
                   grandReceipts += uReceipts;
                   grandMoney += uMoney;
+                  grandAlone += uAlone;
+                  grandSecond += uSecond;
+                  grandLateMins += uLateMins;
 
-                  summaryRows.push([
+                  const sRow = [
                     idx + 1,
                     u.username,
                     u.profession || '—',
@@ -1425,13 +1542,16 @@ const AdminView = (() => {
                     uWeight,
                     uPieces,
                     uReceipts,
-                    uMoney,
-                    uAlone,
-                    uSecond
-                  ]);
+                    uMoney
+                  ];
+                  if (includeAlone) sRow.push(uAlone);
+                  if (includeSecond) sRow.push(uSecond);
+                  if (enableDelay) sRow.push(uLateMins > 0 ? UI.durationToHMM(uLateMins) : '-');
+
+                  summaryRows.push(sRow);
                 });
 
-                summaryRows.push([
+                const sTotal = [
                   'کۆی گشتی',
                   '',
                   '',
@@ -1439,14 +1559,18 @@ const AdminView = (() => {
                   grandWeight,
                   grandPieces,
                   grandReceipts,
-                  grandMoney,
-                  grandAlone,
-                  grandSecond
-                ]);
+                  grandMoney
+                ];
+                if (includeAlone) sTotal.push(grandAlone);
+                if (includeSecond) sTotal.push(grandSecond);
+                if (enableDelay) sTotal.push(grandLateMins > 0 ? UI.durationToHMM(grandLateMins) : '-');
+
+                summaryRows.push(sTotal);
 
                 const wsSummary = XLSX.utils.aoa_to_sheet(summaryRows);
                 wsSummary['!views'] = [{ RTL: true }];
-                wsSummary['!cols'] = [
+
+                const summaryCols = [
                   { wch: 6 },
                   { wch: 22 },
                   { wch: 18 },
@@ -1454,12 +1578,15 @@ const AdminView = (() => {
                   { wch: 16 },
                   { wch: 14 },
                   { wch: 14 },
-                  { wch: 24 },
-                  { wch: 16 },
-                  { wch: 14 }
+                  { wch: 24 }
                 ];
+                if (includeAlone) summaryCols.push({ wch: 16 });
+                if (includeSecond) summaryCols.push({ wch: 14 });
+                if (enableDelay) summaryCols.push({ wch: 22 });
+
+                wsSummary['!cols'] = summaryCols;
                 wsSummary['!merges'] = [
-                  { s: { r: 0, c: 0 }, e: { r: 0, c: 9 } },
+                  { s: { r: 0, c: 0 }, e: { r: 0, c: summaryCols.length - 1 } },
                   { s: { r: 1, c: 1 }, e: { r: 1, c: 2 } }
                 ];
 
@@ -1467,47 +1594,83 @@ const AdminView = (() => {
               }
 
               // ٢. شیتێکی سەربەخۆ بۆ هەر بەکارهێنەرێکی هەڵبژێردراو
-              const selectedUsersList = state.users.filter(u => selectedUsers.has(u.username));
+              const selectedUsersList = allUsers.filter(u => selectedUsers.has(u.username));
               let sheetsCreated = 0;
 
               for (const u of selectedUsersList) {
-                const uRecs = exportRecords.filter(r => userMatchesRecord(u, r));
+                let uRecs = exportRecords.filter(r => userMatchesRecord(u, r));
+                if (!includeSecond) {
+                  uRecs = uRecs.filter(r => cargoIdxOf(r) === 0);
+                }
                 const totalWeight = uRecs.reduce((s, r) => s + UI.cleanInt(r.cargo_weight), 0);
                 const totalPieces = uRecs.reduce((s, r) => s + UI.cleanInt(r.pieces_count), 0);
                 const totalReceipts = uRecs.reduce((s, r) => s + UI.cleanInt(r.receipt_number), 0);
                 const totalMoney = uRecs.reduce((s, r) => s + UI.cleanInt(r.collected_money), 0);
+                const uAlone = uRecs.filter(r => isAloneTrip(r) && UI.recMatchesUser(r, 'driver', u)).length;
+                const uSecond = uRecs.filter(r => cargoIdxOf(r) >= 1).length;
+
+                let userTotalLateMins = 0;
+                if (enableDelay && delayMinutes !== null) {
+                  uRecs.forEach(r => {
+                    const arr = UI.timeToMinutes(r.arrival_time);
+                    if (arr !== null && arr > delayMinutes) {
+                      userTotalLateMins += (arr - delayMinutes);
+                    }
+                  });
+                }
+
+                let summaryLine = `کۆی گەشت: ${uRecs.length} | کۆی کێش: ${totalWeight} کگم | کۆی پارچە: ${totalPieces} | کۆی وەسڵ: ${totalReceipts} | کۆی پارە: ${totalMoney.toLocaleString('en-US')} د.ع`;
+                if (includeSecond) summaryLine += ` | باری دووەم: ${uSecond}`;
+                if (includeAlone) summaryLine += ` | بەتەنیا: ${uAlone}`;
+                if (enableDelay) summaryLine += ` | کۆی تاخیربوون: ${userTotalLateMins > 0 ? UI.durationToHMM(userTotalLateMins) : '0:00'}`;
+
+                const sheetHeaders = [
+                  '#',
+                  'بەروار',
+                  'شۆفێر',
+                  'دابەشکار',
+                  'مەندوب',
+                  'زۆن',
+                  'سەیارە',
+                  'کێشی بار (کگم)',
+                  'پارچەکان',
+                  'وەسڵ',
+                  'کاتی دەرچوون',
+                  'کاتی ناو زۆن',
+                  'کاتی دەرێی زۆن',
+                  'کاتی گەشتنەوە',
+                  'کاتی کارکردن'
+                ];
+                if (enableDelay) sheetHeaders.push(`کاتی تاخیربوون (دوای ${delayHour})`);
+                if (includeSecond) sheetHeaders.push('باری دووەم');
+                if (includeAlone) sheetHeaders.push('بەتەنها دەرچوون');
+                sheetHeaders.push('پارەی هێنراوە (د.ع)');
 
                 const sheetRows = [
                   ['سیستەمی بەڕێوەبردنی گەیاندن — ڕاپۆرتی تۆمارەکانی گەیاندن'],
                   ['ناوی بەکارهێنەر:', u.username, '', '', 'پیشە:', u.profession || '—'],
                   ['مەودای بەروار:', dateRangeStr, '', '', 'بەرواری دەرکردن:', `${UI.todayStr()} ${UI.nowTime()}`],
-                  [`کۆی گەشت: ${uRecs.length} | کۆی کێش: ${totalWeight} کگم | کۆی پارچە: ${totalPieces} | کۆی وەسڵ: ${totalReceipts} | کۆی پارە: ${totalMoney.toLocaleString('en-US')} د.ع`],
+                  [summaryLine],
                   [],
-                  [
-                    '#',
-                    'بەروار',
-                    'شۆفێر',
-                    'دابەشکار',
-                    'مەندوب',
-                    'زۆن',
-                    'سەیارە',
-                    'کێشی بار (کگم)',
-                    'پارچەکان',
-                    'وەسڵ',
-                    'کاتی دەرچوون',
-                    'کاتی ناو زۆن',
-                    'کاتی دەرێی زۆن',
-                    'کاتی گەشتنەوە',
-                    'کاتی کارکردن',
-                    'پارەی هێنراوە (د.ع)'
-                  ]
+                  sheetHeaders
                 ];
 
                 if (!uRecs.length) {
                   sheetRows.push(['هیچ تۆمارێک نەدۆزرایەوە بۆ ئەم بەکارهێنەرە لەم بەروارەدا.']);
                 } else {
                   uRecs.forEach((r, idx) => {
-                    sheetRows.push([
+                    const isAlone = isAloneTrip(r);
+                    const cIdx = cargoIdxOf(r);
+
+                    let rowLateStr = '-';
+                    if (enableDelay && delayMinutes !== null) {
+                      const arr = UI.timeToMinutes(r.arrival_time);
+                      if (arr !== null && arr > delayMinutes) {
+                        rowLateStr = UI.durationToHMM(arr - delayMinutes);
+                      }
+                    }
+
+                    const rRow = [
                       idx + 1,
                       r.record_date || '',
                       r.driver || '',
@@ -1522,12 +1685,22 @@ const AdminView = (() => {
                       r.in_zone_time || '',
                       r.out_zone_time || '',
                       r.arrival_time || '',
-                      UI.workTimeDisplay(r),
-                      UI.cleanInt(r.collected_money)
-                    ]);
+                      UI.workTimeDisplay(r)
+                    ];
+                    if (enableDelay) rRow.push(rowLateStr);
+                    if (includeSecond) rRow.push(cIdx >= 1 ? (CONFIG.CARGO_LABELS[cIdx] || 'باری دووەم') : '-');
+                    if (includeAlone) rRow.push(isAlone ? 'بەتەنها' : '-');
+                    rRow.push(UI.cleanInt(r.collected_money));
+
+                    sheetRows.push(rRow);
                   });
 
-                  sheetRows.push([
+                  const totalWorkDuration = UI.fmtDuration(uRecs.reduce((s, r) => {
+                    const d = UI.recordDurationMinutes(r);
+                    return s + (d === null ? 0 : d);
+                  }, 0) || null);
+
+                  const rTotal = [
                     'کۆی گشتی',
                     '',
                     '',
@@ -1542,17 +1715,20 @@ const AdminView = (() => {
                     '',
                     '',
                     '',
-                    UI.fmtDuration(uRecs.reduce((s, r) => {
-                      const d = UI.recordDurationMinutes(r);
-                      return s + (d === null ? 0 : d);
-                    }, 0) || null),
-                    totalMoney
-                  ]);
+                    totalWorkDuration
+                  ];
+                  if (enableDelay) rTotal.push(userTotalLateMins > 0 ? UI.durationToHMM(userTotalLateMins) : '-');
+                  if (includeSecond) rTotal.push(uSecond);
+                  if (includeAlone) rTotal.push(uAlone);
+                  rTotal.push(totalMoney);
+
+                  sheetRows.push(rTotal);
                 }
 
                 const ws = XLSX.utils.aoa_to_sheet(sheetRows);
                 ws['!views'] = [{ RTL: true }];
-                ws['!cols'] = [
+
+                const cols = [
                   { wch: 6 },
                   { wch: 14 },
                   { wch: 18 },
@@ -1567,14 +1743,19 @@ const AdminView = (() => {
                   { wch: 14 },
                   { wch: 14 },
                   { wch: 14 },
-                  { wch: 14 },
-                  { wch: 20 }
+                  { wch: 14 }
                 ];
+                if (enableDelay) cols.push({ wch: 22 });
+                if (includeSecond) cols.push({ wch: 14 });
+                if (includeAlone) cols.push({ wch: 16 });
+                cols.push({ wch: 20 });
+
+                ws['!cols'] = cols;
                 ws['!merges'] = [
-                  { s: { r: 0, c: 0 }, e: { r: 0, c: 15 } },
+                  { s: { r: 0, c: 0 }, e: { r: 0, c: cols.length - 1 } },
                   { s: { r: 1, c: 1 }, e: { r: 1, c: 3 } },
                   { s: { r: 2, c: 1 }, e: { r: 2, c: 3 } },
-                  { s: { r: 3, c: 0 }, e: { r: 3, c: 15 } }
+                  { s: { r: 3, c: 0 }, e: { r: 3, c: cols.length - 1 } }
                 ];
 
                 // ناوی شیتەکە دەبێت تا ٣١ پیت بێت و هێما نایاساییەکانی تێدا نەبێت
@@ -2184,7 +2365,7 @@ const AdminView = (() => {
       grid.innerHTML = state.vehiclesError && !state.vehicles.length
         ? `<div class="empty-state" style="grid-column:1/-1"><div class="empty-ico">⚠️</div><p>نەتوانرا ژمارەی سەیارەکان لە Supabase بهێنرێت: ${UI.esc(state.vehiclesError)}</p></div>`
         : !rows.length ? `<div class="empty-state" style="grid-column:1/-1"><p>هیچ سەیارەیەک نەدۆزرایەوە.</p></div>` :
-        rows.map(r => `
+          rows.map(r => `
           <div class="zone-card${Store.isHidden('vehicles', r.id) ? ' is-hidden' : ''}">
             <span class="zone-name">🚐 ${UI.esc(vehicleLabel(r))} ${hiddenBadge('vehicles', r.id)}</span>
             <div class="zone-actions">
@@ -2272,7 +2453,7 @@ const AdminView = (() => {
                 UI.toast(`ئەم ژمارەیە پێشتر تۆمار کراوە: «${vehicleLabel(dup.exact)}»`, 'warning', 4200);
                 return;
               }
-              const col = vehicleKey();
+              const col = (isEdit && vehicleKeyOf(veh)) ? vehicleKeyOf(veh) : vehicleKey();
               if (isEdit) {
                 await API.Lists.updateVehicle(veh.id, { [col]: number });
                 UI.toast('ژمارەی سەیارە نوێ کرایەوە ✓', 'success');
@@ -2394,9 +2575,9 @@ const AdminView = (() => {
             <thead><tr><th>جۆر</th><th>زانیاری</th><th>کاتی سڕینەوە</th><th>ماوە</th><th>کردار</th></tr></thead>
             <tbody>
               ${items.map(x => {
-                const k = Trash.KINDS[x.kind] || { label: x.kind, icon: '📄' };
-                const left = Trash.daysLeft(x);
-                return `<tr data-tid="${UI.esc(x.tid)}">
+      const k = Trash.KINDS[x.kind] || { label: x.kind, icon: '📄' };
+      const left = Trash.daysLeft(x);
+      return `<tr data-tid="${UI.esc(x.tid)}">
                   <td data-label="جۆر" class="nowrap">${k.icon} ${UI.esc(k.label)}</td>
                   <td data-label="زانیاری">${UI.esc(trashSummary(x))}</td>
                   <td data-label="کاتی سڕینەوە" class="nowrap">${UI.esc(trashFmtDate(x.deletedAt))}</td>
@@ -2406,7 +2587,7 @@ const AdminView = (() => {
                     <button type="button" class="btn btn-danger btn-sm" data-trash-purge="${UI.esc(x.tid)}">✖ سڕینەوەی یەکجاری</button>
                   </td>
                 </tr>`;
-              }).join('')}
+    }).join('')}
             </tbody>
           </table>
         </div>
@@ -2483,5 +2664,5 @@ const AdminView = (() => {
     if (refreshTimer) { clearInterval(refreshTimer); refreshTimer = null; }
   }
 
-  return { render, stop };
+  return { render, stop, openExcelExportModal, openVehicleModal };
 })();

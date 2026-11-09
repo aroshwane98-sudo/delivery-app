@@ -366,15 +366,40 @@ const Store = (() => {
   const MARKETS_CACHE_KEY = 'dlv_markets_cache';
   let memoryMarkets = null;
 
+  function dedupeMarkets(list) {
+    if (!Array.isArray(list)) return [];
+    const seen = new Set();
+    const result = [];
+    for (const m of list) {
+      if (!m) continue;
+      const code = String(m.account_code || '').trim();
+      if (!code || seen.has(code)) continue;
+      seen.add(code);
+      result.push(m);
+    }
+    return result;
+  }
+
   async function loadMarkets(force = false) {
     if (memoryMarkets && !force) return memoryMarkets;
     try {
       if (typeof API !== 'undefined' && API.Markets && API.Markets.list) {
         const rows = await API.Markets.list();
         if (Array.isArray(rows)) {
-          memoryMarkets = rows;
-          try { localStorage.setItem(MARKETS_CACHE_KEY, JSON.stringify(rows)); } catch (_) {}
-          return rows;
+          if (rows.length > 0) {
+            const cleanRows = dedupeMarkets(rows);
+            memoryMarkets = cleanRows;
+            try { localStorage.setItem(MARKETS_CACHE_KEY, JSON.stringify(cleanRows)); } catch (_) {}
+            return cleanRows;
+          } else {
+            const cached = getCachedMarkets();
+            if (cached && cached.length > 0) {
+              memoryMarkets = cached;
+              return cached;
+            }
+            memoryMarkets = [];
+            return [];
+          }
         }
       }
     } catch (err) {
@@ -388,17 +413,18 @@ const Store = (() => {
       const raw = localStorage.getItem(MARKETS_CACHE_KEY);
       if (raw) {
         const arr = JSON.parse(raw);
-        if (Array.isArray(arr)) return arr;
+        if (Array.isArray(arr)) return dedupeMarkets(arr);
       }
     } catch (_) {}
     return [];
   }
 
   function saveMarketsCache(markets) {
-    memoryMarkets = markets;
+    const clean = dedupeMarkets(markets);
+    memoryMarkets = clean;
     try {
-      localStorage.setItem(MARKETS_CACHE_KEY, JSON.stringify(markets));
-      window.dispatchEvent(new CustomEvent('dlv-markets-changed', { detail: markets }));
+      localStorage.setItem(MARKETS_CACHE_KEY, JSON.stringify(clean));
+      window.dispatchEvent(new CustomEvent('dlv-markets-changed', { detail: clean }));
       return true;
     } catch (_) {
       return false;
