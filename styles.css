@@ -284,6 +284,32 @@ input[type='date'], input[type='time'] { direction: ltr; text-align: right; }
   font-size: 0.74rem;
   font-weight: 700;
 }
+.topbar-date .tb-pending-btn {
+  background: #f59e0b;
+  color: #0f172a !important;
+  font-family: inherit;
+  font-weight: 800 !important;
+  font-size: 0.8rem !important;
+  padding: 4px 12px !important;
+  border-radius: 999px !important;
+  border: 1px solid rgba(245, 158, 11, 0.8) !important;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  box-shadow: 0 0 10px rgba(245, 158, 11, 0.4);
+  animation: tb-pending-pulse 2s infinite ease-in-out;
+  transition: transform 0.15s ease, background 0.15s ease;
+}
+.topbar-date .tb-pending-btn:hover {
+  background: #d97706 !important;
+  color: #ffffff !important;
+  transform: scale(1.05);
+}
+@keyframes tb-pending-pulse {
+  0%, 100% { box-shadow: 0 0 8px rgba(245, 158, 11, 0.35); transform: scale(1); }
+  50% { box-shadow: 0 0 16px rgba(245, 158, 11, 0.7); transform: scale(1.04); }
+}
 
 .avatar {
   border-radius: 50%; object-fit: cover; flex-shrink: 0;
@@ -422,6 +448,100 @@ html.hide-icons .toast-ico .lic { display: inline-block !important; }
   background: var(--surface-2); border: 1px solid var(--border);
 }
 .zone-chip.sm { font-size: 0.78rem; }
+
+/* — دوگمەی شێرکردن — */
+.btn-share-trip {
+  font-family: inherit;
+  font-size: 0.82rem;
+  font-weight: 700;
+  padding: 5px 14px;
+  border-radius: 99px;
+  border: 1px solid color-mix(in srgb, var(--accent) 45%, var(--border));
+  background: color-mix(in srgb, var(--accent) 12%, var(--surface-2));
+  color: var(--accent);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.15s ease;
+}
+.btn-share-trip:hover {
+  background: var(--accent);
+  color: #fff !important;
+  border-color: var(--accent);
+  transform: translateY(-1px);
+}
+.btn-share-trip:active { transform: scale(0.97); }
+.btn-share-trip.sm {
+  font-size: 0.74rem;
+  padding: 3px 10px;
+}
+
+.share-modal-body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.share-actions-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.btn-share-app {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  font-family: inherit;
+  font-size: 0.88rem;
+  font-weight: 700;
+  border: 1px solid var(--border);
+  cursor: pointer;
+  text-decoration: none;
+  transition: transform 0.15s ease, filter 0.15s ease;
+}
+.btn-share-app:hover {
+  filter: brightness(1.1);
+  transform: translateY(-1px);
+}
+.btn-share-app:active { transform: scale(0.98); }
+.btn-share-app.whatsapp {
+  background: #25d366;
+  color: #ffffff !important;
+  border-color: #25d366;
+}
+.btn-share-app.telegram {
+  background: #229ed9;
+  color: #ffffff !important;
+  border-color: #229ed9;
+}
+.btn-share-app.native {
+  background: var(--surface-2);
+  color: var(--text);
+  border-color: var(--border);
+}
+.btn-share-app.copy {
+  background: var(--surface-2);
+  color: var(--text);
+  border-color: var(--border);
+}
+.share-preview-card {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px;
+  font-size: 0.84rem;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  direction: rtl;
+  text-align: right;
+  color: var(--text);
+  max-height: 220px;
+  overflow-y: auto;
+  user-select: all;
+}
 
 /* — قۆناغەکان (Stepper) — */
 

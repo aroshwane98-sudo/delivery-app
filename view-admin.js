@@ -770,7 +770,7 @@ const AdminView = (() => {
           <div class="field"><label>کێشی بار (کگم) *</label><input id="m-rec-wt" type="text" inputmode="numeric" value="${rec && rec.cargo_weight ? (UI.hasOperator(rec.cargo_weight) ? rec.cargo_weight : UI.fmtNum(rec.cargo_weight)) : ''}" placeholder="0"></div>
           <div class="field"><label>ژمارەی پارچەکان *</label><input id="m-rec-pcs" type="text" inputmode="numeric" value="${rec && rec.pieces_count ? (UI.hasOperator(rec.pieces_count) ? rec.pieces_count : UI.fmtNum(rec.pieces_count)) : ''}" placeholder="0"></div>
         </div>
-        <div class="field"><label>ژمارەی وەسڵ *</label><input id="m-rec-rcp" type="text" inputmode="numeric" value="${rec && rec.receipt_number ? (UI.hasOperator(rec.receipt_number) ? rec.receipt_number : UI.fmtNum(rec.receipt_number)) : ''}" placeholder="0"></div>
+        <div class="field"><label>ژمارەی وەسڵ * <span style="font-weight:normal;font-size:12px;color:var(--text-muted)"></span></label><input id="m-rec-rcp" type="text" inputmode="numeric" placeholder="1-99" maxlength="10" value="${rec && rec.receipt_number ? (UI.hasOperator(rec.receipt_number) ? rec.receipt_number : UI.fmtNum(rec.receipt_number)) : ''}"></div>
         <div class="field"><label>💰 پارەی هێنراوە (د.ع)</label><input id="m-rec-mny" type="text" inputmode="numeric" value="${rec && Number(rec.collected_money || 0) > 0 ? UI.fmtNum(rec.collected_money) : ''}" placeholder="بەتاڵ = تۆمار نەکراوە"></div>
 
         <div class="date-range-compact" style="margin-top:10px">
@@ -810,6 +810,16 @@ const AdminView = (() => {
     UI.wireThousands($('#m-rec-pcs', body), { allowOperators: true });
     UI.wireThousands($('#m-rec-rcp', body), { allowOperators: true });
     UI.wireThousands($('#m-rec-mny', body), { allowOperators: true });
+
+    $('#m-rec-rcp', body)?.addEventListener('input', (e) => {
+      const raw = e.target.value;
+      if (!UI.hasOperator(raw)) {
+        const latin = UI.toLatinDigits(raw).replace(/[^0-9]/g, '');
+        if (latin.length > 2) {
+          e.target.value = latin.slice(0, 2);
+        }
+      }
+    });
 
     const { close } = UI.openModal({
       title: isEdit ? '✏️ دەستکاریکردنی تۆماری گەیاندن' : '➕ زیادکردنی باری نوێ',
@@ -878,6 +888,11 @@ const AdminView = (() => {
             if (data.collected_money > 99999999) {
               $('#m-rec-mny', body)?.classList.add('invalid');
               UI.toast('بڕی پارەی هێنراوە ناتوانێت لە ٩٩،٩٩٩،٩٩٩ زیاتر بێت', 'warning');
+              return;
+            }
+            if (data.receipt_number < 1 || data.receipt_number > 99) {
+              $('#m-rec-rcp', body)?.classList.add('invalid');
+              UI.toast('ژمارەی وەسڵ نابێت لە ٢ ژمارە زیاتر بێت (دەبێت لە نێوان ١ بۆ ٩٩ بێت)', 'warning', 5000);
               return;
             }
 
@@ -1843,7 +1858,7 @@ const AdminView = (() => {
         <div class="admin-header-row" style="margin-bottom:6px">
           <h3 style="font-size:0.96rem"><span class="sec-icon">${UI.icon('users')}</span> بەڕێوەبردنی بەکارهێنەران (خشتەی usersv2)</h3>
           <div style="display:flex;gap:8px">
-            ${CONFIG.GATEWAY_URL ? `<button type="button" class="btn btn-ghost btn-sm" id="adm-migrate-avatars-btn" title="گواستنەوەی وێنە کۆنەکان (base64) بۆ GitHub — لیستەکان خێراتر دەبێت">🌐 وێنەکان بۆ GitHub</button>` : ''}
+            <button type="button" class="btn btn-ghost btn-sm" id="adm-migrate-avatars-btn" title="پاشەکەوتکردنی ڕاستەوخۆی وێنەی بەکارهێنەران لە داتابەیس (Base64)">💾 پاشەکەوتکردنی وێنەکان لە داتابەیس</button>
             <button type="button" class="btn btn-ghost btn-sm" id="adm-toggle-pass">👁️ پشاندانی هەموو پاسۆڕدەکان</button>
             <button type="button" class="btn btn-primary btn-sm" id="admin-add-user-btn">➕ بەکارهێنەری نوێ</button>
           </div>
@@ -1956,27 +1971,36 @@ const AdminView = (() => {
     });
     $('#admin-add-user-btn', wrap).addEventListener('click', () => openUserModal(null, updateUserCardsGrid));
 
-    // گواستنەوەی وێنە کۆنەکان (dataURL) بۆ GitHub repo — لیستی یوسەرەکان خێراتر دەبێت
+    // پاشەکەوتکردنی هەموو وێنەکانی AVATAR_MAP لەناو داتابەیس بە Base64
     const migBtn = $('#adm-migrate-avatars-btn', wrap);
     if (migBtn) migBtn.addEventListener('click', async () => {
       const ok = await UI.confirmDialog(
-        'هەموو وێنە کۆنەکان کە وەک base64 لە داتابەیسەکەدا پاشەکەوتکراون، دەگوازرێنەوە بۆ GitHub repo ەکە و لە داتابەیسەکەدا تەنها ڕێڕەوەکەیان دەمێنێتەوە. بەردەوام دەبیت؟',
-        { okLabel: 'بەڵێ، بگوازەوە', cancelLabel: 'پاشگەزبوونەوە' }
+        'ئایا دەتەوێت وێنەی بەکارهێنەران بە شێوەی Base64 لە داتابەیسدا پاشەکەوت بکەیت تا لە هەموو ئامێرێکدا بە ڕاستەوخۆ دەربکەون؟',
+        { okLabel: 'بەڵێ، پاشەکەوت بکە', cancelLabel: 'پاشگەزبوونەوە' }
       );
       if (!ok) return;
       UI.btnLoading(migBtn, true, '...');
       try {
-        const res = await API.migrateAvatars();
+        let updated = 0;
+        if (typeof AVATAR_MAP !== 'undefined') {
+          for (const u of (state.users || [])) {
+            const av = AVATAR_MAP[String(u.id)];
+            if (av && (!u.avatar_url || !u.avatar_url.startsWith('data:image/'))) {
+              try {
+                await API.Lists.updateUser(u.id, { avatar_url: av });
+                u.avatar_url = av;
+                updated++;
+              } catch (e) {
+                console.warn('Update user avatar failed:', u.username, e);
+              }
+            }
+          }
+        }
         Store.invalidateLists();
-        const failed = (res && res.failed) || [];
-        const firstError = (res && res.firstError) || '';
-        const failedTxt = failed.length
-          ? ` — شکستی هێنا بۆ ${UI.fmtNum(failed.length)} وێنە${firstError ? ` (هۆکار: ${firstError})` : ''}`
-          : '';
-        UI.toast(`${UI.fmtNum(res.migrated || 0)} وێنە گواسترایەوە بۆ GitHub ✓${failedTxt}`, failed.length ? 'warning' : 'success', 8000);
+        UI.toast(`وێنەی ${UI.fmtNum(updated)} بەکارهێنەر لە داتابەیس نوێ کرایەوە ✓`, 'success', 6000);
         updateUserCardsGrid();
       } catch (err) {
-        UI.toast('هەڵە لە گواستنەوەی وێنەکان: ' + err.message, 'error', 8000);
+        UI.toast('هەڵە لە پاشەکەوتکردنی وێنەکان: ' + err.message, 'error', 8000);
       } finally {
         UI.btnLoading(migBtn, false);
       }
@@ -2032,9 +2056,10 @@ const AdminView = (() => {
     const renderPreview = () => {
       const box = $('#mu-avatar-preview', body);
       if (!box) return;
+      const userAv = (typeof resolveAvatar === 'function' ? resolveAvatar(user) : user?.avatar_url) || user?.avatar_url;
       const cur = newAvatar !== undefined
         ? (newAvatar ? { username: user?.username || '', avatar_url: newAvatar } : null)
-        : (user?.avatar_url ? { username: user.username, avatar_url: user.avatar_url } : null);
+        : (userAv ? { username: user?.username || '', avatar_url: userAv } : null);
       box.innerHTML = cur
         ? `<img class="avatar" src="${UI.esc(cur.avatar_url)}" alt="" style="width:64px;height:64px">`
         : `<div class="avatar avatar-fallback" style="width:64px;height:64px;font-size:26px">${UI.esc((user?.username || '؟').trim().charAt(0))}</div>`;
@@ -2103,14 +2128,9 @@ const AdminView = (() => {
                   location: location || null,
                 };
                 if (newAvatar !== undefined) {
-                  if (newAvatar === null) {
-                    patch.avatar_url = null;
-                  } else if (CONFIG.GATEWAY_URL) {
-                    // وێنەکە دەچێتە ناو GitHub repo — لە داتابەیسەکەدا تەنها ڕێڕەوەکە دەمێنێتەوە
-                    const up = await API.uploadAvatar(user.id, newAvatar);
-                    patch.avatar_url = (up && up.avatar_url) ? up.avatar_url : newAvatar;
-                  } else {
-                    patch.avatar_url = newAvatar;
+                  patch.avatar_url = newAvatar || null;
+                  if (typeof AVATAR_MAP !== 'undefined') {
+                    AVATAR_MAP[String(user.id)] = newAvatar || null;
                   }
                 }
                 await API.Lists.updateUser(user.id, patch);
@@ -2125,15 +2145,12 @@ const AdminView = (() => {
                   location: location || null,
                 };
                 if (newAvatar) {
-                  if (CONFIG.GATEWAY_URL) {
-                    // یوسەری نوێ هێشتا ئایدی نییە — سەرەتا فایلەکە بۆ GitHub دەچێت، پاشان ڕێڕەوەکە لەگەڵ ڕیزەکە تۆمار دەکرێت
-                    const up = await API.uploadAvatar('', newAvatar);
-                    row.avatar_url = (up && up.avatar_url) ? up.avatar_url : newAvatar;
-                  } else {
-                    row.avatar_url = newAvatar;
-                  }
+                  row.avatar_url = newAvatar;
                 }
                 const inserted = await API.Lists.insertUser(row);
+                if (inserted?.id && newAvatar && typeof AVATAR_MAP !== 'undefined') {
+                  AVATAR_MAP[String(inserted.id)] = newAvatar;
+                }
                 state.users.unshift(inserted || { id: Date.now(), ...row });
                 UI.toast('بەکارهێنەری نوێ زیادکرا ✓', 'success');
               }

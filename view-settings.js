@@ -441,6 +441,9 @@ const SettingsView = (() => {
           const res = await API.uploadAvatar(App.getUser().id, dataUrl);
           const newUrl = (res && res.avatar_url) ? res.avatar_url : dataUrl;
           Store.updateSession({ avatar_url: newUrl });
+          if (typeof AVATAR_MAP !== 'undefined') {
+            AVATAR_MAP[String(App.getUser().id)] = newUrl;
+          }
           $('#profile-avatar', container).innerHTML = UI.avatarHtml(App.getUser(), 76);
           App.renderHeader();
           UI.toast('وێنەی پڕۆفایل نوێ کرایەوە ✓', 'success');

@@ -520,17 +520,24 @@ const UI = (() => {
     const attrs = user?.id !== undefined && user?.id !== null
       ? ` data-uid="${esc(String(user.id))}" data-uname="${esc(user.username || '')}" data-uprof="${esc(user.profession || '')}"`
       : '';
-    if (user?.avatar_url) {
-      return `<img class="avatar" src="${user.avatar_url}" alt="${esc(user.username)}" style="width:${size}px;height:${size}px"${attrs}>`;
+    const src = (typeof resolveAvatar === 'function' ? resolveAvatar(user) : user?.avatar_url) || user?.avatar_url;
+    if (src) {
+      return `<img class="avatar" src="${src}" alt="${esc(user.username)}" style="width:${size}px;height:${size}px"${attrs}>`;
     }
     return `<div class="avatar avatar-fallback" style="width:${size}px;height:${size}px;font-size:${Math.round(size * 0.42)}px"${attrs}>${initial}</div>`;
   }
 
   // وێنەی ئاڤاتاری شێواو (بەستەری هەڵە یان نەگەیشتوو) — لە جیاتی نیشانەی وێنەی شێواو،
-  // پیتە یەکەمی ناوی یوسەرەکە پیشان دەدرێت (هەمان شێوەی فۆڵباکی بنەڕەتی)
+  // سەرەتا هەوڵ دەدات لە نەخشەی ناوەکی AVATAR_MAP وەریگرێتەوە، ئەگەر نەبوو پیتە یەکەمەکە پیشان دەدات
   document.addEventListener('error', e => {
     const img = e.target;
     if (!(img instanceof HTMLImageElement) || !img.classList.contains('avatar')) return;
+    const uid = img.getAttribute('data-uid');
+    if (uid && typeof AVATAR_MAP !== 'undefined' && AVATAR_MAP[uid] && !img.dataset.retried) {
+      img.dataset.retried = '1';
+      img.src = AVATAR_MAP[uid];
+      return;
+    }
     const fallback = document.createElement('div');
     fallback.className = 'avatar avatar-fallback';
     fallback.setAttribute('style', img.getAttribute('style') || '');
@@ -711,7 +718,8 @@ const UI = (() => {
     });
     // کلیک لەسەر وێنەکە لەناو ویندۆکە — پیشاندانی وێنەکە بە پڕی شاشە
     const sheetAvatar = backdrop.querySelector('.ups-head .avatar');
-    if (sheetAvatar && user.avatar_url) {
+    const avSrc = (typeof resolveAvatar === 'function' ? resolveAvatar(user) : user?.avatar_url) || user?.avatar_url;
+    if (sheetAvatar && avSrc) {
       sheetAvatar.style.cursor = 'zoom-in';
       sheetAvatar.addEventListener('click', e => {
         e.stopPropagation(); // ڕێگری لە کردنەوەی دووبارەی ویندۆی زانیارییەکە
@@ -722,12 +730,13 @@ const UI = (() => {
 
   /** پیشاندانی وێنەی یوسەر بە پڕی شاشە — کلیک لەسەر هەر شوێنێک دادەخات */
   function openAvatarLightbox(user) {
+    const avSrc = (typeof resolveAvatar === 'function' ? resolveAvatar(user) : user?.avatar_url) || user?.avatar_url;
     const wrap = document.createElement('div');
     wrap.className = 'avatar-lightbox';
     wrap.innerHTML = `
       <div class="avatar-lightbox-inner">
-        <img src="${esc(user.avatar_url)}" alt="${esc(user.username || '')}">
-        ${user.username ? `<div class="avatar-lightbox-name">${esc(user.username)}</div>` : ''}
+        <img src="${esc(avSrc)}" alt="${esc(user?.username || '')}">
+        ${user?.username ? `<div class="avatar-lightbox-name">${esc(user.username)}</div>` : ''}
       </div>`;
     let unregLb = null;
     const closeLb = () => {

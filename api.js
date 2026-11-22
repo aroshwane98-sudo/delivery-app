@@ -758,21 +758,23 @@ const API = (() => {
   }
 
   /**
-   * بارکردنی وێنەی پڕۆفایل — لە مۆدی دەروازەدا وێنەکە دەچێتە ناو GitHub repo
-   * (پەڕگەیەکی سەربەخۆ + CDN) و لە داتابەیسەکەدا تەنها ڕێڕەوەکە دەمێنێتەوە —
-   * بۆیە لیستی یوسەرەکان زۆر سووک و خێرا دەبێت. userId بەتاڵ بێت = تەنها فایلەکە بار دەکرێت
-   * (بۆ یوسەری نوێ کە هێشتا دروست نەکراوە).
+   * بارکردنی وێنەی پڕۆفایل — وێنەکە بە شێوەی Base64 dataURL ڕاستەوخۆ لە
+   * خشتەی usersv2 دا پاشەکەوت دەبێت تا بەبێ پێویستی بە هیچ سێرڤەرێکی دەرەکی،
+   * لە هەموو ئامێرێکدا بە ڕاستەوخۆ و خێرایی دەربکەوێت.
    */
   function uploadAvatar(userId, dataUrl) {
-    if (gwOn()) return gw('users.uploadAvatar', { userId: userId || '', dataUrl });
-    // ڕێگای کۆن — dataURL ڕاستەوخۆ لە خشتەکەدا
     if (!userId) return Promise.resolve({ avatar_url: dataUrl });
-    return Lists.updateUser(userId, { avatar_url: dataUrl });
+    return Lists.updateUser(userId, { avatar_url: dataUrl }).then(() => {
+      if (typeof AVATAR_MAP !== 'undefined') {
+        AVATAR_MAP[String(userId)] = dataUrl;
+      }
+      return { avatar_url: dataUrl };
+    });
   }
 
-  /** گواستنەوەی هەموو وێنە کۆنەکان (dataURL) بۆ GitHub — تەنها بەڕێوەبەر */
+  /** گواستنەوەی وێنەکان */
   function migrateAvatars() {
-    return gw('users.migrateAvatars', {});
+    return Promise.resolve({ migrated: 0 });
   }
 
   /* ---------------- خشتەی ماڕکێتەکان (public.market_locaetion) ---------------- */
